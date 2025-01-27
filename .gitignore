@@ -1,0 +1,25 @@
+# Node.js dependencies
+client/node_modules/
+
+# Python environment
+server/venv/
+server/Lib/
+server/Scripts/
+server/files/
+
+# Ignore logs and cache
+**/*.log
+**/__pycache__/
+**/*.pyc
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Environment variables
+client/.env
+server/.env
+
+# Other ignored files
+.idea/
+.vscode/
