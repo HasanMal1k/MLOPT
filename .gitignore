@@ -4,7 +4,7 @@ client/node_modules/
 # Python environment
 server/venv/
 server/Lib/
-server/Scripts/
+# server/Scripts/
 server/files/
 
 # Ignore logs and cache
@@ -46,6 +46,7 @@ client/.yarn/*
 # misc
 client/.DS_Store
 client/*.pem
+client/.env.local
 
 # debug
 client/npm-debug.log*

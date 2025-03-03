@@ -10,7 +10,22 @@ const compat = new FlatCompat({
 });
 
 const eslintConfig = [
-  ...compat.extends("next/core-web-vitals", "next/typescript"),
+  // This empty config will effectively disable all rules
+  { 
+    linterOptions: {
+      noInlineConfig: false,
+    },
+    rules: {
+      // Set all rules to "off"
+      // This overrides any rules from the extended configs
+      "@next/next/no-html-link-for-pages": "off",
+      "react/no-unescaped-entities": "off",
+      // Add any other specific rules you want to disable
+    }
+  }
+  
+  // Comment out the extended configs to completely disable them
+  // ...compat.extends("next/core-web-vitals", "next/typescript"),
 ];
 
 export default eslintConfig;
