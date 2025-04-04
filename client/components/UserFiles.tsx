@@ -12,12 +12,15 @@ import { createClient } from '@/utils/supabase/client'
 interface FileData {
   id: string;
   user_id: string;
+  filename: string;
   original_filename: string;
   file_size: number;
-  row_count: number;
-  column_names: string[];
+  mime_type: string;
   upload_date: string;
-  // Add any other fields you expect from Supabase
+  column_names: string[];
+  row_count: number;
+  file_preview: Record<string, any>[];
+  statistics: Record<string, any>;
 }
 
 interface FilePreviewProps {

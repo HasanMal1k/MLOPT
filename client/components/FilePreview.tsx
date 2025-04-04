@@ -6,9 +6,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { X } from "lucide-react"
 
 interface FilePreviewProps {
-  fileMetadata: any
-  isOpen: boolean
-  onClose: () => void
+  fileMetadata: File | null;
+  isOpen: boolean;
+  onClose: () => void;
 }
 
 interface FileMetadata {
