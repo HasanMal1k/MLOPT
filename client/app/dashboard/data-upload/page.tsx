@@ -5,7 +5,7 @@ import { FilePlus2 } from "lucide-react";
 import UploadedDataTable from "@/components/UploadDataTable";
 import { Button } from "@/components/ui/button";
 
-export default function Preprocessing() {
+export default function DataUpload() {
     const [files, setFiles] = useState<File[]>([])
     const [error, setError] = useState<string | null>(null)
     const [isUploading, setIsUploading] = useState(false)
@@ -79,7 +79,7 @@ export default function Preprocessing() {
                 Upload Data
             </div>
             <input {...getInputProps()} />
-            <div className="bg-gray-100 mt-10 h-24 rounded-lg border border-2 border-dashed border-zinc-300 flex items-center justify-center flex-col gap-2" onClick={open}>
+            <div className="cursor-pointer bg-gray-100 mt-10 h-24 rounded-lg border border-2 border-dashed border-zinc-300 flex items-center justify-center flex-col gap-2" onClick={open}>
                 <FilePlus2 color="gray" />
                 <p className="text-gray-600">Click Here Or Drag And Drop Your Files Anywhere</p>
             </div>

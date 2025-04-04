@@ -19,7 +19,7 @@ const uploadAndPreprocessing = [
   },
   {
     title: 'Preprocessing',
-    url : '#',
+    url : '/dashboard/preprocessing',
     icon: Braces
   },
   {
