@@ -1,7 +1,5 @@
 'use client'
 
-
-
 import { useState, useEffect } from 'react'
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
@@ -9,7 +7,7 @@ import FilePreview from "./FilePreview"
 import { createClient } from '@/utils/supabase/client'
 
 // Define types for your file data
-interface FileData {
+interface FileMetadata {
   id: string;
   user_id: string;
   filename: string;
@@ -23,26 +21,6 @@ interface FileData {
   statistics: Record<string, any>;
 }
 
-interface FilePreviewProps {
-  fileMetadata: FileData | null;
-  isOpen: boolean;
-  onClose: () => void;
-}
-
-interface FileMetadata {
-    id: string;
-    user_id: string;
-    filename: string;
-    original_filename: string;
-    file_size: number;
-    mime_type: string;
-    upload_date: string;
-    column_names: string[];
-    row_count: number;
-    file_preview: Record<string, any>[];
-    statistics: Record<string, any>;
-  }
-
 export default function UserFiles() {
   const [files, setFiles] = useState<FileMetadata[]>([]);
   const [loading, setLoading] = useState<boolean>(true)
@@ -53,27 +31,35 @@ export default function UserFiles() {
   
   useEffect(() => {
     async function fetchFiles() {
-      const { data: { user } } = await supabase.auth.getUser()
-      
-      if (user) {
-        const { data, error } = await supabase
-          .from('files')
-          .select('*')
-          .eq('user_id', user.id)
-          .order('upload_date', { ascending: false })
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
         
-        if (data) {
-          setFiles(data as FileData[])
+        if (user) {
+          const { data, error } = await supabase
+            .from('files')
+            .select('*')
+            .eq('user_id', user.id)
+            .order('upload_date', { ascending: false })
+          
+          if (data) {
+            setFiles(data as FileMetadata[])
+          }
+          
+          if (error) {
+            console.error('Error fetching files:', error.message)
+          }
         }
+      } catch (error) {
+        console.error('Error in fetchFiles:', error)
+      } finally {
+        setLoading(false)
       }
-      
-      setLoading(false)
     }
     
     fetchFiles()
   }, [])
   
-  const handlePreview = (file: FileData) => {
+  const handlePreview = (file: FileMetadata) => {
     setPreviewFile(file)
     setIsPreviewOpen(true)
   }

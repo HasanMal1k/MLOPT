@@ -2,7 +2,6 @@ import Papa from 'papaparse';
 import * as XLSX from 'xlsx';
 import type { ParseStepResult } from 'papaparse';
 
-
 interface ColumnStatistics {
   min?: number;
   max?: number;
@@ -44,15 +43,17 @@ const extractMetadata = async (file: File): Promise<FileMetadata> => {
       metadata.preview = previewResults.data as Record<string, any>[];
 
       // Count total rows (excluding header)
-      const countResults = Papa.parse(text, {
+      let rowCount = 0;
+      Papa.parse(text, {
         header: false,
         skipEmptyLines: true,
         step: (results: ParseStepResult<string[]>) => {
-            if (results.data.length > 0) metadata.rowCount++;
+          if (results.data.length > 0) rowCount++;
         },
-        });
-
-      metadata.rowCount--; // Subtract header row
+        complete: () => {
+          metadata.rowCount = rowCount > 0 ? rowCount - 1 : 0; // Subtract header row if there are rows
+        }
+      });
     } 
     else if (fileType === 'xlsx') {
       // Read Excel as ArrayBuffer
@@ -63,18 +64,28 @@ const extractMetadata = async (file: File): Promise<FileMetadata> => {
 
       // Convert to JSON (auto-detects headers)
       const jsonData = XLSX.utils.sheet_to_json<Record<string, any>>(worksheet, {
-        header: 'A',
+        header: 1,
         defval: '',
       });
 
-      // Get columns from first row
-      metadata.columns = jsonData.length > 0 ? Object.keys(jsonData[0]) : [];
-
-      // Set row count (subtract 1 if header exists)
-      metadata.rowCount = jsonData.length;
-
-      // Get preview (first 100 rows)
-      metadata.preview = jsonData.slice(0, 100);
+      if (jsonData.length > 0 && Array.isArray(jsonData[0])) {
+        // Extract headers from first row
+        metadata.columns = (jsonData[0] as any[]).map(col => String(col));
+        
+        // Convert data to format with column names as keys
+        const records = jsonData.slice(1).map(row => {
+          const record: Record<string, any> = {};
+          if (Array.isArray(row)) {
+            metadata.columns.forEach((col, i) => {
+              record[col] = i < row.length ? row[i] : '';
+            });
+          }
+          return record;
+        });
+        
+        metadata.preview = records.slice(0, 100);
+        metadata.rowCount = records.length;
+      }
     }
 
     // Calculate statistics
@@ -95,8 +106,11 @@ const calculateStatistics = (
   columns.forEach((column) => {
     const values = data.map((row) => row[column]);
     const numericValues = values
-      .map((val) => (typeof val === 'string' ? parseFloat(val) : val))
-      .filter((val) => !isNaN(val) && typeof val === 'number');
+      .map((val) => {
+        const parsed = typeof val === 'string' ? parseFloat(val) : val;
+        return typeof parsed === 'number' && !isNaN(parsed) ? parsed : null;
+      })
+      .filter((val): val is number => val !== null);
 
     if (numericValues.length > 0) {
       stats[column] = {
@@ -107,7 +121,7 @@ const calculateStatistics = (
         count: numericValues.length,
       };
     } else {
-      const uniqueValues = new Set(values.filter((val) => val !== ''));
+      const uniqueValues = new Set(values.filter((val) => val !== null && val !== ''));
       stats[column] = {
         type: 'categorical',
         uniqueCount: uniqueValues.size,
@@ -118,4 +132,4 @@ const calculateStatistics = (
   return stats;
 };
 
-export default extractMetadata
+export default extractMetadata;

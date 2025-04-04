@@ -17,6 +17,7 @@ export async function login(formData: FormData) {
   const { error } = await supabase.auth.signInWithPassword(data)
 
   if (error) {
+    console.error('Login error:', error.message)
     redirect('/signup')
   }
 
@@ -26,7 +27,7 @@ export async function login(formData: FormData) {
 
 export async function signup(formData: FormData) {
   const supabase = await createClient()
-    console.log('iawdj')
+  
   // type-casting here for convenience
   // in practice, you should validate your inputs
   const data = {
@@ -37,6 +38,7 @@ export async function signup(formData: FormData) {
   const { error } = await supabase.auth.signUp(data)
 
   if (error) {
+    console.error('Signup error:', error.message)
     redirect('/error')
   }
 

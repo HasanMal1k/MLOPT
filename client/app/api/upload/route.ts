@@ -9,7 +9,8 @@ export async function POST(request: Request) {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     
     if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      console.error('Authentication error:', authError);
+      return NextResponse.json({ error: 'Unauthorized', details: authError?.message }, { status: 401 });
     }
     
     // Parse the form data
@@ -21,21 +22,30 @@ export async function POST(request: Request) {
     }
     
     const uniqueFilename = `${Date.now()}-${file.name}`;
+    const filePath = `${user.id}/${uniqueFilename}`;
     
     // Upload to Supabase storage
-    const { data, error } = await supabase.storage
+    const { data: uploadData, error: uploadError } = await supabase.storage
       .from('data-files')
-      .upload(`${user.id}/${uniqueFilename}`, file, {
+      .upload(filePath, file, {
         contentType: file.type,
         upsert: false
       });
     
-    if (error) {
-      throw error;
+    if (uploadError) {
+      console.error('Storage upload error:', uploadError);
+      return NextResponse.json({ 
+        error: 'Failed to upload file to storage', 
+        details: uploadError.message 
+      }, { status: 500 });
     }
     
-    // Extract metadata (you'll need to implement this function)
-    // This should parse CSV/XLSX and extract columns, preview data, etc.
+    // Get the public URL (if needed)
+    const { data: { publicUrl } } = supabase.storage
+      .from('data-files')
+      .getPublicUrl(filePath);
+    
+    // Extract metadata
     const metadata = await extractMetadata(file);
     
     // Save metadata to database
@@ -55,12 +65,18 @@ export async function POST(request: Request) {
       .select();
     
     if (dbError) {
-      throw dbError;
+      console.error('Database error:', dbError);
+      // Try to delete the uploaded file if database insert fails
+      await supabase.storage.from('data-files').remove([filePath]);
+      return NextResponse.json({ 
+        error: 'Failed to save file metadata', 
+        details: dbError.message 
+      }, { status: 500 });
     }
     
     return NextResponse.json({
       success: true,
-      fileId: fileRecord[0].id,
+      fileId: fileRecord?.[0]?.id,
       metadata: {
         filename: file.name,
         size: file.size,
@@ -71,6 +87,9 @@ export async function POST(request: Request) {
     
   } catch (err: any) {
     console.error('Upload error:', err);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return NextResponse.json({ 
+      error: 'Upload process failed', 
+      details: err.message 
+    }, { status: 500 });
   }
 }

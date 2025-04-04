@@ -12,8 +12,25 @@ type data = {
   setFiles: React.Dispatch<React.SetStateAction<File[]>>
 }
 
+// Create a mock FileMetadata from a File object
+const createMockFileMetadata = (file: File) => {
+  return {
+    id: Date.now().toString(),
+    user_id: "temporary",
+    filename: file.name,
+    original_filename: file.name,
+    file_size: file.size,
+    mime_type: file.type,
+    upload_date: new Date().toISOString(),
+    column_names: [],
+    row_count: 0,
+    file_preview: [],
+    statistics: {}
+  };
+};
+
 function UploadedDataTable({ files, setFiles }: data) {
-  const [previewFile, setPreviewFile] = useState<File | null>(null)
+  const [previewFile, setPreviewFile] = useState<any | null>(null)
   const [isPreviewOpen, setIsPreviewOpen] = useState(false)
 
   const removeItem = (fileName: string) => {
@@ -22,7 +39,9 @@ function UploadedDataTable({ files, setFiles }: data) {
   }
 
   const handlePreview = (file: File) => {
-    setPreviewFile(file)
+    // Create a mock file metadata for preview
+    const mockFileMetadata = createMockFileMetadata(file);
+    setPreviewFile(mockFileMetadata)
     setIsPreviewOpen(true)
   }
 
@@ -73,10 +92,9 @@ function UploadedDataTable({ files, setFiles }: data) {
         </TableBody>
       </Table>
 
-      <FilePreview file={previewFile} isOpen={isPreviewOpen} onClose={closePreview} />
+      <FilePreview fileMetadata={previewFile} isOpen={isPreviewOpen} onClose={closePreview} />
     </>
   )
 }
 
 export default UploadedDataTable
-
