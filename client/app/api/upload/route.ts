@@ -16,6 +16,11 @@ export async function POST(request: Request) {
     // Parse the form data
     const formData = await request.formData();
     const file = formData.get('file') as File;
+    const isPreprocessed = formData.get('preprocessed') === 'true';
+    
+    // Get preprocessing results if available
+    const preprocessingResults = formData.get('preprocessing_results') ? 
+      JSON.parse(formData.get('preprocessing_results') as string) : null;
     
     if (!file) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 });
@@ -48,6 +53,19 @@ export async function POST(request: Request) {
     // Extract metadata
     const metadata = await extractMetadata(file);
     
+    // Prepare preprocessing info if available
+    const preprocessingInfo = preprocessingResults ? {
+      is_preprocessed: true,
+      preprocessing_date: new Date().toISOString(),
+      columns_cleaned: preprocessingResults.columns_cleaned || [],
+      auto_detected_dates: preprocessingResults.date_columns_detected || [],
+      dropped_columns: preprocessingResults.columns_dropped || [],
+      missing_value_stats: preprocessingResults.missing_value_stats || {}
+    } : {
+      is_preprocessed: isPreprocessed,
+      preprocessing_date: isPreprocessed ? new Date().toISOString() : null
+    };
+    
     // Save metadata to database
     const { data: fileRecord, error: dbError } = await supabase
       .from('files')
@@ -60,7 +78,8 @@ export async function POST(request: Request) {
         column_names: metadata.columns,
         row_count: metadata.rowCount,
         file_preview: metadata.preview,
-        statistics: metadata.statistics
+        statistics: metadata.statistics,
+        preprocessing_info: preprocessingInfo
       })
       .select();
     
@@ -81,7 +100,8 @@ export async function POST(request: Request) {
         filename: file.name,
         size: file.size,
         rowCount: metadata.rowCount,
-        columns: metadata.columns
+        columns: metadata.columns,
+        isPreprocessed: isPreprocessed
       }
     });
     

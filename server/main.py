@@ -1,4 +1,4 @@
-from fastapi import FastAPI, File, UploadFile, HTTPException, BackgroundTasks
+from fastapi import FastAPI, File, UploadFile, HTTPException, BackgroundTasks, Form
 from fastapi.responses import JSONResponse
 from pathlib import Path
 from fastapi.middleware.cors import CORSMiddleware
@@ -15,11 +15,13 @@ from sklearn.base import BaseEstimator, TransformerMixin
 import os
 import time
 import json
+import uuid
 
 app = FastAPI()
 
 origins = [
-    "http://localhost:3000",  # Adjust this to your Next.js app's URL
+    "http://localhost:3000",  # Next.js app URL
+    "http://127.0.0.1:3000",
     "https://your-next-app-domain.com"
 ]
 
@@ -84,10 +86,25 @@ def preprocess_file(file_path, output_path):
         df = pl.read_csv(file_path, null_values=missing_values, ignore_errors=True)
         df = df.to_pandas()
         
+        # Store original columns
+        original_columns = list(df.columns)
+        
         # Clean data
         update_progress(filename, 15, "Cleaning data and removing nulls")
         # Remove white space
         df.replace(r'^\s*$', np.nan, regex=True, inplace=True)
+        
+        # Track missing values statistics
+        missing_value_stats = {}
+        for column in df.columns:
+            missing_count = df[column].isna().sum()
+            missing_percentage = round((missing_count / len(df)) * 100, 2)
+            if missing_count > 0:
+                missing_value_stats[column] = {
+                    "missing_count": int(missing_count),
+                    "missing_percentage": missing_percentage,
+                    "imputation_method": "None"
+                }
         
         # Drop rows with all null values
         df.dropna(how='all', inplace=True)
@@ -105,6 +122,9 @@ def preprocess_file(file_path, output_path):
         nominal_columns = [column for column in df2.columns if df2[column].dtype in ['object', 'category', 'string', 'bool']]
         non_nominal_columns = [column for column in df2.columns if column not in nominal_columns and df[column].dtype != 'datetime64[ns]']
         
+        # Track which columns will be imputed
+        columns_with_imputation = []
+        
         # Create and apply preprocessing pipeline
         update_progress(filename, 35, "Creating preprocessing pipeline")
         nominal_imputer = ModeImputer()
@@ -112,8 +132,8 @@ def preprocess_file(file_path, output_path):
         
         preprocessor = ColumnTransformer(
             transformers=[
-                ('initial_encoding', nominal_imputer, nominal_columns),
-                ('imputing', non_nominal_imputer, non_nominal_columns)
+                ('nominal_imputing', nominal_imputer, nominal_columns),
+                ('non_nominal_imputing', non_nominal_imputer, non_nominal_columns)
             ],
             remainder='passthrough'
         )
@@ -122,6 +142,18 @@ def preprocess_file(file_path, output_path):
         update_progress(filename, 45, "Imputing missing values")
         if nominal_columns and non_nominal_columns:
             df2 = preprocessor.fit_transform(df2)
+            
+            # Update imputation method in missing value stats
+            for column in nominal_columns:
+                if column in missing_value_stats:
+                    missing_value_stats[column]["imputation_method"] = "Mode Imputation"
+                    columns_with_imputation.append(column)
+                    
+            for column in non_nominal_columns:
+                if column in missing_value_stats:
+                    missing_value_stats[column]["imputation_method"] = "KNN Imputation"
+                    columns_with_imputation.append(column)
+            
             df2_imputed = pd.DataFrame(df2, columns=nominal_columns + non_nominal_columns)
             
             # Save the preprocessing pipeline
@@ -169,18 +201,27 @@ def preprocess_file(file_path, output_path):
         
         # Drop columns with only one unique value
         update_progress(filename, 90, "Finalizing data")
+        columns_before_final_drop = list(df2_imputed.columns)
         df2_imputed = df2_imputed.drop(columns=[col for col in df2_imputed.columns if df2_imputed[col].nunique() == 1])
+        dropped_by_unique = list(set(columns_before_final_drop) - set(df2_imputed.columns))
         
         # Save processed file
         df2_imputed.to_csv(output_path, index=False)
         update_progress(filename, 100, "Processing completed successfully")
         
+        # Calculate which columns were dropped
+        final_columns = list(df2_imputed.columns)
+        all_dropped_columns = list(set(original_columns) - set(final_columns))
+        
         result = {
             "success": True,
             "original_shape": df.shape,
             "processed_shape": df2_imputed.shape,
-            "columns_dropped": list(set(df.columns) - set(df2_imputed.columns)),
-            "date_columns_detected": date_containing
+            "columns_dropped": all_dropped_columns,
+            "date_columns_detected": date_containing,
+            "columns_cleaned": columns_with_imputation,
+            "missing_value_stats": missing_value_stats,
+            "dropped_by_unique_value": dropped_by_unique
         }
         
         # Save result details
@@ -218,23 +259,31 @@ async def upload_files(background_tasks: BackgroundTasks, files: list[UploadFile
                 detail=f"File type not supported for {file.filename}. Only CSV or XLSX allowed."
             )
         
+        # Generate a unique filename to prevent collisions
+        unique_id = str(uuid.uuid4())[:8]
+        safe_filename = f"{unique_id}_{file.filename}"
+        
         # Save the file to the local folder
-        file_path = upload_folder / file.filename
+        file_path = upload_folder / safe_filename
         with file_path.open("wb") as f:
             content = await file.read()
             f.write(content)
         
-        saved_files.append(file.filename)
+        saved_files.append({
+            "original_filename": file.filename,
+            "saved_filename": safe_filename
+        })
         
         # Process the file in the background
         if is_csv:
-            output_filename = f"processed_{file.filename}"
+            output_filename = f"processed_{safe_filename}"
             output_path = processed_folder / output_filename
             
             # Initialize progress tracking
-            init_status = update_progress(file.filename, 0, "Queued for processing")
+            init_status = update_progress(safe_filename, 0, "Queued for processing")
             processing_info.append({
-                "filename": file.filename,
+                "filename": safe_filename,
+                "original_filename": file.filename,
                 "processed_filename": output_filename,
                 "status": init_status
             })
@@ -256,6 +305,15 @@ async def get_processed_files():
     files = [f.name for f in processed_folder.glob("*") if f.is_file() and not (f.name.endswith('.joblib') or f.name.endswith('.json'))]
     return {"processed_files": files}
 
+@app.get("/download/{filename}")
+async def download_file(filename: str):
+    """Get a processed file by filename"""
+    file_path = processed_folder / filename
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="File not found")
+    
+    return {"file_url": f"/processed_files/{filename}"}
+
 @app.get("/processing-status/{filename}")
 async def get_processing_status(filename: str):
     """Get the processing status and progress of a file"""
@@ -275,6 +333,31 @@ async def get_processing_status(filename: str):
         return status
     else:
         return {"status": "not_found", "message": f"No processing status found for {filename}"}
+
+@app.post("/custom-preprocess/")
+async def custom_preprocess(
+    file_id: str = Form(...),
+    operations: str = Form(...),
+    user_id: str = Form(...)
+):
+    """Apply custom preprocessing operations to a file"""
+    # This would be implemented to perform specific preprocessing tasks
+    # based on user selections passed in the 'operations' parameter
+    
+    # Parse the operations JSON
+    try:
+        operations_list = json.loads(operations)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Invalid operations format: {str(e)}")
+    
+    # Mock response for demonstration
+    return {
+        "success": True,
+        "file_id": file_id,
+        "operations_applied": operations_list,
+        "message": "Custom preprocessing completed successfully",
+        "result_file": f"custom_processed_{file_id}.csv"
+    }
 
 if __name__ == "__main__":
     import uvicorn

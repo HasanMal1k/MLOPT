@@ -4,12 +4,14 @@ import { useDropzone, type FileRejection } from "react-dropzone";
 import { FilePlus2 } from "lucide-react";
 import UploadedDataTable from "@/components/UploadDataTable";
 import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
 
 export default function DataUpload() {
-    const [files, setFiles] = useState<File[]>([])
-    const [error, setError] = useState<string | null>(null)
-    const [isUploading, setIsUploading] = useState(false)
-    const [debug, setDebug] = useState<string | null>(null)  // For debugging issues
+    const [files, setFiles] = useState<File[]>([]);
+    const [error, setError] = useState<string | null>(null);
+    const [isUploading, setIsUploading] = useState(false);
+    const [processingStatus, setProcessingStatus] = useState<Record<string, any>>({});
+    const [uploadProgress, setUploadProgress] = useState<number>(0);
 
     const uploadData = async () => {
         if (files.length === 0) {
@@ -19,15 +21,56 @@ export default function DataUpload() {
 
         setIsUploading(true);
         setError(null);
-        setDebug(null);
+        setUploadProgress(0);
         
         try {
+            // Step 1: Upload to Python for preprocessing
+            const pythonFormData = new FormData();
+            files.forEach(file => {
+                pythonFormData.append('files', file);
+            });
+            
+            setUploadProgress(10);
+            
+            // Send to Python backend
+            const pythonResponse = await fetch('http://localhost:8000/upload/', {
+                method: 'POST',
+                body: pythonFormData,
+            });
+
+            if (!pythonResponse.ok) {
+                const errorData = await pythonResponse.json();
+                throw new Error(errorData.detail || 'Preprocessing failed');
+            }
+
+            const preprocessingResult = await pythonResponse.json();
+            setUploadProgress(50);
+            
+            // Initialize status tracking for preprocessing
+            const processingInfo = preprocessingResult.processing_info || [];
+            const initialStatus = {};
+            processingInfo.forEach(info => {
+                initialStatus[info.filename] = {
+                    status: info.status.status,
+                    progress: info.status.progress,
+                    message: info.status.message
+                };
+            });
+            setProcessingStatus(initialStatus);
+            
+            // Step 2: Poll processing status
+            const fileNames = processingInfo.map(info => info.filename);
+            if (fileNames.length > 0) {
+                await trackProcessingStatus(fileNames);
+            }
+            
+            // Step 3: Upload preprocessed files to database
+            setUploadProgress(70);
             for (const file of files) {
                 // Create a new FormData for each file
                 const formData = new FormData();
                 formData.append('file', file);
-                
-                setDebug(`Uploading file: ${file.name}`);
+                formData.append('preprocessed', 'true');
                 
                 // Use relative URL for API endpoint
                 const response = await fetch('/api/upload', {
@@ -40,13 +83,11 @@ export default function DataUpload() {
                 if (!response.ok) {
                     throw new Error(result.details || result.error || `Upload failed: ${response.statusText}`);
                 }
-
-                setDebug(`Uploaded ${file.name} successfully!`);
             }
             
+            setUploadProgress(100);
             // All files uploaded successfully
-            setFiles([]);  // Clear files after successful upload
-            setDebug("All files uploaded successfully!");
+            setFiles([]);
             
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : 'Upload failed';
@@ -55,6 +96,52 @@ export default function DataUpload() {
         } finally {
             setIsUploading(false);
         }
+    };
+    
+    // Function to poll processing status
+    const trackProcessingStatus = async (fileNames: string[]) => {
+        let allCompleted = false;
+        let attempts = 0;
+        const maxAttempts = 30; // Timeout after 30 attempts (5 minutes with 10-second interval)
+        
+        while (!allCompleted && attempts < maxAttempts) {
+            attempts++;
+            let completedCount = 0;
+            
+            for (const fileName of fileNames) {
+                try {
+                    const response = await fetch(`http://localhost:8000/processing-status/${fileName}`);
+                    if (response.ok) {
+                        const status = await response.json();
+                        
+                        setProcessingStatus(prev => ({
+                            ...prev,
+                            [fileName]: {
+                                status: status.status,
+                                progress: status.progress,
+                                message: status.message,
+                                results: status.results
+                            }
+                        }));
+                        
+                        if (status.progress === 100 || status.progress === -1) {
+                            completedCount++;
+                        }
+                    }
+                } catch (error) {
+                    console.error(`Error checking status for ${fileName}:`, error);
+                }
+            }
+            
+            if (completedCount === fileNames.length) {
+                allCompleted = true;
+            } else {
+                // Wait 10 seconds before next poll
+                await new Promise(resolve => setTimeout(resolve, 10000));
+            }
+        }
+        
+        return allCompleted;
     };
 
     const onDrop = useCallback((acceptedFiles: File[]) => {
@@ -101,15 +188,41 @@ export default function DataUpload() {
 
             {files.length === 0 && <p className="w-full flex justify-center mt-7 text-gray-400">No files uploaded</p>}
             {files.length > 0 && <UploadedDataTable files={files} setFiles={setFiles} />}
+            
+            {isUploading && (
+                <div className="mt-6">
+                    <p className="text-sm mb-2">Upload Progress</p>
+                    <Progress value={uploadProgress} className="h-2 w-full" />
+                    
+                    {Object.keys(processingStatus).length > 0 && (
+                        <div className="mt-4">
+                            <p className="text-sm mb-2">Preprocessing Status:</p>
+                            {Object.entries(processingStatus).map(([filename, status]) => (
+                                <div key={filename} className="mb-3">
+                                    <div className="flex justify-between text-xs">
+                                        <span>{filename}</span>
+                                        <span>{status.message}</span>
+                                    </div>
+                                    <Progress 
+                                        value={status.progress < 0 ? 100 : status.progress} 
+                                        className={`h-2 w-full ${status.progress < 0 ? 'bg-red-500' : ''}`} 
+                                    />
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )}
+            
             {error && <p className="text-red-500 text-center mt-4">{error}</p>}
-            {debug && <p className="text-blue-500 text-center mt-2 text-sm">{debug}</p>}
+            
             {files.length > 0 && (
                 <div className="w-full flex justify-center mt-20">
                     <Button 
                         onClick={uploadData} 
                         disabled={isUploading}
                     >
-                        {isUploading ? 'Uploading...' : 'Upload Data'}
+                        {isUploading ? 'Processing...' : 'Upload Data'}
                     </Button>
                 </div>
             )}
