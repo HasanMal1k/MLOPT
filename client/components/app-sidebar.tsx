@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/sidebar"
 
 
-import { Upload, Braces, Move3D, FileText } from "lucide-react"
+import { Upload, Braces, Move3D, FileText, Settings2, GitBranch, Shuffle, Database } from "lucide-react"
 
 const uploadAndPreprocessing = [
   {
@@ -21,17 +21,22 @@ const uploadAndPreprocessing = [
   {
     title: 'My Files',
     url: '/dashboard/my-files',
-    icon: FileText // import this from lucide-react
+    icon: FileText
   },
   {
-    title: 'Preprocessing',
-    url : '/dashboard/preprocessing',
+    title: 'Auto Preprocessing',
+    url: '/dashboard/preprocessing',
+    icon: Settings2
+  },
+  {
+    title: 'Custom Preprocessing',
+    url: '/dashboard/custom-preprocessing',
     icon: Braces
   },
   {
-    title: 'Transformation',
-    url: '#',
-    icon: Move3D
+    title: 'Feature Engineering',
+    url: '/dashboard/feature-engineering',
+    icon: GitBranch
   }
 ]
 
@@ -40,7 +45,7 @@ export function AppSidebar() {
     <Sidebar>
       <SidebarContent>
       <SidebarGroup>
-        <SidebarGroupLabel>Upload And Preprocessing</SidebarGroupLabel>
+        <SidebarGroupLabel>Data Management</SidebarGroupLabel>
         <SidebarMenu>
           {uploadAndPreprocessing.map((item)=> (
             <SidebarMenuItem key={item.title}>

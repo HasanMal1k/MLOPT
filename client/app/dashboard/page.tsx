@@ -11,7 +11,7 @@ import {
   CardFooter,
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { FileUp, Database, Settings2, ChevronRight, Eye } from "lucide-react"
+import { FileUp, Database, Settings2, ChevronRight, Eye, Braces } from "lucide-react"
 import type { FileMetadata } from '@/components/FilePreview'
 import Link from 'next/link'
 import { Badge } from "@/components/ui/badge"
@@ -163,9 +163,10 @@ export default function Dashboard() {
           </Card>
           
           {/* Quick Actions */}
+          {/* Quick Actions */}
           <div>
             <h2 className="text-xl font-semibold mb-3">Quick Actions</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                   <CardTitle className="text-sm font-medium">Upload Data</CardTitle>
@@ -185,17 +186,34 @@ export default function Dashboard() {
               
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium">Preprocess Data</CardTitle>
+                  <CardTitle className="text-sm font-medium">Auto Preprocess</CardTitle>
                   <Settings2 className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
                   <p className="text-xs text-muted-foreground">
-                    Clean and transform your data for machine learning
+                    Clean and transform your data automatically
                   </p>
                 </CardContent>
                 <CardFooter>
                   <Button variant="outline" asChild className="w-full">
                     <Link href="/dashboard/preprocessing">Preprocess</Link>
+                  </Button>
+                </CardFooter>
+              </Card>
+              
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium">Custom Preprocessing</CardTitle>
+                  <Braces className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <p className="text-xs text-muted-foreground">
+                    Define custom preprocessing steps for your data
+                  </p>
+                </CardContent>
+                <CardFooter>
+                  <Button variant="outline" asChild className="w-full">
+                    <Link href="/dashboard/custom-preprocessing">Customize</Link>
                   </Button>
                 </CardFooter>
               </Card>

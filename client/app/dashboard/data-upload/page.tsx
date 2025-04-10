@@ -6,6 +6,14 @@ import UploadedDataTable from "@/components/UploadDataTable";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 
+interface ProcessingInfo {
+    filename: string;
+    status: {
+      status: string;
+      progress: number;
+      message: string;
+    };
+  }
 export default function DataUpload() {
     const [files, setFiles] = useState<File[]>([]);
     const [error, setError] = useState<string | null>(null);
@@ -47,19 +55,21 @@ export default function DataUpload() {
             setUploadProgress(50);
             
             // Initialize status tracking for preprocessing
-            const processingInfo = preprocessingResult.processing_info || [];
-            const initialStatus = {};
-            processingInfo.forEach(info => {
-                initialStatus[info.filename] = {
-                    status: info.status.status,
-                    progress: info.status.progress,
-                    message: info.status.message
-                };
+            // For the first error at line 52
+            const processingInfo = (preprocessingResult.processing_info || []) as ProcessingInfo[];
+            const initialStatus: Record<string, any> = {};
+            processingInfo.forEach((info: ProcessingInfo) => {
+            initialStatus[info.filename] = {
+                status: info.status.status,
+                progress: info.status.progress,
+                message: info.status.message
+            };
             });
+
             setProcessingStatus(initialStatus);
             
             // Step 2: Poll processing status
-            const fileNames = processingInfo.map(info => info.filename);
+            const fileNames = processingInfo.map((info: ProcessingInfo) => info.filename);
             if (fileNames.length > 0) {
                 await trackProcessingStatus(fileNames);
             }

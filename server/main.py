@@ -17,7 +17,13 @@ import time
 import json
 import uuid
 
+# Import custom preprocessing module
+from custom_preprocessing import router as custom_preprocessing_router
+
 app = FastAPI()
+
+# Register custom preprocessing router
+app.include_router(custom_preprocessing_router)
 
 origins = [
     "http://localhost:3000",  # Next.js app URL
@@ -341,10 +347,7 @@ async def custom_preprocess(
     user_id: str = Form(...)
 ):
     """Apply custom preprocessing operations to a file"""
-    # This would be implemented to perform specific preprocessing tasks
-    # based on user selections passed in the 'operations' parameter
-    
-    # Parse the operations JSON
+    # This is maintained for compatibility, but new code should use the /custom-preprocessing/ routes
     try:
         operations_list = json.loads(operations)
     except Exception as e:

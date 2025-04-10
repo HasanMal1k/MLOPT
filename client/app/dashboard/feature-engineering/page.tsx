@@ -1,10 +1,11 @@
 // app/dashboard/feature-engineering/page.tsx
 import { Suspense } from 'react'
-import CustomPreprocessing from './preprocessing'
+import FeatureEngineering from './FeatureEngineering'
+
 export default function Page() {
   return (
     <Suspense fallback={<div>Loading feature engineering...</div>}>
-      <CustomPreprocessing />
+      <FeatureEngineering />
     </Suspense>
   )
 }
