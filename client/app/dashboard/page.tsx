@@ -11,7 +11,7 @@ import {
   CardFooter,
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { FileUp, Database, Settings2, ChevronRight, Eye, Braces } from "lucide-react"
+import { FileUp, Database, Settings2, ChevronRight, Eye, Braces, GitBranch } from "lucide-react"
 import type { FileMetadata } from '@/components/FilePreview'
 import Link from 'next/link'
 import { Badge } from "@/components/ui/badge"
@@ -163,7 +163,6 @@ export default function Dashboard() {
           </Card>
           
           {/* Quick Actions */}
-          {/* Quick Actions */}
           <div>
             <h2 className="text-xl font-semibold mb-3">Quick Actions</h2>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -231,6 +230,23 @@ export default function Dashboard() {
                 <CardFooter>
                   <Button variant="outline" asChild className="w-full">
                     <Link href="/dashboard/my-files">Browse</Link>
+                  </Button>
+                </CardFooter>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium">Auto Transformations</CardTitle>
+                  <GitBranch className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <p className="text-xs text-muted-foreground">
+                    Generate features automatically from your data
+                  </p>
+                </CardContent>
+                <CardFooter>
+                  <Button variant="outline" asChild className="w-full">
+                    <Link href="/dashboard/transformations">Transform</Link>
                   </Button>
                 </CardFooter>
               </Card>

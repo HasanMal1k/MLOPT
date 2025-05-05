@@ -5,6 +5,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { X } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
+import TransformationsView from "./TransformationsView"
+
 
 interface FilePreviewProps {
   fileMetadata: FileMetadata | null;
@@ -31,6 +33,8 @@ export interface FileMetadata {
     auto_detected_dates?: string[];
     dropped_columns?: string[];
     missing_value_stats?: Record<string, any>;
+    engineered_features?: string[];
+    transformation_details?: Record<string, any>;
   };
 }
 
@@ -61,6 +65,17 @@ export default function FilePreview({ fileMetadata, isOpen, onClose }: FilePrevi
         </DialogHeader>
 
         <Tabs defaultValue="data" className="w-full">
+        <TabsList>
+            <TabsTrigger value="data">Data Preview</TabsTrigger>
+            <TabsTrigger value="stats">Statistics</TabsTrigger>
+            {isPreprocessed && (
+              <TabsTrigger value="preprocessing">Preprocessing Info</TabsTrigger>
+            )}
+            {fileMetadata.preprocessing_info?.engineered_features && 
+            fileMetadata.preprocessing_info.engineered_features.length > 0 && (
+              <TabsTrigger value="transformations">Transformations</TabsTrigger>
+            )}
+          </TabsList>
           <TabsList>
             <TabsTrigger value="data">Data Preview</TabsTrigger>
             <TabsTrigger value="stats">Statistics</TabsTrigger>
@@ -197,6 +212,15 @@ export default function FilePreview({ fileMetadata, isOpen, onClose }: FilePrevi
                     </Table>
                   </div>
                 )}
+                {fileMetadata.preprocessing_info?.engineered_features && (
+                <TabsContent value="transformations">
+                  <TransformationsView 
+                    engineeredFeatures={fileMetadata.preprocessing_info.engineered_features}
+                    transformationDetails={fileMetadata.preprocessing_info.transformation_details}
+                  />
+                </TabsContent>
+                )}
+
               </div>
             </TabsContent>
           )}

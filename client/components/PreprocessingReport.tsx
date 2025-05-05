@@ -29,7 +29,8 @@ import {
   AlertTriangle,
   ChevronDown,
   ChevronUp,
-  FileDown
+  FileDown,
+  GitBranch
 } from "lucide-react"
 import { Progress } from "@/components/ui/progress"
 import {
@@ -53,6 +54,8 @@ interface PreprocessingReportData {
   processed_shape?: [number, number];
   missing_value_stats?: Record<string, MissingValueStat>;
   dropped_by_unique_value?: string[];
+  engineered_features?: string[];
+  transformation_details?: Record<string, any>;
 }
 
 interface PreprocessingReportProps {
@@ -296,6 +299,30 @@ export default function PreprocessingReport({ report, onDownload }: Preprocessin
                       </AccordionContent>
                     </AccordionItem>
                   )}
+
+                  {report.engineered_features && report.engineered_features.length > 0 && (
+                    <AccordionItem value="engineered">
+                      <AccordionTrigger className="px-4">
+                        <div className="flex items-center gap-2">
+                          <GitBranch className="h-4 w-4 text-indigo-500" />
+                          <span>Engineered Features ({report.engineered_features.length})</span>
+                        </div>
+                      </AccordionTrigger>
+                      <AccordionContent className="px-4 pb-4">
+                        <ScrollArea className="h-[200px]">
+                          <div className="space-y-1">
+                            {report.engineered_features.map((column: string) => (
+                              <div key={column} className="py-1 px-2 rounded-md bg-muted/50">
+                                {column}
+                              </div>
+                            ))}
+                          </div>
+                        </ScrollArea>
+                      </AccordionContent>
+                    </AccordionItem>
+                  )}
+
+
                 </Accordion>
               </div>
             </div>

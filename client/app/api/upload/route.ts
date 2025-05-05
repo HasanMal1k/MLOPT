@@ -60,7 +60,9 @@ export async function POST(request: Request) {
       columns_cleaned: preprocessingResults.columns_cleaned || [],
       auto_detected_dates: preprocessingResults.date_columns_detected || [],
       dropped_columns: preprocessingResults.columns_dropped || [],
-      missing_value_stats: preprocessingResults.missing_value_stats || {}
+      missing_value_stats: preprocessingResults.missing_value_stats || {},
+      engineered_features: preprocessingResults.engineered_features || [],
+      transformation_details: preprocessingResults.transformation_details || {}
     } : {
       is_preprocessed: isPreprocessed,
       preprocessing_date: isPreprocessed ? new Date().toISOString() : null

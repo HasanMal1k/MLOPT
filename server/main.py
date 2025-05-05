@@ -19,11 +19,16 @@ import uuid
 
 # Import custom preprocessing module
 from custom_preprocessing import router as custom_preprocessing_router
+from transformations import router as transformations_router
+
+
 
 app = FastAPI()
 
 # Register custom preprocessing router
 app.include_router(custom_preprocessing_router)
+app.include_router(transformations_router)
+
 
 origins = [
     "http://localhost:3000",  # Next.js app URL
@@ -82,6 +87,8 @@ def preprocess_file(file_path, output_path):
     """
     Preprocess a CSV file and save the cleaned version with progress tracking.
     """
+    result = {}    
+    
     filename = file_path.name
     try:
         # Initialize progress
@@ -204,6 +211,38 @@ def preprocess_file(file_path, output_path):
         update_progress(filename, 80, "Converting date columns")
         for column in date_containing:
             df2_imputed[column] = pd.to_datetime(df2_imputed[column], errors='ignore')
+            
+        # In preprocess_file function, after handling date columns and before saving
+        update_progress(filename, 85, "Generating engineered features")
+        try:
+            # Call the engineer_features function from transformations.py
+            from transformations import engineer_features
+            df2_imputed, transformation_results = engineer_features(df2_imputed)
+            
+            # Track which features were engineered
+            engineered_features = []
+            for feature_type in transformation_results:
+                if feature_type == "datetime_features":
+                    for item in transformation_results[feature_type]:
+                        engineered_features.extend(item["derived_features"])
+                elif feature_type == "categorical_encodings":
+                    for item in transformation_results[feature_type]:
+                        engineered_features.extend(item["derived_features"])
+                elif feature_type == "numeric_transformations":
+                    for item in transformation_results[feature_type]:
+                        engineered_features.extend(item["derived_features"])
+                elif feature_type == "binned_features":
+                    for item in transformation_results[feature_type]:
+                        engineered_features.append(item["derived_feature"])
+                        
+            # Add to result
+            result["engineered_features"] = engineered_features
+            result["transformation_details"] = transformation_results
+        except Exception as e:
+            print(f"Feature engineering error: {e}")
+            # Continue with processing even if feature engineering fails
+            result["engineered_features"] = []
+            result["transformation_details"] = {}
         
         # Drop columns with only one unique value
         update_progress(filename, 90, "Finalizing data")

@@ -1,0 +1,417 @@
+{
+  "column_changes": {},
+  "row_count": {
+    "before": 1460,
+    "after": 1460
+  },
+  "data_types": {
+    "Id": {
+      "original": "int64",
+      "converted_to": "datetime"
+    },
+    "MSSubClass": {
+      "original": "int64",
+      "converted_to": "integer"
+    },
+    "MSZoning": {
+      "original": "object",
+      "converted_to": "integer"
+    },
+    "LotFrontage": {
+      "original": "float64",
+      "converted_to": "float"
+    },
+    "LotArea": {
+      "original": "int64",
+      "converted_to": "integer"
+    },
+    "Street": {
+      "original": "object",
+      "converted_to": "string"
+    },
+    "Alley": {
+      "original": "object",
+      "converted_to": "string"
+    },
+    "LotShape": {
+      "original": "object",
+      "converted_to": "string"
+    },
+    "LandContour": {
+      "original": "object",
+      "converted_to": "string"
+    },
+    "Utilities": {
+      "original": "object",
+      "converted_to": "string"
+    },
+    "LotConfig": {
+      "original": "object",
+      "converted_to": "string"
+    },
+    "LandSlope": {
+      "original": "object",
+      "converted_to": "string"
+    },
+    "Neighborhood": {
+      "original": "object",
+      "converted_to": "string"
+    },
+    "Condition1": {
+      "original": "object",
+      "converted_to": "string"
+    },
+    "Condition2": {
+      "original": "object",
+      "converted_to": "string"
+    },
+    "BldgType": {
+      "original": "object",
+      "converted_to": "string"
+    },
+    "HouseStyle": {
+      "original": "object",
+      "converted_to": "string"
+    },
+    "OverallQual": {
+      "original": "int64",
+      "converted_to": "integer"
+    },
+    "OverallCond": {
+      "original": "int64",
+      "converted_to": "integer"
+    },
+    "YearBuilt": {
+      "original": "int64",
+      "converted_to": "integer"
+    },
+    "YearRemodAdd": {
+      "original": "int64",
+      "converted_to": "integer"
+    },
+    "RoofStyle": {
+      "original": "object",
+      "converted_to": "string"
+    },
+    "RoofMatl": {
+      "original": "object",
+      "converted_to": "string"
+    },
+    "Exterior1st": {
+      "original": "object",
+      "converted_to": "string"
+    },
+    "Exterior2nd": {
+      "original": "object",
+      "converted_to": "string"
+    },
+    "MasVnrType": {
+      "original": "object",
+      "converted_to": "string"
+    },
+    "MasVnrArea": {
+      "original": "float64",
+      "converted_to": "float"
+    },
+    "ExterQual": {
+      "original": "object",
+      "converted_to": "string"
+    },
+    "ExterCond": {
+      "original": "object",
+      "converted_to": "string"
+    },
+    "Foundation": {
+      "original": "object",
+      "converted_to": "string"
+    },
+    "BsmtQual": {
+      "original": "object",
+      "converted_to": "string"
+    },
+    "BsmtCond": {
+      "original": "object",
+      "converted_to": "string"
+    },
+    "BsmtExposure": {
+      "original": "object",
+      "converted_to": "string"
+    },
+    "BsmtFinType1": {
+      "original": "object",
+      "converted_to": "string"
+    },
+    "BsmtFinSF1": {
+      "original": "int64",
+      "converted_to": "integer"
+    },
+    "BsmtFinType2": {
+      "original": "object",
+      "converted_to": "string"
+    },
+    "BsmtFinSF2": {
+      "original": "int64",
+      "converted_to": "integer"
+    },
+    "BsmtUnfSF": {
+      "original": "int64",
+      "converted_to": "integer"
+    },
+    "TotalBsmtSF": {
+      "original": "int64",
+      "converted_to": "integer"
+    },
+    "Heating": {
+      "original": "object",
+      "converted_to": "string"
+    },
+    "HeatingQC": {
+      "original": "object",
+      "converted_to": "string"
+    },
+    "CentralAir": {
+      "original": "object",
+      "converted_to": "string"
+    },
+    "Electrical": {
+      "original": "object",
+      "converted_to": "string"
+    },
+    "1stFlrSF": {
+      "original": "int64",
+      "converted_to": "integer"
+    },
+    "2ndFlrSF": {
+      "original": "int64",
+      "converted_to": "integer"
+    },
+    "LowQualFinSF": {
+      "original": "int64",
+      "converted_to": "integer"
+    },
+    "GrLivArea": {
+      "original": "int64",
+      "converted_to": "integer"
+    },
+    "BsmtFullBath": {
+      "original": "int64",
+      "converted_to": "integer"
+    },
+    "BsmtHalfBath": {
+      "original": "int64",
+      "converted_to": "integer"
+    },
+    "FullBath": {
+      "original": "int64",
+      "converted_to": "integer"
+    },
+    "HalfBath": {
+      "original": "int64",
+      "converted_to": "integer"
+    },
+    "BedroomAbvGr": {
+      "original": "int64",
+      "converted_to": "integer"
+    },
+    "KitchenAbvGr": {
+      "original": "int64",
+      "converted_to": "integer"
+    },
+    "KitchenQual": {
+      "original": "object",
+      "converted_to": "string"
+    },
+    "TotRmsAbvGrd": {
+      "original": "int64",
+      "converted_to": "integer"
+    },
+    "Functional": {
+      "original": "object",
+      "converted_to": "string"
+    },
+    "Fireplaces": {
+      "original": "int64",
+      "converted_to": "integer"
+    },
+    "FireplaceQu": {
+      "original": "object",
+      "converted_to": "string"
+    },
+    "GarageType": {
+      "original": "object",
+      "converted_to": "string"
+    },
+    "GarageYrBlt": {
+      "original": "float64",
+      "converted_to": "float"
+    },
+    "GarageFinish": {
+      "original": "object",
+      "converted_to": "string"
+    },
+    "GarageCars": {
+      "original": "int64",
+      "converted_to": "integer"
+    },
+    "GarageArea": {
+      "original": "int64",
+      "converted_to": "integer"
+    },
+    "GarageQual": {
+      "original": "object",
+      "converted_to": "string"
+    },
+    "GarageCond": {
+      "original": "object",
+      "converted_to": "string"
+    },
+    "PavedDrive": {
+      "original": "object",
+      "converted_to": "string"
+    },
+    "WoodDeckSF": {
+      "original": "int64",
+      "converted_to": "integer"
+    },
+    "OpenPorchSF": {
+      "original": "int64",
+      "converted_to": "integer"
+    },
+    "EnclosedPorch": {
+      "original": "int64",
+      "converted_to": "integer"
+    },
+    "3SsnPorch": {
+      "original": "int64",
+      "converted_to": "integer"
+    },
+    "ScreenPorch": {
+      "original": "int64",
+      "converted_to": "integer"
+    },
+    "PoolArea": {
+      "original": "int64",
+      "converted_to": "integer"
+    },
+    "PoolQC": {
+      "original": "object",
+      "converted_to": "string"
+    },
+    "Fence": {
+      "original": "object",
+      "converted_to": "string"
+    },
+    "MiscFeature": {
+      "original": "object",
+      "converted_to": "string"
+    },
+    "MiscVal": {
+      "original": "int64",
+      "converted_to": "integer"
+    },
+    "MoSold": {
+      "original": "int64",
+      "converted_to": "integer"
+    },
+    "YrSold": {
+      "original": "int64",
+      "converted_to": "integer"
+    },
+    "SaleType": {
+      "original": "object",
+      "converted_to": "string"
+    },
+    "SaleCondition": {
+      "original": "object",
+      "converted_to": "string"
+    },
+    "SalePrice": {
+      "original": "int64",
+      "converted_to": "integer"
+    }
+  },
+  "missing_values": {},
+  "transformations_applied": [
+    "Converted Id to datetime",
+    "Converted MSSubClass to integer",
+    "Converted MSZoning to integer",
+    "Converted LotFrontage to float",
+    "Converted LotArea to integer",
+    "Converted Street to string",
+    "Converted Alley to string",
+    "Converted LotShape to string",
+    "Converted LandContour to string",
+    "Converted Utilities to string",
+    "Converted LotConfig to string",
+    "Converted LandSlope to string",
+    "Converted Neighborhood to string",
+    "Converted Condition1 to string",
+    "Converted Condition2 to string",
+    "Converted BldgType to string",
+    "Converted HouseStyle to string",
+    "Converted OverallQual to integer",
+    "Converted OverallCond to integer",
+    "Converted YearBuilt to integer",
+    "Converted YearRemodAdd to integer",
+    "Converted RoofStyle to string",
+    "Converted RoofMatl to string",
+    "Converted Exterior1st to string",
+    "Converted Exterior2nd to string",
+    "Converted MasVnrType to string",
+    "Converted MasVnrArea to float",
+    "Converted ExterQual to string",
+    "Converted ExterCond to string",
+    "Converted Foundation to string",
+    "Converted BsmtQual to string",
+    "Converted BsmtCond to string",
+    "Converted BsmtExposure to string",
+    "Converted BsmtFinType1 to string",
+    "Converted BsmtFinSF1 to integer",
+    "Converted BsmtFinType2 to string",
+    "Converted BsmtFinSF2 to integer",
+    "Converted BsmtUnfSF to integer",
+    "Converted TotalBsmtSF to integer",
+    "Converted Heating to string",
+    "Converted HeatingQC to string",
+    "Converted CentralAir to string",
+    "Converted Electrical to string",
+    "Converted 1stFlrSF to integer",
+    "Converted 2ndFlrSF to integer",
+    "Converted LowQualFinSF to integer",
+    "Converted GrLivArea to integer",
+    "Converted BsmtFullBath to integer",
+    "Converted BsmtHalfBath to integer",
+    "Converted FullBath to integer",
+    "Converted HalfBath to integer",
+    "Converted BedroomAbvGr to integer",
+    "Converted KitchenAbvGr to integer",
+    "Converted KitchenQual to string",
+    "Converted TotRmsAbvGrd to integer",
+    "Converted Functional to string",
+    "Converted Fireplaces to integer",
+    "Converted FireplaceQu to string",
+    "Converted GarageType to string",
+    "Converted GarageYrBlt to float",
+    "Converted GarageFinish to string",
+    "Converted GarageCars to integer",
+    "Converted GarageArea to integer",
+    "Converted GarageQual to string",
+    "Converted GarageCond to string",
+    "Converted PavedDrive to string",
+    "Converted WoodDeckSF to integer",
+    "Converted OpenPorchSF to integer",
+    "Converted EnclosedPorch to integer",
+    "Converted 3SsnPorch to integer",
+    "Converted ScreenPorch to integer",
+    "Converted PoolArea to integer",
+    "Converted PoolQC to string",
+    "Converted Fence to string",
+    "Converted MiscFeature to string",
+    "Converted MiscVal to integer",
+    "Converted MoSold to integer",
+    "Converted YrSold to integer",
+    "Converted SaleType to string",
+    "Converted SaleCondition to string",
+    "Converted SalePrice to integer"
+  ]
+}

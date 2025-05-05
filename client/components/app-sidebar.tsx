@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/sidebar"
 
 
-import { Upload, Braces, Move3D, FileText, Settings2, GitBranch, Shuffle, Database } from "lucide-react"
+import { Upload, Braces, Move3D, FileText, Settings2, GitBranch, Shuffle, Database, RefreshCw } from "lucide-react"
 
 const uploadAndPreprocessing = [
   {
@@ -27,6 +27,11 @@ const uploadAndPreprocessing = [
     title: 'Auto Preprocessing',
     url: '/dashboard/preprocessing',
     icon: Settings2
+  },
+  {
+    title: 'Feature Transformations',
+    url: '/dashboard/transformations',
+    icon: RefreshCw
   },
   {
     title: 'Custom Preprocessing',

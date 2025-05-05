@@ -73,6 +73,26 @@ export default function DataUpload() {
             if (fileNames.length > 0) {
                 await trackProcessingStatus(fileNames);
             }
+
+            setUploadProgress(60);
+            if (fileNames.length > 0 && Object.values(processingStatus).every(status => status.progress === 100)) {
+                setUploadProgress(70);
+                
+                try {
+                  // Get preprocessing results to add engineered features to the metadata
+                  for (const fileName of fileNames) {
+                    const statusInfo = processingStatus[fileName];
+                    if (statusInfo.results && statusInfo.results.engineered_features) {
+                      // These will be included in the final upload
+                      console.log(`${fileName} has ${statusInfo.results.engineered_features.length} engineered features`);
+                    }
+                  }
+                  
+                  setUploadProgress(80);
+                } catch (err) {
+                  console.error('Error processing transformations:', err);
+                }
+              }
             
             // Step 3: Upload preprocessed files to database
             setUploadProgress(70);
