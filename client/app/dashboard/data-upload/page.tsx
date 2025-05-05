@@ -55,7 +55,6 @@ export default function DataUpload() {
             setUploadProgress(50);
             
             // Initialize status tracking for preprocessing
-            // For the first error at line 52
             const processingInfo = (preprocessingResult.processing_info || []) as ProcessingInfo[];
             const initialStatus: Record<string, any> = {};
             processingInfo.forEach((info: ProcessingInfo) => {
@@ -82,8 +81,8 @@ export default function DataUpload() {
                   // Get preprocessing results to add engineered features to the metadata
                   for (const fileName of fileNames) {
                     const statusInfo = processingStatus[fileName];
-                    if (statusInfo.results && statusInfo.results.engineered_features) {
-                      // These will be included in the final upload
+                    // FIX: Check if statusInfo and results exist before accessing
+                    if (statusInfo && statusInfo.results && statusInfo.results.engineered_features) {
                       console.log(`${fileName} has ${statusInfo.results.engineered_features.length} engineered features`);
                     }
                   }

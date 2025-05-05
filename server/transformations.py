@@ -75,7 +75,14 @@ async def auto_transform_file(file: UploadFile = File(...)):
 def engineer_features(df):
     """
     Automatically engineer features based on data types and patterns
+    (Fixed version to eliminate warnings and improve performance)
     """
+    import warnings
+    from pandas.errors import PerformanceWarning
+    
+    # Suppress only specific warnings we know are unavoidable
+    warnings.filterwarnings('ignore', category=PerformanceWarning)
+    
     transformation_results = {
         "datetime_features": [],
         "categorical_encodings": [],
@@ -92,8 +99,8 @@ def engineer_features(df):
     
     for col in df.select_dtypes(include=['object']).columns:
         try:
-            # Try to convert with infer_datetime_format and handle warnings
-            temp_series = pd.to_datetime(df[col], errors='coerce', infer_datetime_format=True)
+            # FIX: Remove infer_datetime_format parameter
+            temp_series = pd.to_datetime(df[col], errors='coerce')
             
             # If more than 50% of values were converted successfully, consider it a date column
             if temp_series.notna().sum() > 0.5 * len(df):
@@ -110,29 +117,37 @@ def engineer_features(df):
     existing_date_columns = df.select_dtypes(include=['datetime64']).columns
     date_columns.extend(existing_date_columns)
     
-    # Now process datetime columns using efficient approach to avoid fragmentation
-    for col in date_columns:
-        # Create new feature names
-        date_features = {
-            f'{col}_year': df_transformed[col].dt.year,
-            f'{col}_month': df_transformed[col].dt.month,
-            f'{col}_day': df_transformed[col].dt.day,
-            f'{col}_dayofweek': df_transformed[col].dt.dayofweek,
-            f'{col}_quarter': df_transformed[col].dt.quarter
-        }
+    # FIX: Process datetime columns efficiently to avoid fragmentation
+    if date_columns:
+        # Collect all new date features at once
+        all_date_features = {}
+        for col in date_columns:
+            # Create new feature names and values
+            date_features = {
+                f'{col}_year': df_transformed[col].dt.year,
+                f'{col}_month': df_transformed[col].dt.month,
+                f'{col}_day': df_transformed[col].dt.day,
+                f'{col}_dayofweek': df_transformed[col].dt.dayofweek,
+                f'{col}_quarter': df_transformed[col].dt.quarter
+            }
+            
+            # Collect all features
+            all_date_features.update(date_features)
+            
+            # Track transformations
+            transformation_results["datetime_features"].append({
+                "source_column": col,
+                "derived_features": list(date_features.keys())
+            })
         
-        # Add all at once to avoid fragmentation
-        for feature_name, feature_values in date_features.items():
-            df_transformed[feature_name] = feature_values
-        
-        # Track transformations
-        transformation_results["datetime_features"].append({
-            "source_column": col,
-            "derived_features": list(date_features.keys())
-        })
+        # FIX: Add all date features at once using assign()
+        df_transformed = df_transformed.assign(**all_date_features)
     
     # 2. Handle categorical features (auto one-hot encode)
-    cat_columns = df.select_dtypes(include=['object', 'category']).columns
+    # FIX: Ensure we're not processing date columns again
+    remaining_cat_columns = df.select_dtypes(include=['object', 'category']).columns
+    cat_columns = [col for col in remaining_cat_columns if col not in date_columns]
+    
     for col in cat_columns:
         # Only one-hot encode if cardinality is reasonable
         if 1 < df[col].nunique() < 10:
@@ -149,8 +164,10 @@ def engineer_features(df):
                 "cardinality": int(df[col].nunique())
             })
     
-    # 3. Handle numeric features (log, sqrt, etc.)
+    # 3. FIX: Handle numeric features efficiently to avoid fragmentation
     num_columns = df.select_dtypes(include=['number']).columns
+    all_numeric_features = {}  # Collect all numeric transformations
+    
     for col in num_columns:
         derived_features = []
         
@@ -184,9 +201,8 @@ def engineer_features(df):
             numeric_transformations[f'{col}_reciprocal'] = 1 / df[col].replace([np.inf, -np.inf, 0], np.nan)
             derived_features.append(f'{col}_reciprocal')
         
-        # Add all numeric transformations at once to avoid fragmentation
-        for feature_name, feature_values in numeric_transformations.items():
-            df_transformed[feature_name] = feature_values
+        # FIX: Collect all transformations instead of adding one by one
+        all_numeric_features.update(numeric_transformations)
         
         # Track transformations if any were applied
         if derived_features:
@@ -196,7 +212,12 @@ def engineer_features(df):
                 "skew": float(df[col].skew())
             })
     
-    # 4. Create binned features for continuous variables
+    # FIX: Add all numeric features at once using assign()
+    if all_numeric_features:
+        df_transformed = df_transformed.assign(**all_numeric_features)
+    
+    # 4. FIX: Create binned features efficiently
+    binned_features = {}
     for col in num_columns:
         # Skip if too few unique values
         if df[col].nunique() < 10:
@@ -206,7 +227,7 @@ def engineer_features(df):
         try:
             binned_feature = pd.qcut(df[col], q=4, labels=False, duplicates='drop')
             bin_col_name = f'{col}_binned'
-            df_transformed[bin_col_name] = binned_feature
+            binned_features[bin_col_name] = binned_feature
             
             # Track transformation
             transformation_results["binned_features"].append({
@@ -219,10 +240,146 @@ def engineer_features(df):
             # Skip if binning fails
             pass
     
-    # Create a new clean dataframe to avoid fragmentation warnings
-    df_result = df_transformed.copy()
+    # FIX: Add all binned features at once
+    if binned_features:
+        df_transformed = df_transformed.assign(**binned_features)
     
-    return df_result, transformation_results
+    # FIX: No need for additional copy at the end - df_transformed is already clean
+    return df_transformed, transformation_results
+
+# Alternative more efficient implementation
+def engineer_features_optimized(df):
+    """
+    More optimized version of feature engineering with minimal dataframe operations
+    """
+    import warnings
+    from pandas.errors import PerformanceWarning
+    warnings.filterwarnings('ignore', category=PerformanceWarning)
+    
+    transformation_results = {
+        "datetime_features": [],
+        "categorical_encodings": [],
+        "numeric_transformations": [],
+        "binned_features": []
+    }
+    
+    # Start with a copy
+    result_df = df.copy()
+    
+    # Collect all new features in batches
+    new_features = {}
+    
+    # 1. Datetime processing batch
+    for col in df.select_dtypes(include=['object']).columns:
+        try:
+            temp_series = pd.to_datetime(df[col], errors='coerce')
+            if temp_series.notna().sum() > 0.5 * len(df):
+                new_features[col] = temp_series  # Convert column
+                
+                # Add date components
+                new_features.update({
+                    f'{col}_year': temp_series.dt.year,
+                    f'{col}_month': temp_series.dt.month,
+                    f'{col}_day': temp_series.dt.day,
+                    f'{col}_dayofweek': temp_series.dt.dayofweek,
+                    f'{col}_quarter': temp_series.dt.quarter
+                })
+                
+                transformation_results["datetime_features"].append({
+                    "source_column": col,
+                    "derived_features": [f'{col}_year', f'{col}_month', f'{col}_day', 
+                                       f'{col}_dayofweek', f'{col}_quarter']
+                })
+        except:
+            pass
+    
+    # Process existing datetime columns
+    for col in df.select_dtypes(include=['datetime64']).columns:
+        new_features.update({
+            f'{col}_year': df[col].dt.year,
+            f'{col}_month': df[col].dt.month,
+            f'{col}_day': df[col].dt.day,
+            f'{col}_dayofweek': df[col].dt.dayofweek,
+            f'{col}_quarter': df[col].dt.quarter
+        })
+        
+        transformation_results["datetime_features"].append({
+            "source_column": col,
+            "derived_features": [f'{col}_year', f'{col}_month', f'{col}_day', 
+                               f'{col}_dayofweek', f'{col}_quarter']
+        })
+    
+    # 2. Categorical encoding batch
+    already_converted = set(col for col in new_features.keys() if col in df.columns)
+    cat_columns = [col for col in df.select_dtypes(include=['object', 'category']).columns 
+                   if col not in already_converted]
+    
+    for col in cat_columns:
+        if 1 < df[col].nunique() < 10:
+            dummies = pd.get_dummies(df[col], prefix=col, drop_first=True)
+            new_features.update(dummies.to_dict(orient='list'))
+            
+            transformation_results["categorical_encodings"].append({
+                "source_column": col,
+                "encoding_type": "one_hot",
+                "derived_features": dummies.columns.tolist(),
+                "cardinality": int(df[col].nunique())
+            })
+    
+    # 3. Numeric transformations batch
+    for col in df.select_dtypes(include=['number']).columns:
+        derived_features = []
+        
+        if (df[col] > 0).sum() < 0.5 * len(df):
+            continue
+            
+        positive_values = df[col][df[col] > 0]
+        
+        # All transformations in one batch
+        if len(positive_values) > 0:
+            if abs(positive_values.skew()) > 1:
+                new_features[f'{col}_log'] = np.log1p(df[col].clip(lower=0))
+                derived_features.append(f'{col}_log')
+            
+            new_features[f'{col}_sqrt'] = np.sqrt(df[col].clip(lower=0))
+            derived_features.append(f'{col}_sqrt')
+            
+            new_features[f'{col}_reciprocal'] = 1 / df[col].replace([np.inf, -np.inf, 0], np.nan)
+            derived_features.append(f'{col}_reciprocal')
+        
+        if abs(df[col].skew()) < -0.5:
+            new_features[f'{col}_squared'] = df[col] ** 2
+            derived_features.append(f'{col}_squared')
+        
+        if derived_features:
+            transformation_results["numeric_transformations"].append({
+                "source_column": col,
+                "derived_features": derived_features,
+                "skew": float(df[col].skew())
+            })
+    
+    # 4. Binning batch
+    for col in df.select_dtypes(include=['number']).columns:
+        if df[col].nunique() >= 10:
+            try:
+                binned_feature = pd.qcut(df[col], q=4, labels=False, duplicates='drop')
+                bin_col_name = f'{col}_binned'
+                new_features[bin_col_name] = binned_feature
+                
+                transformation_results["binned_features"].append({
+                    "source_column": col,
+                    "derived_feature": bin_col_name,
+                    "bins": 4,
+                    "method": "equal_frequency"
+                })
+            except:
+                pass
+    
+    # Apply all transformations at once
+    result_df = result_df.assign(**new_features)
+    
+    return result_df, transformation_results
+
 
 @router.post("/analyze-columns/")
 async def analyze_columns(file: UploadFile = File(...)):

@@ -16,3 +16,6 @@
 # Module 5:
     Preprocessing issue
     Transformation Out    
+
+
+Landing page -> login (include credit card information) -> dashboard/ 

@@ -16,6 +16,8 @@ import os
 import time
 import json
 import uuid
+import warnings
+from pandas.errors import PerformanceWarning
 
 # Import custom preprocessing module
 from custom_preprocessing import router as custom_preprocessing_router
@@ -86,18 +88,28 @@ def update_progress(filename, progress, message=""):
 def preprocess_file(file_path, output_path):
     """
     Preprocess a CSV file and save the cleaned version with progress tracking.
+    Fixed version to eliminate warnings and improve performance.
     """
-    result = {}    
     
+    
+    # Suppress specific warnings
+    warnings.filterwarnings('ignore', category=PerformanceWarning)
+    
+    result = {}
     filename = file_path.name
+    
     try:
         # Initialize progress
         update_progress(filename, 0, "Starting preprocessing")
         
         # Read the CSV file
         update_progress(filename, 5, "Reading CSV file")
-        df = pl.read_csv(file_path, null_values=missing_values, ignore_errors=True)
-        df = df.to_pandas()
+        try:
+            df = pl.read_csv(file_path, null_values=missing_values, ignore_errors=True)
+            df = df.to_pandas()
+        except Exception as e:
+            # Fallback to pandas directly
+            df = pd.read_csv(file_path, na_values=missing_values)
         
         # Store original columns
         original_columns = list(df.columns)
@@ -179,15 +191,18 @@ def preprocess_file(file_path, output_path):
         # Process datetime columns
         update_progress(filename, 70, "Processing datetime columns")
         date_patterns = [
-            r"\b\d{4}-\d{2}-\d{2}\b",
-            r"\b\d{2}/\d{2}/\d{4}\b",
-            r"\b\d{2}-\d{2}-\d{4}\b",
-            r"\b\d{2}\.\d{2}\.\d{4}\b",
-            r"\b\d{2}\.\d{2}\.\d{2}\b",
-            r"\b\d{1,2}-[A-Za-z]{3}-\d{4}\b",
-            r"\b[A-Za-z]+\s\d{1,2},\s\d{4}\b",
-            r"\b\d{1,2}/\d{4}\b",
-            r"\b\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?\.+\b",
+            r"\b\d{1,2}/\d{1,2}/\d{2,4}\s*(?:\d{1,2}:\d{2}(?::\d{2})?(?:\s*?[APap][Mm])?)?\b",
+            r"\b\d{1,2}-\d{1,2}-\d{2,4}\s*(?:[ T]\d{2}:\d{2}(?::\d{2})?(?:\.\d+)?)?\b",
+            r"\b\d{1,2}\.\d{1,2}\.\d{2,4}\s*(?:[ T]\d{2}:\d{2}(?::\d{2})?(?:\.\d+)?)?\b",
+            r"\b\d{1,2}\.\d{1,2}\.\d{2}\s*(?:[ T]\d{2}:\d{2}(?::\d{2})?(?:\.\d+)?)?\b",
+            r"\b\d{1,2}-[A-Za-z]{3}-\d{4}\s*(?:[ T]\d{2}:\d{2}(?::\d{2})?(?:\.\d+)?)?\b",
+            r"\b[A-Za-z]+\s\d{1,2},\s\d{4}\s*\d{1,2}:\d{2}(?::\d{2})?(?: ?[APap][Mm])?\b",
+            r"\b\d{1,2}/\d{4} (?:[ T]\d{2}:\d{2}(?::\d{2})?(?:\.\d+)?)?\b",
+            r"\b\d{4}-\d{1,2}-\d{1,2}\s*(?:[ T]\d{2}:\d{2}(?::\d{2})?(?:\.\d+)?)?\b",
+            r"\b\d{1,2}/\d{1,2}/\d{2,4}\s*\d{1,2}:\d{2}(?::\d{2})?(?: ?[APap][Mm])?\b",
+            r"\b\d{1,2}/\d{1,2}/\d{2,4}\s*(?:\d{1,2}:\d{2}(?::\d{2})?(?: ?[APap][Mm])?)?\b",
+            r"\b\d{1,2}/\d{1,2}/\d{2,4}\s*\d{1,2}:\d{2}(?::\d{2})?\s?[APap][Mm]\b",
+            r"\b\d{2}/\d{2}/\d{4}\s*\d{1,2}:\d{2}:\d{2}\s?([APap][Mm])?\b"
         ]
         
         def detect_dates(series, patterns):
@@ -207,40 +222,41 @@ def preprocess_file(file_path, output_path):
         
         date_containing = [column for column in date_like if "date" in column.lower()]
         
-        # Convert date columns
+        # FIX: Convert date columns safely without warnings
         update_progress(filename, 80, "Converting date columns")
         for column in date_containing:
-            df2_imputed[column] = pd.to_datetime(df2_imputed[column], errors='ignore')
-            
-        # In preprocess_file function, after handling date columns and before saving
+            try:
+                # FIX: Use errors='coerce' instead of 'ignore'
+                df2_imputed[column] = pd.to_datetime(df2_imputed[column], errors='coerce')
+            except Exception as e:
+                print(f"Could not convert {column} to datetime: {e}")
+                # Keep the column as is if conversion fails completely
+        
+        # FIX: Use improved engineer_features function
         update_progress(filename, 85, "Generating engineered features")
         try:
-            # Call the engineer_features function from transformations.py
+            # Import the fixed engineer_features function
             from transformations import engineer_features
             df2_imputed, transformation_results = engineer_features(df2_imputed)
             
-            # Track which features were engineered
+            # Track which features were engineered with improved extraction
             engineered_features = []
-            for feature_type in transformation_results:
-                if feature_type == "datetime_features":
-                    for item in transformation_results[feature_type]:
-                        engineered_features.extend(item["derived_features"])
-                elif feature_type == "categorical_encodings":
-                    for item in transformation_results[feature_type]:
-                        engineered_features.extend(item["derived_features"])
-                elif feature_type == "numeric_transformations":
-                    for item in transformation_results[feature_type]:
-                        engineered_features.extend(item["derived_features"])
-                elif feature_type == "binned_features":
-                    for item in transformation_results[feature_type]:
-                        engineered_features.append(item["derived_feature"])
+            for feature_type, items in transformation_results.items():
+                if isinstance(items, list) and len(items) > 0:
+                    for item in items:
+                        if feature_type == "datetime_features" and 'derived_features' in item:
+                            engineered_features.extend(item["derived_features"])
+                        elif feature_type == "categorical_encodings" and 'derived_features' in item:
+                            engineered_features.extend(item["derived_features"])
+                        elif feature_type == "numeric_transformations" and 'derived_features' in item:
+                            engineered_features.extend(item["derived_features"])
+                        elif feature_type == "binned_features" and 'derived_feature' in item:
+                            engineered_features.append(item["derived_feature"])
                         
-            # Add to result
             result["engineered_features"] = engineered_features
             result["transformation_details"] = transformation_results
         except Exception as e:
             print(f"Feature engineering error: {e}")
-            # Continue with processing even if feature engineering fails
             result["engineered_features"] = []
             result["transformation_details"] = {}
         
@@ -287,6 +303,151 @@ def preprocess_file(file_path, output_path):
             "success": False,
             "error": error_message
         }
+
+
+# Additional helper function for safer datetime conversion
+def safe_datetime_conversion(column, method='coerce'):
+    """
+    Safely convert a column to datetime with proper error handling
+    """
+    try:
+        # Try standard conversion first
+        converted = pd.to_datetime(column, errors=method)
+        
+        # If too few values converted successfully, return original
+        if method == 'coerce' and converted.notna().sum() < 0.1 * len(column):
+            return column
+            
+        return converted
+    except Exception as e:
+        print(f"Datetime conversion failed: {e}")
+        return column
+
+
+# Alternative improved preprocessing function with minimal warnings
+def preprocess_file_optimized(file_path, output_path):
+    """
+    Optimized version of preprocess_file with minimal warnings
+    """
+    import warnings
+    warnings.filterwarnings('ignore', category=pd.errors.PerformanceWarning)
+    warnings.filterwarnings('ignore', category=pd.errors.SettingWithCopyWarning)
+    
+    filename = file_path.name
+    
+    try:
+        # Read CSV with better error handling
+        try:
+            df = pl.read_csv(file_path, null_values=missing_values, ignore_errors=True)
+            df = df.to_pandas()
+        except:
+            df = pd.read_csv(file_path, na_values=missing_values)
+            
+        # Track original state
+        original_columns = df.columns.tolist()
+        original_shape = df.shape
+        
+        # Efficient cleaning pipeline
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            
+            # Clean data efficiently
+            df = df.replace(r'^\s*$', np.nan, regex=True)
+            df = df.dropna(how='all')
+            
+            # Drop problematic columns
+            to_drop = [col for col in df.columns if 
+                      'duplicated' in col or 
+                      col == '' or 
+                      df[col].isna().sum() > (df.shape[0] * 0.95)]
+            df.drop(to_drop, axis=1, inplace=True)
+        
+        # Imputation with minimal warnings
+        df_imputed = perform_imputation(df)
+        
+        # DateTime conversion
+        df_imputed = convert_datetime_columns(df_imputed)
+        
+        # Feature engineering
+        df_final, transform_results = engineer_features(df_imputed)
+        
+        # Final cleanup
+        df_final = df_final.drop(columns=[col for col in df_final.columns 
+                                         if df_final[col].nunique() == 1])
+        
+        # Save results
+        df_final.to_csv(output_path, index=False)
+        
+        return generate_results(df, df_final, original_columns, transform_results)
+        
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+def perform_imputation(df):
+    """Perform imputation with reduced warnings"""
+    nominal_cols = df.select_dtypes(include=['object', 'category', 'string', 'bool']).columns
+    numeric_cols = df.select_dtypes(include=['number']).columns
+    
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        
+        if nominal_cols.any():
+            df[nominal_cols] = df[nominal_cols].fillna(df[nominal_cols].mode().iloc[0])
+        
+        if numeric_cols.any():
+            imputer = KNNImputer()
+            df[numeric_cols] = imputer.fit_transform(df[numeric_cols])
+    
+    return df
+
+
+def convert_datetime_columns(df):
+    """Convert datetime columns efficiently"""
+    # Batch convert potential date columns
+    potential_date_cols = [col for col in df.columns 
+                          if df[col].dtype == 'object' and 
+                          any(keyword in col.lower() for keyword in ['date', 'time', 'timestamp'])]
+    
+    for col in potential_date_cols:
+        try:
+            converted = pd.to_datetime(df[col], errors='coerce')
+            if converted.notna().sum() > 0.5 * len(df):
+                df[col] = converted
+        except:
+            pass
+    
+    return df
+
+
+def generate_results(df_orig, df_final, original_columns, transform_results):
+    """Generate result dictionary with proper formatting"""
+    final_columns = df_final.columns.tolist()
+    dropped_columns = list(set(original_columns) - set(final_columns))
+    
+    return {
+        "success": True,
+        "original_shape": list(df_orig.shape),
+        "processed_shape": list(df_final.shape),
+        "columns_dropped": dropped_columns,
+        "engineered_features": extract_engineered_features(transform_results),
+        "transformation_details": transform_results
+    }
+
+
+def extract_engineered_features(transform_results):
+    """Extract engineered features from transformation results"""
+    engineered_features = []
+    
+    for feature_type, items in transform_results.items():
+        if isinstance(items, list):
+            for item in items:
+                if 'derived_features' in item:
+                    engineered_features.extend(item['derived_features'])
+                elif 'derived_feature' in item:
+                    engineered_features.append(item['derived_feature'])
+    
+    return engineered_features
 
 @app.post("/upload/")
 async def upload_files(background_tasks: BackgroundTasks, files: list[UploadFile] = File(...)):

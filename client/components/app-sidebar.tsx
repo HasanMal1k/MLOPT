@@ -24,7 +24,7 @@ const uploadAndPreprocessing = [
     icon: FileText
   },
   {
-    title: 'Auto Preprocessing',
+    title: 'Custom Cleaning',
     url: '/dashboard/preprocessing',
     icon: Settings2
   },
@@ -33,11 +33,11 @@ const uploadAndPreprocessing = [
     url: '/dashboard/transformations',
     icon: RefreshCw
   },
-  {
-    title: 'Custom Preprocessing',
-    url: '/dashboard/custom-preprocessing',
-    icon: Braces
-  },
+  // {
+  //   title: 'Custom Preprocessing',
+  //   url: '/dashboard/custom-preprocessing',
+  //   icon: Braces
+  // },
   {
     title: 'Feature Engineering',
     url: '/dashboard/feature-engineering',
@@ -64,6 +64,45 @@ export function AppSidebar() {
           ))}
         </SidebarMenu>
       </SidebarGroup>
+      
+      {/* Blueprint */}
+      <SidebarGroup>
+        <SidebarGroupLabel>Blueprint</SidebarGroupLabel>
+        <SidebarMenu>
+          {uploadAndPreprocessing.map((item)=> (
+            <SidebarMenuItem key={item.title}>
+            <SidebarMenuButton asChild>
+              <a href={item.url}>
+                <item.icon />
+                <span>{item.title}</span>
+              </a>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          ))}
+        </SidebarMenu>
+      </SidebarGroup>
+
+      {/* Models */}
+      <SidebarGroup>
+        <SidebarGroupLabel>Models</SidebarGroupLabel>
+        <SidebarMenu>
+          {uploadAndPreprocessing.map((item)=> (
+            <SidebarMenuItem key={item.title}>
+            <SidebarMenuButton asChild>
+              <a href={item.url}>
+                <item.icon />
+                <span>{item.title}</span>
+              </a>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          ))}
+        </SidebarMenu>
+      </SidebarGroup>
+
+      {/* Deployment */}
+
+      {/* Testing */}
+
       </SidebarContent>
     </Sidebar>
   )

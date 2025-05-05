@@ -6,6 +6,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { X } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import TransformationsView from "./TransformationsView"
+import { format, parseISO, isValid } from 'date-fns';
+
 
 
 interface FilePreviewProps {
@@ -44,6 +46,29 @@ export default function FilePreview({ fileMetadata, isOpen, onClose }: FilePrevi
   const headers = fileMetadata.column_names || []
   const previewData = fileMetadata.file_preview || []
   const isPreprocessed = fileMetadata.preprocessing_info?.is_preprocessed || false
+  const formatSafeDate = (dateValue: any): string => {
+    if (!dateValue) return '';
+    
+    try {
+      let date: Date;
+      
+      if (typeof dateValue === 'string') {
+        date = parseISO(dateValue);
+      } else if (dateValue instanceof Date) {
+        date = dateValue;
+      } else {
+        return String(dateValue);
+      }
+      
+      if (!isValid(date)) {
+        return String(dateValue);
+      }
+      
+      return format(date, 'yyyy-MM-dd HH:mm:ss');
+    } catch (error) {
+      return String(dateValue);
+    }
+  };
   
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
