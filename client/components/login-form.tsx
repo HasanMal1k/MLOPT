@@ -1,3 +1,5 @@
+'use client'
+
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import {
@@ -11,11 +13,45 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import Link from "next/link"
 import { login } from "@/app/(auth)/auth-actions"
+import { useState } from "react"
+import { useToast } from "@/hooks/use-toast"
 
 export function LoginForm({
   className,
   ...props
 }: React.ComponentPropsWithoutRef<"div">) {
+
+  const {toast} = useToast()
+  const [loading, setLoading] = useState(false)
+
+  async function handleSubmit(formData: FormData){
+    setLoading(true)
+
+    try {
+      // Calling server action
+      const result = await login(formData)
+      
+      // If there's an error, show toast
+      if (result?.error) {
+        toast({
+          variant: "destructive",
+          title: "Login failed",
+          description: result.error,
+        })
+      }
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Something went wrong",
+        description: "Please try again later.",
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  
+
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
@@ -26,7 +62,7 @@ export function LoginForm({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form>
+          <form action={handleSubmit}>
             <div className="grid gap-6">
               <div className="flex flex-col gap-4">
                 <Button variant="outline" className="w-full">
@@ -73,8 +109,8 @@ export function LoginForm({
                   </div>
                   <Input id="password" type="password" name="password" required />
                 </div>
-                <Button type="submit" className="w-full" formAction={login}>
-                  Login
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading ? 'Logging In...' : 'Login'}
                 </Button>
               </div>
               <div className="text-center text-sm">
