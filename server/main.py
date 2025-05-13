@@ -1,5 +1,6 @@
 from fastapi import FastAPI, File, UploadFile, HTTPException, BackgroundTasks, Form
 from fastapi.responses import JSONResponse
+from fastapi.responses import HTMLResponse
 from pathlib import Path
 from fastapi.middleware.cors import CORSMiddleware
 import polars as pl
@@ -18,6 +19,8 @@ import json
 import uuid
 import warnings
 from pandas.errors import PerformanceWarning
+from ydata_profiling import ProfileReport
+
 
 # Import custom preprocessing module
 from custom_preprocessing import router as custom_preprocessing_router
@@ -561,6 +564,27 @@ async def custom_preprocess(
         "message": "Custom preprocessing completed successfully",
         "result_file": f"custom_processed_{file_id}.csv"
     }
+
+@app.post("/generate_report/", response_class=HTMLResponse)
+async def generate_report(file: UploadFile = File(...)):
+    # Only accept CSV/XLSX
+    if not file.filename.endswith(('.csv', '.xlsx')):
+        raise HTTPException(status_code=400, detail="Only CSV or XLSX files are accepted")
+
+    contents = await file.read()
+    suffix = os.path.splitext(file.filename)[1]
+    with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
+        tmp.write(contents)
+        temp_path = tmp.name
+
+    try:
+        df = pd.read_csv(temp_path) if suffix == '.csv' else pd.read_excel(temp_path)
+        profile = ProfileReport(df, explorative=True, minimal=True)
+        html_report = profile.to_html()
+    finally:
+        os.unlink(temp_path)
+
+    return html_report
 
 if __name__ == "__main__":
     import uvicorn
