@@ -1,3 +1,4 @@
+// Modified KaggleUpload.tsx file
 import { useState } from "react";
 import { 
   Card, 
@@ -79,7 +80,9 @@ export default function KaggleUpload({ onFileImported }: KaggleUploadProps) {
         },
         body: JSON.stringify({
           type: parsedUrl.type,
-          path: parsedUrl.path
+          path: parsedUrl.path,
+          // Add name information to help with better naming on server
+          name: parsedUrl.name
         }),
       });
 
