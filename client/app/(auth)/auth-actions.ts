@@ -51,10 +51,14 @@ export async function signInWithOAuth(formData: FormData) {
   
   const provider = formData.get('provider') as 'google' | 'github'
   
+  // Get the custom redirectTo URL if provided, otherwise use default
+  const redirectTo = formData.get('redirectTo') as string || 
+    `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`
+  
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: provider,
     options: {
-      redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`
+      redirectTo: redirectTo
     }
   })
   

@@ -54,6 +54,10 @@ export function SignupForm({
       const formData = new FormData()
       formData.append('provider', provider)
       
+      // Add explicit redirect to auth/callback
+      const redirectTo = `${window.location.origin}/auth/callback`
+      formData.append('redirectTo', redirectTo)
+      
       const result = await signInWithOAuth(formData)
       
       if (result?.error) {

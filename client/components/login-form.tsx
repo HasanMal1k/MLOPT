@@ -9,7 +9,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
+import {
+  Input,
+  Input as InputComponent,
+} from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import Link from "next/link"
 import { login, signInWithOAuth } from "@/app/(auth)/auth-actions"
@@ -56,6 +59,10 @@ export function LoginForm({
     try {
       const formData = new FormData()
       formData.append('provider', provider)
+      
+      // Add redirect URL to auth/callback instead of default
+      const redirectTo = `${window.location.origin}/auth/callback`
+      formData.append('redirectTo', redirectTo)
       
       const result = await signInWithOAuth(formData)
       
