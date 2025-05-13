@@ -18,6 +18,7 @@ import time
 import json
 import uuid
 import warnings
+import tempfile
 from pandas.errors import PerformanceWarning
 from ydata_profiling import ProfileReport
 
@@ -93,7 +94,6 @@ def preprocess_file(file_path, output_path):
     Preprocess a CSV file and save the cleaned version with progress tracking.
     Fixed version to eliminate warnings and improve performance.
     """
-    
     
     # Suppress specific warnings
     warnings.filterwarnings('ignore', category=PerformanceWarning)
@@ -225,20 +225,17 @@ def preprocess_file(file_path, output_path):
         
         date_containing = [column for column in date_like if "date" in column.lower()]
         
-        # FIX: Convert date columns safely without warnings
+        # Convert date columns safely without warnings
         update_progress(filename, 80, "Converting date columns")
         for column in date_containing:
             try:
-                # FIX: Use errors='coerce' instead of 'ignore'
                 df2_imputed[column] = pd.to_datetime(df2_imputed[column], errors='coerce')
             except Exception as e:
                 print(f"Could not convert {column} to datetime: {e}")
-                # Keep the column as is if conversion fails completely
         
-        # FIX: Use improved engineer_features function
+        # Use improved engineer_features function
         update_progress(filename, 85, "Generating engineered features")
         try:
-            # Import the fixed engineer_features function
             from transformations import engineer_features
             df2_imputed, transformation_results = engineer_features(df2_imputed)
             
