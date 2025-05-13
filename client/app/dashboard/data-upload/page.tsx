@@ -1,10 +1,12 @@
 'use client'
 import { useState, useCallback } from "react";
 import { useDropzone, type FileRejection } from "react-dropzone";
-import { FilePlus2 } from "lucide-react";
+import { FilePlus2, Link as LinkIcon } from "lucide-react";
 import UploadedDataTable from "@/components/UploadDataTable";
+import KaggleUpload from "@/components/KaggleUpload";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface ProcessingInfo {
     filename: string;
@@ -20,6 +22,7 @@ export default function DataUpload() {
     const [isUploading, setIsUploading] = useState(false);
     const [processingStatus, setProcessingStatus] = useState<Record<string, any>>({});
     const [uploadProgress, setUploadProgress] = useState<number>(0);
+    const [activeTab, setActiveTab] = useState<string>("upload");
 
     const uploadData = async () => {
         if (files.length === 0) {
@@ -200,6 +203,14 @@ export default function DataUpload() {
         noClick: true
     });
 
+    // Handler for when a file is imported from Kaggle
+    const handleKaggleFileImported = (file: File) => {
+        setFiles((prevFiles) => [...prevFiles, file]);
+        setError(null);
+        // Switch to upload tab to show the imported file
+        setActiveTab("upload");
+    };
+
     return (
         <section {...getRootProps()} className="h-screen w-[100%] px-6 md:px-10 py-10" >
             {isDragActive &&
@@ -209,11 +220,31 @@ export default function DataUpload() {
             <div className="text-4xl font-bold">
                 Upload Data
             </div>
-            <input {...getInputProps()} />
-            <div className="cursor-pointer bg-gray-100 mt-10 h-24 rounded-lg border border-2 border-dashed border-zinc-300 flex items-center justify-center flex-col gap-2" onClick={open}>
-                <FilePlus2 color="gray" />
-                <p className="text-gray-600">Click Here Or Drag And Drop Your Files Anywhere</p>
-            </div>
+
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-6">
+                <TabsList className="mb-4">
+                    <TabsTrigger value="upload" className="flex items-center gap-2">
+                        <FilePlus2 className="h-4 w-4" />
+                        File Upload
+                    </TabsTrigger>
+                    <TabsTrigger value="kaggle" className="flex items-center gap-2">
+                        <LinkIcon className="h-4 w-4" />
+                        Import from Kaggle
+                    </TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="upload">
+                    <input {...getInputProps()} />
+                    <div className="cursor-pointer bg-gray-100 mt-4 h-24 rounded-lg border border-2 border-dashed border-zinc-300 flex items-center justify-center flex-col gap-2" onClick={open}>
+                        <FilePlus2 color="gray" />
+                        <p className="text-gray-600">Click Here Or Drag And Drop Your Files Anywhere</p>
+                    </div>
+                </TabsContent>
+
+                <TabsContent value="kaggle">
+                    <KaggleUpload onFileImported={handleKaggleFileImported} />
+                </TabsContent>
+            </Tabs>
 
             {files.length === 0 && <p className="w-full flex justify-center mt-7 text-gray-400">No files uploaded</p>}
             {files.length > 0 && <UploadedDataTable files={files} setFiles={setFiles} />}

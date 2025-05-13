@@ -1,6 +1,7 @@
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
@@ -64,46 +65,15 @@ export function AppSidebar() {
           ))}
         </SidebarMenu>
       </SidebarGroup>
-      
-      {/* Blueprint */}
-      <SidebarGroup>
-        <SidebarGroupLabel>Blueprint</SidebarGroupLabel>
-        <SidebarMenu>
-          {uploadAndPreprocessing.map((item)=> (
-            <SidebarMenuItem key={item.title}>
-            <SidebarMenuButton asChild>
-              <a href={item.url}>
-                <item.icon />
-                <span>{item.title}</span>
-              </a>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          ))}
-        </SidebarMenu>
-      </SidebarGroup>
-
-      {/* Models */}
-      <SidebarGroup>
-        <SidebarGroupLabel>Models</SidebarGroupLabel>
-        <SidebarMenu>
-          {uploadAndPreprocessing.map((item)=> (
-            <SidebarMenuItem key={item.title}>
-            <SidebarMenuButton asChild>
-              <a href={item.url}>
-                <item.icon />
-                <span>{item.title}</span>
-              </a>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          ))}
-        </SidebarMenu>
-      </SidebarGroup>
-
-      {/* Deployment */}
-
-      {/* Testing */}
+          
 
       </SidebarContent>
+      <SidebarFooter>
+        {/* Add some content to the footer to verify it's rendering */}
+        <div className="p-4 text-sm text-muted-foreground">
+          © 2024 Your App Name
+        </div>
+      </SidebarFooter> 
     </Sidebar>
   )
 }
