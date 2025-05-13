@@ -1,4 +1,6 @@
-// app/auth/callback/route.ts
+// First, create the directory structure:
+// client/app/auth/callback/route.ts
+
 import { createClient } from '@/utils/supabase/server'
 import { NextResponse } from 'next/server'
 
@@ -6,27 +8,31 @@ export async function GET(request: Request) {
   const requestUrl = new URL(request.url)
   const code = requestUrl.searchParams.get('code')
   
-  // If no code is present in the URL, redirect to login
-  if (!code) {
-    return NextResponse.redirect(new URL('/login', requestUrl.origin))
-  }
-  
-  try {
-    // Create a Supabase client
+  if (code) {
     const supabase = await createClient()
     
-    // Exchange the auth code for a session
-    const { error } = await supabase.auth.exchangeCodeForSession(code)
-    
-    if (error) {
-      console.error('Error exchanging code for session:', error)
-      return NextResponse.redirect(new URL('/login?error=auth_callback_error', requestUrl.origin))
+    try {
+      // Exchange the code for a session
+      const { error } = await supabase.auth.exchangeCodeForSession(code)
+      
+      if (error) {
+        console.error('Error in auth callback:', error)
+        // Redirect to login page with error
+        return NextResponse.redirect(`${requestUrl.origin}/login?error=auth_callback_error`)
+      }
+      
+      // Debug - log when this callback is executed
+      console.log('Auth callback executed successfully, redirecting to dashboard')
+      
+      // URL to redirect to after sign in process completes
+      return NextResponse.redirect(`${requestUrl.origin}/dashboard`)
+    } catch (error) {
+      console.error('Exception in auth callback:', error)
+      // Redirect to login page with error
+      return NextResponse.redirect(`${requestUrl.origin}/login?error=auth_callback_error`)
     }
-    
-    // Successful authentication, redirect to dashboard
-    return NextResponse.redirect(new URL('/dashboard', requestUrl.origin))
-  } catch (error) {
-    console.error('Unexpected error in auth callback:', error)
-    return NextResponse.redirect(new URL('/login?error=unexpected_error', requestUrl.origin))
   }
+  
+  // If there's no code, redirect to homepage
+  return NextResponse.redirect(`${requestUrl.origin}`)
 }

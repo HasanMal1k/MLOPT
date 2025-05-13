@@ -51,14 +51,16 @@ export async function signInWithOAuth(formData: FormData) {
   
   const provider = formData.get('provider') as 'google' | 'github'
   
-  // Get the custom redirectTo URL if provided, otherwise use default
-  const redirectTo = formData.get('redirectTo') as string || 
-    `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`
+  // Get the app URL with a fallback for development
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
   
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: provider,
     options: {
-      redirectTo: redirectTo
+      redirectTo: `${appUrl}/auth/callback`,
+      queryParams: {
+        prompt: 'select_account' // Forces Google to show account selection screen
+      }
     }
   })
   
