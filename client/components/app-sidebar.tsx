@@ -27,7 +27,8 @@
     User,
     Settings,
     HelpCircle,
-    LayoutDashboard
+    LayoutDashboard,
+    BarChart
   } from "lucide-react"
   import { Separator } from "@/components/ui/separator"
   import { useToast } from "@/hooks/use-toast"
@@ -57,6 +58,11 @@
       title: 'Feature Engineering',
       url: '/dashboard/feature-engineering',
       icon: GitBranch
+    },
+    {
+      title: 'EDA Reports',
+      url: '/dashboard/eda-reports',
+      icon: BarChart
     }
   ]
 

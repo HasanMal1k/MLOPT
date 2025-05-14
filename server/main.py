@@ -37,8 +37,8 @@ app.include_router(transformations_router)
 
 
 origins = [
-    "http://localhost:3000",  # Next.js app URL
     "http://127.0.0.1:3000",
+    "http://localhost:3001",  # Next.js app URL
     "https://your-next-app-domain.com"
 ]
 
@@ -581,7 +581,15 @@ async def generate_report(file: UploadFile = File(...)):
     finally:
         os.unlink(temp_path)
 
-    return html_report
+    # Return the HTML with proper headers
+    return HTMLResponse(
+        content=html_report,
+        status_code=200,
+        headers={
+            "Access-Control-Allow-Origin": "*",
+            "Content-Type": "text/html"
+        }
+    )
 
 if __name__ == "__main__":
     import uvicorn
