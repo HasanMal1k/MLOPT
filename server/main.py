@@ -568,18 +568,69 @@ async def generate_report(file: UploadFile = File(...)):
     if not file.filename.endswith(('.csv', '.xlsx')):
         raise HTTPException(status_code=400, detail="Only CSV or XLSX files are accepted")
 
-    contents = await file.read()
-    suffix = os.path.splitext(file.filename)[1]
-    with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
-        tmp.write(contents)
-        temp_path = tmp.name
-
     try:
-        df = pd.read_csv(temp_path) if suffix == '.csv' else pd.read_excel(temp_path)
-        profile = ProfileReport(df, explorative=True, minimal=True)
-        html_report = profile.to_html()
+        # Read the file content
+        contents = await file.read()
+        
+        # Log file details for debugging
+        print(f"Received file: {file.filename}, size: {len(contents)} bytes")
+        
+        # Create a temporary file
+        suffix = os.path.splitext(file.filename)[1]
+        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
+            tmp.write(contents)
+            temp_path = tmp.name
+        
+        # Read the file with pandas - with better error handling
+        try:
+            if suffix.lower() == '.csv':
+                # Try different options to handle potential CSV issues
+                try:
+                    df = pd.read_csv(temp_path)
+                except pd.errors.EmptyDataError:
+                    # If it's empty, create a sample dataframe to avoid crashing
+                    df = pd.DataFrame({'Sample': ['No data found in file']})
+                except:
+                    # Try again with different parsing options
+                    df = pd.read_csv(temp_path, sep=None, engine='python')
+            else:
+                # Excel file
+                df = pd.read_excel(temp_path)
+            
+            # Limit the rows to prevent very large reports
+            if len(df) > 10000:
+                df = df.sample(10000, random_state=42)
+                
+            # Generate the profile report
+            profile = ProfileReport(df, explorative=True, minimal=True)
+            html_report = profile.to_html()
+        except Exception as e:
+            # If pandas couldn't read the file properly, return a simple error report
+            error_info = str(e)
+            html_report = f"""
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Error Processing File</title>
+                <style>
+                    body {{ font-family: Arial, sans-serif; padding: 20px; }}
+                    .error {{ color: red; background-color: #ffeeee; padding: 10px; border-radius: 5px; }}
+                </style>
+            </head>
+            <body>
+                <h1>File Processing Error</h1>
+                <p>There was an error processing the file: {file.filename}</p>
+                <div class="error">
+                    <h3>Error Details:</h3>
+                    <pre>{error_info}</pre>
+                </div>
+            </body>
+            </html>
+            """
     finally:
-        os.unlink(temp_path)
+        # Clean up the temporary file
+        if os.path.exists(temp_path):
+            os.unlink(temp_path)
 
     # Return the HTML with proper headers
     return HTMLResponse(

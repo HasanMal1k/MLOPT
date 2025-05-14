@@ -7,9 +7,8 @@ export async function POST(request: NextRequest) {
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized', message: 'You must be logged in to generate EDA reports' }, { status: 401 });
-    }
+    // Skip auth check for EDA report generation - allow anonymous users
+    // This allows viewing reports before uploading
     
     // Get the form data
     const formData = await request.formData();
@@ -18,6 +17,9 @@ export async function POST(request: NextRequest) {
     if (!file) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 });
     }
+    
+    // Add logging for debugging
+    console.log(`Received file for EDA: ${file.name}, type: ${file.type}, size: ${file.size} bytes`);
     
     // Forward the file to the Python backend for report generation
     const pythonBackendURL = 'http://localhost:8000/generate_report/';
@@ -38,7 +40,8 @@ export async function POST(request: NextRequest) {
         console.error('Python backend error:', errorText);
         return NextResponse.json({ 
           error: 'Report generation failed', 
-          message: `Python backend returned status ${pythonResponse.status}: ${pythonResponse.statusText}`
+          message: `Python backend returned status ${pythonResponse.status}: ${pythonResponse.statusText}`,
+          details: errorText
         }, { status: 500 });
       }
       

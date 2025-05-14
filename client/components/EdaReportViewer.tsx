@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { AlertCircle, Download, FileText, RefreshCw } from "lucide-react"
 import { Progress } from "@/components/ui/progress"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose, DialogFooter } from "@/components/ui/dialog"
 import { X } from "lucide-react"
 import type { FileMetadata } from '@/components/FilePreview'
 
@@ -22,9 +22,11 @@ interface EdaReportViewerProps {
   fileMetadata?: FileMetadata | null;
   onClose: () => void;
   isOpen: boolean;
+  // Add original file for new uploads
+  originalFile?: File | null;
 }
 
-export default function EdaReportViewer({ fileMetadata, onClose, isOpen }: EdaReportViewerProps) {
+export default function EdaReportViewer({ fileMetadata, onClose, isOpen, originalFile }: EdaReportViewerProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [reportHtml, setReportHtml] = useState<string | null>(null);
@@ -37,30 +39,40 @@ export default function EdaReportViewer({ fileMetadata, onClose, isOpen }: EdaRe
     setError(null);
     
     try {
-      // Create a FormData object to send the file directly
+      // Create a FormData object to send the file
       const formData = new FormData();
       
-      // Get the file from Supabase storage
-      const supabase = createClient();
-      const { data: { publicUrl } } = supabase.storage
-        .from('data-files')
-        .getPublicUrl(`${fileMetadata.user_id}/${fileMetadata.filename}`);
-      
-      // Fetch the file
-      const response = await fetch(publicUrl);
-      
-      if (!response.ok) {
-        throw new Error(`Failed to download file: ${response.statusText}`);
+      // Check if we have the original file object (for new uploads)
+      if (originalFile) {
+        // Use the original file object directly
+        formData.append('file', originalFile);
+        console.log("Using original file:", originalFile.name, originalFile.size);
+      } else if (fileMetadata.user_id !== "temporary") {
+        // This is an existing file in storage
+        const supabase = createClient();
+        const { data: { publicUrl } } = supabase.storage
+          .from('data-files')
+          .getPublicUrl(`${fileMetadata.user_id}/${fileMetadata.filename}`);
+        
+        // Fetch the file
+        const response = await fetch(publicUrl);
+        
+        if (!response.ok) {
+          throw new Error(`Failed to download file: ${response.statusText}`);
+        }
+        
+        // Get the file content as a blob
+        const fileBlob = await response.blob();
+        const file = new File([fileBlob], fileMetadata.original_filename, { 
+          type: fileMetadata.mime_type 
+        });
+        
+        // Add the file to form data
+        formData.append('file', file);
+        console.log("Using file from storage:", file.name, file.size);
+      } else {
+        throw new Error("Cannot generate report: File not available");
       }
-      
-      // Get the file content as a blob
-      const fileBlob = await response.blob();
-      const file = new File([fileBlob], fileMetadata.original_filename, { 
-        type: fileMetadata.mime_type 
-      });
-      
-      // Add the file to form data
-      formData.append('file', file);
       
       // Send to API endpoint for EDA report
       const reportResponse = await fetch('/api/eda-report', {
@@ -69,8 +81,9 @@ export default function EdaReportViewer({ fileMetadata, onClose, isOpen }: EdaRe
       });
       
       if (!reportResponse.ok) {
-        const errorData = await reportResponse.json();
-        throw new Error(errorData.message || 'Failed to generate EDA report');
+        const errorText = await reportResponse.text();
+        console.error("EDA report generation failed:", errorText);
+        throw new Error(`Failed to generate EDA report: ${reportResponse.statusText}`);
       }
       
       // Get the HTML report
@@ -146,11 +159,14 @@ export default function EdaReportViewer({ fileMetadata, onClose, isOpen }: EdaRe
           )}
         </div>
         
-        <CardFooter className="flex justify-end pt-4">
-          <Button variant="outline" onClick={onClose}>
-            Close
+        <DialogFooter className="flex justify-between pt-4 border-t">
+          <p className="text-sm text-muted-foreground">
+            Review this report to better understand your data before preprocessing
+          </p>
+          <Button onClick={onClose}>
+            {reportHtml ? "Continue with Upload" : "Close"}
           </Button>
-        </CardFooter>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

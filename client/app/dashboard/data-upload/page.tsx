@@ -7,6 +7,7 @@ import KaggleUpload from "@/components/KaggleUpload";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { toast } from "@/hooks/use-toast";
 
 interface ProcessingInfo {
     filename: string;
@@ -16,6 +17,7 @@ interface ProcessingInfo {
       message: string;
     };
   }
+  
 export default function DataUpload() {
     const [files, setFiles] = useState<File[]>([]);
     const [error, setError] = useState<string | null>(null);
@@ -120,6 +122,10 @@ export default function DataUpload() {
             setUploadProgress(100);
             // All files uploaded successfully
             setFiles([]);
+            toast({
+              title: "Success",
+              description: "Files have been uploaded and preprocessed successfully",
+            });
             
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : 'Upload failed';
@@ -235,7 +241,7 @@ export default function DataUpload() {
 
                 <TabsContent value="upload">
                     <input {...getInputProps()} />
-                    <div className="cursor-pointer bg-gray-100 mt-4 h-24 rounded-lg border border-2 border-dashed border-zinc-300 flex items-center justify-center flex-col gap-2" onClick={open}>
+                    <div className="cursor-pointer bg-black mt-4 h-24 rounded-lg border border-2 border-dashed border-zinc-300 flex items-center justify-center flex-col gap-2" onClick={open}>
                         <FilePlus2 color="gray" />
                         <p className="text-gray-600">Click Here Or Drag And Drop Your Files Anywhere</p>
                     </div>
@@ -247,7 +253,13 @@ export default function DataUpload() {
             </Tabs>
 
             {files.length === 0 && <p className="w-full flex justify-center mt-7 text-gray-400">No files uploaded</p>}
-            {files.length > 0 && <UploadedDataTable files={files} setFiles={setFiles} />}
+            {files.length > 0 && (
+              <UploadedDataTable 
+                files={files} 
+                setFiles={setFiles} 
+                onUpload={uploadData} 
+              />
+            )}
             
             {isUploading && (
                 <div className="mt-6">
@@ -275,17 +287,6 @@ export default function DataUpload() {
             )}
             
             {error && <p className="text-red-500 text-center mt-4">{error}</p>}
-            
-            {files.length > 0 && (
-                <div className="w-full flex justify-center mt-20">
-                    <Button 
-                        onClick={uploadData} 
-                        disabled={isUploading}
-                    >
-                        {isUploading ? 'Processing...' : 'Upload Data'}
-                    </Button>
-                </div>
-            )}
         </section>
     );
 }
