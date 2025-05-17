@@ -740,7 +740,7 @@ export default function DataUpload() {
                       <CardTitle className="text-base">Feature Engineering</CardTitle>
                       <CardDescription>Create new features for ML</CardDescription>
                     </CardHeader>
-                    <CardContent className="text-sm pb-2">
+                                      <CardContent className="text-sm pb-2">
                       Transform your data and create new features to improve machine learning model performance
                     </CardContent>
                     <CardFooter>
@@ -810,12 +810,11 @@ export default function DataUpload() {
             file_preview: [],
             statistics: {}
           }}
-                
-        originalFile={files[activeFileIndex]}
-                isOpen={isEdaReportOpen} 
-                onClose={handleEdaReportClosed} 
-                />
-            )}
-            </div>
-        );
-        }
+          originalFile={files[activeFileIndex]}
+          isOpen={isEdaReportOpen} 
+          onClose={handleEdaReportClosed} 
+        />
+      )}
+    </div>
+  );
+}
