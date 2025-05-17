@@ -1,8 +1,29 @@
-# Add these imports to data_preprocessing.py
+# Import required libraries
+import pandas as pd
+import numpy as np
+from pathlib import Path
+from typing import List, Tuple, Dict, Any, Union, Optional
+import time
+import json
+import uuid
+import os
+import re
+import logging
 import warnings
-from date_parsing import convert_date_columns_improved, parse_dates_with_format_detection
 
-# Replace the existing detect_date_columns function with this improved version
+# Set up logging
+logger = logging.getLogger('data_preprocessing')
+
+# Define date detection patterns
+DATE_PATTERNS = [
+    r'\d{4}-\d{2}-\d{2}',  # YYYY-MM-DD
+    r'\d{2}/\d{2}/\d{4}',  # MM/DD/YYYY
+    r'\d{2}-\d{2}-\d{4}',  # MM-DD-YYYY
+    r'\d{4}/\d{2}/\d{2}',  # YYYY/MM/DD
+    r'\d{2}\.\d{2}\.\d{4}',  # DD.MM.YYYY
+    r'\d{4}\.\d{2}\.\d{2}'   # YYYY.MM.DD
+]
+
 def detect_date_columns(df: pd.DataFrame) -> List[str]:
     """
     Intelligently detect columns containing dates
@@ -67,7 +88,6 @@ def detect_date_columns(df: pd.DataFrame) -> List[str]:
     
     return date_columns
 
-# Replace the existing convert_date_columns function with this fixed version
 def convert_date_columns(df: pd.DataFrame, date_columns: List[str]) -> Tuple[pd.DataFrame, List[str]]:
     """
     Convert detected date columns to datetime type
@@ -79,16 +99,120 @@ def convert_date_columns(df: pd.DataFrame, date_columns: List[str]) -> Tuple[pd.
     Returns:
         Tuple of (updated dataframe, successfully converted columns)
     """
-    # Use the improved date parsing function that suppresses warnings
-    return convert_date_columns_improved(df, date_columns)
+    df_result = df.copy()
+    successfully_converted = []
+    
+    # Suppress dateutil parser warnings
+    with warnings.catch_warnings():
+        warnings.filterwarnings('ignore', category=UserWarning)
+        
+        for col in date_columns:
+            try:
+                if col in df_result.columns:
+                    df_result[col] = pd.to_datetime(df_result[col], errors='coerce')
+                    successfully_converted.append(col)
+            except Exception as e:
+                logger.warning(f"Failed to convert {col} to datetime: {e}")
+    
+    return df_result, successfully_converted
 
-# Update the preprocess_file function to use the improved date parsing
-# Replace the date column detection and conversion section with:
+def update_status(filename: str, status_folder: Path, progress: int, message: str) -> Dict:
+    """
+    Update the processing status of a file
+    
+    Args:
+        filename: Name of the file being processed
+        status_folder: Directory to save status files
+        progress: Progress percentage (0-100)
+        message: Status message
+        
+    Returns:
+        Status dictionary
+    """
+    status = {
+        "status": "processing" if progress < 100 else "completed",
+        "progress": progress,
+        "message": message,
+        "timestamp": time.time()
+    }
+    
+    status_path = status_folder / f"{filename}_status.json"
+    with open(status_path, 'w') as f:
+        json.dump(status, f)
+    
+    return status
 
 def preprocess_file(file_path: Path, output_path: Path, 
                    status_folder: Path, progress_callback=None) -> Dict:
-    """Main preprocessing function with improved performance and reporting"""
-    # ... (keep existing code until the date detection section)
+    """
+    Main preprocessing function with improved performance and reporting
+    
+    Args:
+        file_path: Path to the input file
+        output_path: Path to save the output file
+        status_folder: Path to save status files
+        progress_callback: Optional callback function for progress updates
+        
+    Returns:
+        Dictionary with preprocessing results
+    """
+    filename = file_path.name
+    
+    # 1. Read the file
+    if progress_callback:
+        progress_callback(10, "Reading file")
+    update_status(filename, status_folder, 10, "Reading file")
+    
+    try:
+        if file_path.suffix.lower() == '.csv':
+            df = pd.read_csv(file_path)
+        else:  # Excel file
+            df = pd.read_excel(file_path)
+    except Exception as e:
+        logger.error(f"Error reading file: {e}")
+        update_status(filename, status_folder, -1, f"Error: {str(e)}")
+        return {"success": False, "error": str(e)}
+    
+    # Save original shape for reporting
+    original_shape = df.shape
+    
+    # Processing results
+    preprocessing_info = {
+        "columns_dropped": [],
+        "date_columns_detected": [],
+        "columns_cleaned": [],
+        "missing_value_stats": {}
+    }
+    
+    # 2. Simple cleaning - drop columns with all missing values
+    update_status(filename, status_folder, 20, "Cleaning data")
+    if progress_callback:
+        progress_callback(20, "Cleaning data")
+    
+    # Drop columns with all missing values
+    null_columns = df.columns[df.isnull().all()].tolist()
+    if null_columns:
+        df = df.drop(columns=null_columns)
+        preprocessing_info["columns_dropped"].extend(null_columns)
+    
+    # 3. Save basic statistics about missing values
+    for col in df.columns:
+        missing_count = df[col].isnull().sum()
+        if missing_count > 0:
+            missing_percentage = round((missing_count / len(df)) * 100, 2)
+            preprocessing_info["missing_value_stats"][col] = {
+                "missing_count": int(missing_count),
+                "missing_percentage": missing_percentage,
+                "imputation_method": "None"  # Default value, will be updated if imputation is applied
+            }
+    
+    # 4. Detect and drop columns with very high missing values (e.g., > 95%)
+    high_missing_cols = [col for col in df.columns 
+                        if df[col].isnull().sum() > 0.95 * len(df)]
+    
+    if high_missing_cols:
+        df = df.drop(columns=high_missing_cols)
+        preprocessing_info["columns_dropped"].extend(high_missing_cols)
     
     # 5. Detect and convert date columns
     update_status(filename, status_folder, 40, "Detecting date columns")
@@ -101,10 +225,90 @@ def preprocess_file(file_path: Path, output_path: Path,
                                message="Could not infer format, so each element will be parsed individually")
         
         date_columns = detect_date_columns(df)
-        df, converted_date_columns = convert_date_columns_improved(df, date_columns)
+        df, converted_date_columns = convert_date_columns(df, date_columns)
     
-    # ... (continue with the rest of the function)
+    preprocessing_info["date_columns_detected"] = converted_date_columns
     
+    # 6. Handle missing values in remaining columns
+    update_status(filename, status_folder, 60, "Handling missing values")
+    if progress_callback:
+        progress_callback(60, "Handling missing values")
+    
+    columns_with_missing = [col for col in df.columns if df[col].isnull().sum() > 0]
+    
+    for col in columns_with_missing:
+        # If it's a numeric column, fill with median
+        if pd.api.types.is_numeric_dtype(df[col]):
+            median_value = df[col].median()
+            df[col] = df[col].fillna(median_value)
+            preprocessing_info["columns_cleaned"].append(col)
+            if col in preprocessing_info["missing_value_stats"]:
+                preprocessing_info["missing_value_stats"][col]["imputation_method"] = "median"
+        
+        # If it's a categorical/string column, fill with mode (most common value)
+        elif pd.api.types.is_string_dtype(df[col]) or pd.api.types.is_categorical_dtype(df[col]):
+            mode_value = df[col].mode()[0] if not df[col].mode().empty else "Unknown"
+            df[col] = df[col].fillna(mode_value)
+            preprocessing_info["columns_cleaned"].append(col)
+            if col in preprocessing_info["missing_value_stats"]:
+                preprocessing_info["missing_value_stats"][col]["imputation_method"] = "mode"
+        
+        # For datetime columns, just leave as NaT (pandas null value for datetime)
+        else:
+            # No special handling needed
+            pass
+    
+    # 7. Save the cleaned dataframe
+    update_status(filename, status_folder, 80, "Saving processed file")
+    if progress_callback:
+        progress_callback(80, "Saving processed file")
+    
+    try:
+        if output_path.suffix.lower() == '.csv':
+            df.to_csv(output_path, index=False)
+        else:  # Excel file
+            df.to_excel(output_path, index=False)
+    except Exception as e:
+        logger.error(f"Error saving file: {e}")
+        update_status(filename, status_folder, -1, f"Error: {str(e)}")
+        return {"success": False, "error": str(e)}
+    
+    # 8. Complete and return report
+    update_status(filename, status_folder, 100, "Processing complete")
+    if progress_callback:
+        progress_callback(100, "Processing complete")
+    
+    # Final report
+    report = {
+        "success": True,
+        "original_shape": original_shape,
+        "processed_shape": df.shape,
+        "preprocessing_info": preprocessing_info
+    }
+    
+    return report
+
+def generate_eda_report(df: pd.DataFrame) -> str:
+    """
+    Generate an EDA report for a dataframe
+    
+    Args:
+        df: Input dataframe
+        
+    Returns:
+        HTML report as a string
+    """
+    try:
+        # Try to use ydata-profiling if available
+        from ydata_profiling import ProfileReport
+        
+        # Generate report
+        profile = ProfileReport(df, title="Data Profiling Report", minimal=True)
+        return profile.to_html()
+    except:
+        # Fallback to simple report
+        return generate_simple_eda_report(df)
+
 def generate_simple_eda_report(df: pd.DataFrame) -> str:
     """
     Generate a simple EDA report when ydata-profiling fails
@@ -151,11 +355,6 @@ def generate_simple_eda_report(df: pd.DataFrame) -> str:
             .container {{ max-width: 1200px; margin: 0 auto; }}
             .summary {{ display: flex; gap: 20px; margin-bottom: 20px; }}
             .summary-box {{ padding: 15px; background-color: #f8f9fa; border-radius: 4px; border: 1px solid #dee2e6; flex: 1; }}
-            .tab {{ overflow: hidden; border: 1px solid #ccc; background-color: #f1f1f1; }}
-            .tab button {{ background-color: inherit; float: left; border: none; outline: none; cursor: pointer; padding: 14px 16px; }}
-            .tab button:hover {{ background-color: #ddd; }}
-            .tab button.active {{ background-color: #ccc; }}
-            .tabcontent {{ display: none; padding: 6px 12px; border: 1px solid #ccc; border-top: none; }}
         </style>
     </head>
     <body>
@@ -278,7 +477,6 @@ def generate_simple_eda_report(df: pd.DataFrame) -> str:
     
     return html
 
-
 def process_data_file(input_file: Union[str, Path], 
                      output_dir: Union[str, Path],
                      status_dir: Union[str, Path],
@@ -312,220 +510,3 @@ def process_data_file(input_file: Union[str, Path],
     
     # Return the results
     return result
-
-
-def analyze_dataframe_structure(df: pd.DataFrame) -> Dict[str, Any]:
-    """
-    Analyze the structure of a dataframe including data types and distributions
-    
-    Args:
-        df: Input dataframe
-        
-    Returns:
-        Dictionary with structure analysis
-    """
-    # Basic dataframe info
-    info = {
-        "row_count": len(df),
-        "column_count": len(df.columns),
-        "memory_usage": df.memory_usage(deep=True).sum() / (1024 * 1024),  # MB
-    }
-    
-    # Column type stats
-    column_types = df.dtypes.astype(str).value_counts().to_dict()
-    info["column_types"] = {str(k): int(v) for k, v in column_types.items()}
-    
-    # Missing value analysis
-    missing_counts = df.isna().sum()
-    missing_percentages = (missing_counts / len(df) * 100).round(2)
-    
-    columns_with_missing = []
-    for col, count in missing_counts.items():
-        if count > 0:
-            columns_with_missing.append({
-                "name": col,
-                "missing_count": int(count),
-                "missing_percentage": float(missing_percentages[col])
-            })
-    
-    info["missing_values"] = {
-        "total_missing_cells": int(df.isna().sum().sum()),
-        "columns_with_missing": columns_with_missing,
-        "columns_with_missing_count": len(columns_with_missing)
-    }
-    
-    # Duplicate rows analysis
-    duplicate_count = df.duplicated().sum()
-    info["duplicates"] = {
-        "duplicate_rows": int(duplicate_count),
-        "duplicate_percentage": round(duplicate_count / len(df) * 100, 2) if len(df) > 0 else 0
-    }
-    
-    # Column cardinality (uniqueness)
-    cardinality = {}
-    for col in df.columns:
-        unique_count = df[col].nunique()
-        cardinality[col] = {
-            "unique_count": int(unique_count),
-            "unique_percentage": round(unique_count / len(df) * 100, 2) if len(df) > 0 else 0
-        }
-    
-    info["cardinality"] = cardinality
-    
-    # Value distributions for categorical columns (limited to avoid huge outputs)
-    distributions = {}
-    categorical_columns = df.select_dtypes(include=['object', 'category']).columns
-    
-    for col in categorical_columns:
-        if df[col].nunique() <= 10:  # Only for columns with reasonable cardinality
-            value_counts = df[col].value_counts(normalize=True).head(10)
-            distributions[col] = {str(k): float(v) for k, v in value_counts.items()}
-    
-    info["distributions"] = distributions
-    
-    return info
-
-
-def detect_anomalies(df: pd.DataFrame, method: str = 'iqr', threshold: float = 1.5) -> Dict[str, List[int]]:
-    """
-    Detect anomalies in numeric columns of a dataframe
-    
-    Args:
-        df: Input dataframe
-        method: Method for anomaly detection ('iqr', 'zscore', or 'isolation_forest')
-        threshold: Threshold for outlier detection
-        
-    Returns:
-        Dictionary with column names as keys and lists of anomalous row indices as values
-    """
-    anomalies = {}
-    
-    # Only process numeric columns
-    numeric_columns = df.select_dtypes(include=['number']).columns
-    
-    if method == 'iqr':
-        # Interquartile Range method
-        for col in numeric_columns:
-            q1 = df[col].quantile(0.25)
-            q3 = df[col].quantile(0.75)
-            iqr = q3 - q1
-            
-            lower_bound = q1 - threshold * iqr
-            upper_bound = q3 + threshold * iqr
-            
-            # Get indices of outliers
-            outlier_indices = df[(df[col] < lower_bound) | (df[col] > upper_bound)].index.tolist()
-            
-            if outlier_indices:
-                anomalies[col] = outlier_indices
-    
-    elif method == 'zscore':
-        # Z-score method
-        from scipy import stats
-        
-        for col in numeric_columns:
-            z_scores = stats.zscore(df[col], nan_policy='omit')
-            # Use absolute z-score
-            outlier_indices = df[abs(z_scores) > threshold].index.tolist()
-            
-            if outlier_indices:
-                anomalies[col] = outlier_indices
-    
-    elif method == 'isolation_forest':
-        # Isolation Forest method (more complex but more powerful)
-        try:
-            from sklearn.ensemble import IsolationForest
-            
-            # Only use columns with enough values
-            valid_columns = [col for col in numeric_columns 
-                           if df[col].notna().sum() > len(df) * 0.5]
-            
-            if valid_columns:
-                # Prepare data
-                X = df[valid_columns].fillna(df[valid_columns].mean())
-                
-                # Train isolation forest
-                model = IsolationForest(contamination=0.1, random_state=42)
-                model.fit(X)
-                
-                # Predict anomalies
-                anomaly_flags = model.predict(X)
-                outlier_indices = df[anomaly_flags == -1].index.tolist()
-                
-                if outlier_indices:
-                    anomalies['multivariate_outliers'] = outlier_indices
-        except Exception as e:
-            logger.warning(f"Isolation Forest anomaly detection failed: {e}")
-    
-    return anomalies
-
-
-def batch_process_files(file_paths: List[Path], 
-                       output_dir: Path, 
-                       status_dir: Path, 
-                       settings: Dict = None) -> Dict:
-    """
-    Process multiple files with common settings
-    
-    Args:
-        file_paths: List of paths to input files
-        output_dir: Directory to save output files
-        status_dir: Directory to save status files
-        settings: Optional dictionary of processing settings
-        
-    Returns:
-        Dictionary with processing results for each file
-    """
-    results = {}
-    
-    # Process each file
-    for file_path in file_paths:
-        try:
-            logger.info(f"Processing file: {file_path}")
-            result = process_data_file(file_path, output_dir, status_dir)
-            results[str(file_path)] = result
-        except Exception as e:
-            logger.error(f"Error processing {file_path}: {e}")
-            results[str(file_path)] = {
-                "success": False,
-                "error": str(e)
-            }
-    
-    # Summarize the batch processing
-    summary = {
-        "total_files": len(file_paths),
-        "successful": sum(1 for r in results.values() if r.get("success", False)),
-        "failed": sum(1 for r in results.values() if not r.get("success", False)),
-        "results": results
-    }
-    
-    # Save summary to a file
-    summary_path = output_dir / f"batch_summary_{int(time.time())}.json"
-    with open(summary_path, 'w') as f:
-        json.dump(summary, f, indent=2)
-    
-    return summary
-
-
-if __name__ == "__main__":
-    # Example usage
-    import sys
-    
-    if len(sys.argv) < 2:
-        print("Usage: python data_preprocessing.py input_file.csv [output_dir] [status_dir]")
-        sys.exit(1)
-    
-    input_file = sys.argv[1]
-    output_dir = sys.argv[2] if len(sys.argv) > 2 else "./processed_files"
-    status_dir = sys.argv[3] if len(sys.argv) > 3 else "./status_files"
-    
-    # Simple progress callback
-    def print_progress(progress, message):
-        print(f"Progress: {progress}% - {message}")
-    
-    # Process the file
-    result = process_data_file(input_file, output_dir, status_dir, print_progress)
-    
-    # Print the result
-    print("\nProcessing Result:")
-    print(json.dumps(result, indent=2))

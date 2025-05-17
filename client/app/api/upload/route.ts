@@ -55,18 +55,20 @@ export async function POST(request: Request) {
     
     // Prepare preprocessing info if available
     const preprocessingInfo = preprocessingResults ? {
-      is_preprocessed: true,
-      preprocessing_date: new Date().toISOString(),
-      columns_cleaned: preprocessingResults.columns_cleaned || [],
-      auto_detected_dates: preprocessingResults.date_columns_detected || [],
-      dropped_columns: preprocessingResults.columns_dropped || [],
-      missing_value_stats: preprocessingResults.missing_value_stats || {},
-      engineered_features: preprocessingResults.engineered_features || [],
-      transformation_details: preprocessingResults.transformation_details || {}
-    } : {
-      is_preprocessed: isPreprocessed,
-      preprocessing_date: isPreprocessed ? new Date().toISOString() : null
-    };
+    is_preprocessed: true,
+    preprocessing_date: new Date().toISOString(),
+    columns_cleaned: preprocessingResults.columns_cleaned || [],
+    auto_detected_dates: preprocessingResults.date_columns_detected || [],
+    dropped_columns: preprocessingResults.columns_dropped || [],
+    missing_value_stats: preprocessingResults.missing_value_stats || {},
+    engineered_features: preprocessingResults.engineered_features || [],
+    transformation_details: preprocessingResults.transformation_details || {},
+    original_shape: preprocessingResults.original_shape || [],
+    processed_shape: preprocessingResults.processed_shape || []
+  } : {
+    is_preprocessed: isPreprocessed,
+    preprocessing_date: isPreprocessed ? new Date().toISOString() : null
+  };
     
     // Save metadata to database
     const { data: fileRecord, error: dbError } = await supabase

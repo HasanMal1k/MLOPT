@@ -51,6 +51,7 @@ import { Stepper, Step, StepDescription, StepLabel, StepTitle } from "@/componen
 import FilePreview from "@/components/FilePreview";
 import EdaReportViewer from "@/components/EdaReportViewer";
 import KaggleUpload from "@/components/KaggleUpload";
+import AutoPreprocessingReport from "@/components/AutoPreprocessingReport";
 
 interface ProcessingInfo {
   filename: string;
@@ -84,6 +85,9 @@ export default function DataUpload() {
     successCount: 0,
     filesProcessed: []
   });
+  const [preprocessingResults, setPreprocessingResults] = useState<any>(null);
+  const [filePreprocessingResults, setFilePreprocessingResults] = useState<Record<string, any>>({});
+
 
   const uploadData = async () => {
     if (files.length === 0) {
@@ -143,13 +147,18 @@ export default function DataUpload() {
         
         try {
           // Get preprocessing results to add engineered features to the metadata
+          const preprocessingData = {};
           for (const fileName of fileNames) {
             const statusInfo = processingStatus[fileName];
             // Check if statusInfo and results exist before accessing
-            if (statusInfo && statusInfo.results && statusInfo.results.engineered_features) {
-              console.log(`${fileName} has ${statusInfo.results.engineered_features.length} engineered features`);
+            if (statusInfo && statusInfo.results) {
+              console.log(`Preprocessing results for ${fileName}:`, statusInfo.results);
+              preprocessingData[fileName] = statusInfo.results;
             }
           }
+          
+          // Store preprocessing results in state
+          setFilePreprocessingResults(preprocessingData);
           
           setUploadProgress(80);
         } catch (err) {
@@ -166,6 +175,10 @@ export default function DataUpload() {
         const formData = new FormData();
         formData.append('file', file);
         formData.append('preprocessed', 'true');
+
+        if (filePreprocessingResults[file.name]) {
+        formData.append('preprocessing_results', JSON.stringify(filePreprocessingResults[file.name]));
+        }
         
         try {
           // Use relative URL for API endpoint
@@ -235,6 +248,18 @@ export default function DataUpload() {
       setIsUploading(false);
     }
   };
+
+  useEffect(() => {
+  console.log("Current filePreprocessingResults:", filePreprocessingResults);
+  console.log("Current uploadSummary:", uploadSummary);
+  
+  if (uploadSummary.filesProcessed.length > 0) {
+    const hasPreprocessingData = uploadSummary.filesProcessed.some(
+      file => filePreprocessingResults[file.name]
+    );
+    console.log("Has preprocessing data:", hasPreprocessingData);
+  }
+}, [filePreprocessingResults, uploadSummary]);
   
   // Function to poll processing status
   const trackProcessingStatus = async (fileNames: string[]) => {
@@ -699,77 +724,102 @@ export default function DataUpload() {
           
           {/* Step 4: Complete */}
           {currentStep === 3 && (
-            <Card className="shadow-sm">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <CheckCircle2 className="h-5 w-5 text-green-500" />
-                  <span>Upload Complete</span>
-                </CardTitle>
-                <CardDescription>
-                  Your data is ready for analysis and machine learning
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="bg-green-50 border border-green-200 rounded-lg p-6 mb-6">
-                  <h3 className="text-lg font-medium text-green-800 mb-2">Upload Summary</h3>
-                  <p className="text-green-700 mb-4">
-                    Successfully uploaded {uploadSummary.successCount} of {uploadSummary.totalFiles} files
-                  </p>
-                  
-                  {uploadSummary.filesProcessed.length > 0 && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-4">
-                      {uploadSummary.filesProcessed.map((file, index) => (
-                        <div key={index} className="flex items-center gap-2 text-sm">
-                          {file.success ? (
-                            <CheckCircle2 className="h-4 w-4 text-green-600" />
-                          ) : (
-                            <X className="h-4 w-4 text-red-600" />
-                          )}
-                          <span className={file.success ? "text-green-700" : "text-red-700"}>
-                            {file.name}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-base">Feature Engineering</CardTitle>
-                      <CardDescription>Create new features for ML</CardDescription>
-                    </CardHeader>
-                                      <CardContent className="text-sm pb-2">
-                      Transform your data and create new features to improve machine learning model performance
-                    </CardContent>
-                    <CardFooter>
-                      <Button variant="outline" onClick={() => handleFinish('feature-engineering')} className="w-full gap-2">
-                        <ChevronRight className="h-4 w-4" />
-                        <span>Go to Feature Engineering</span>
-                      </Button>
-                    </CardFooter>
-                  </Card>
-                  
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-base">Dashboard</CardTitle>
-                      <CardDescription>Return to dashboard</CardDescription>
-                    </CardHeader>
-                    <CardContent className="text-sm pb-2">
-                      Go back to the dashboard to view all your uploaded files and explore other options
-                    </CardContent>
-                    <CardFooter>
-                      <Button onClick={() => handleFinish('dashboard')} className="w-full gap-2">
-                        <ChevronRight className="h-4 w-4" />
-                        <span>Return to Dashboard</span>
-                      </Button>
-                    </CardFooter>
-                  </Card>
-                </div>
-              </CardContent>
-            </Card>
-          )}
+  <Card className="shadow-sm">
+    <CardHeader>
+      <CardTitle className="flex items-center gap-2">
+        <CheckCircle2 className="h-5 w-5 text-green-500" />
+        <span>Upload Complete</span>
+      </CardTitle>
+      <CardDescription>
+        Your data is ready for analysis and machine learning
+      </CardDescription>
+    </CardHeader>
+    <CardContent>
+      <div className="bg-green-50 border border-green-200 rounded-lg p-6 mb-6">
+        <h3 className="text-lg font-medium text-green-800 mb-2">Upload Summary</h3>
+        <p className="text-green-700 mb-4">
+          Successfully uploaded {uploadSummary.successCount} of {uploadSummary.totalFiles} files
+        </p>
+        
+        {uploadSummary.filesProcessed.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-4">
+            {uploadSummary.filesProcessed.map((file, index) => (
+              <div key={index} className="flex items-center gap-2 text-sm">
+                {file.success ? (
+                  <CheckCircle2 className="h-4 w-4 text-green-600" />
+                ) : (
+                  <X className="h-4 w-4 text-red-600" />
+                )}
+                <span className={file.success ? "text-green-700" : "text-red-700"}>
+                  {file.name}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+      
+      {/* Preprocessing Reports Section - Now moved inside the Card */}
+      {uploadSummary.filesProcessed.some(file => filePreprocessingResults[file.name]) && (
+        <div className="mb-6">
+          <h3 className="text-xl font-bold mb-4">Data Preprocessing Reports</h3>
+          <div className="space-y-6">
+            {uploadSummary.filesProcessed.map((file, index) => {
+              if (file.success && filePreprocessingResults[file.name]) {
+                return (
+                  <div key={index} className="border rounded-lg p-4">
+                    <h4 className="font-medium text-lg mb-3">{file.name}</h4>
+                    <AutoPreprocessingReport
+                      processingResults={filePreprocessingResults[file.name]}
+                      fileName={file.name}
+                      isLoading={false}
+                    />
+                  </div>
+                );
+              }
+              return null;
+            })}
+          </div>
+        </div>
+      )}
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">Feature Engineering</CardTitle>
+            <CardDescription>Create new features for ML</CardDescription>
+          </CardHeader>
+          <CardContent className="text-sm pb-2">
+            Transform your data and create new features to improve machine learning model performance
+          </CardContent>
+          <CardFooter>
+            <Button variant="outline" onClick={() => handleFinish('feature-engineering')} className="w-full gap-2">
+              <ChevronRight className="h-4 w-4" />
+              <span>Go to Feature Engineering</span>
+            </Button>
+          </CardFooter>
+        </Card>
+        
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">Dashboard</CardTitle>
+            <CardDescription>Return to dashboard</CardDescription>
+          </CardHeader>
+          <CardContent className="text-sm pb-2">
+            Go back to the dashboard to view all your uploaded files and explore other options
+          </CardContent>
+          <CardFooter>
+            <Button onClick={() => handleFinish('dashboard')} className="w-full gap-2">
+              <ChevronRight className="h-4 w-4" />
+              <span>Return to Dashboard</span>
+            </Button>
+          </CardFooter>
+        </Card>
+      </div>
+    </CardContent>
+  </Card>
+)}
+
         </div>
       </div>
       
