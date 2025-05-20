@@ -93,61 +93,33 @@ export default function DataUpload() {
   const [preprocessingResults, setPreprocessingResults] = useState<any>(null);
   const [filePreprocessingResults, setFilePreprocessingResults] = useState<Record<string, any>>({});
 
- // This is a utility function that can be added to dashboard/data-upload/page.tsx
-
-/**
- * Enhanced version that transforms and normalizes the preprocessing results
- * from various formats, including those from the joblib file
- * @param serverResponse - The preprocessing results from the server
- * @returns Normalized preprocessing results
- */
-function transformPreprocessingResults(serverResponse: any) {
+ const transformPreprocessingResults = (serverResponse) => {
   // If the response is null or undefined, return null
   if (!serverResponse) return null;
 
   console.log("Transforming server response:", serverResponse);
 
-  // Handle the case where results come from joblib pipeline data
-  if (serverResponse.preprocessing_info || 
-      (serverResponse.original_shape && serverResponse.missing_value_stats)) {
-    // Direct pipeline data format
-    return {
-      success: true,
-      original_shape: serverResponse.original_shape || [0, 0],
-      processed_shape: serverResponse.processed_shape || serverResponse.final_shape || [0, 0],
-      columns_dropped: serverResponse.columns_dropped || [],
-      dropped_by_unique_value: serverResponse.dropped_by_unique_value || [],
-      date_columns_detected: serverResponse.date_columns_detected || [],
-      columns_cleaned: serverResponse.columns_cleaned || [],
-      missing_value_stats: serverResponse.missing_value_stats || {},
-      engineered_features: serverResponse.engineered_features || [],
-      transformation_details: serverResponse.transformation_details || {}
-    };
-  }
-  
   // Check if results are nested under preprocessing_info
   if (serverResponse.preprocessing_info) {
-    const info = serverResponse.preprocessing_info;
     return {
       success: serverResponse.success !== false,
-      original_shape: serverResponse.original_shape || info.original_shape || [0, 0],
-      processed_shape: serverResponse.processed_shape || info.processed_shape || [0, 0],
-      columns_dropped: info.dropped_columns || [],
-      dropped_by_unique_value: info.dropped_by_unique_value || [],
-      date_columns_detected: info.auto_detected_dates || [],
-      columns_cleaned: info.columns_cleaned || [],
-      missing_value_stats: info.missing_value_stats || {},
-      engineered_features: info.engineered_features || [],
-      transformation_details: info.transformation_details || {}
+      original_shape: serverResponse.original_shape || [0, 0],
+      processed_shape: serverResponse.processed_shape || [0, 0],
+      columns_dropped: serverResponse.preprocessing_info.columns_dropped || [],
+      date_columns_detected: serverResponse.preprocessing_info.date_columns_detected || [],
+      columns_cleaned: serverResponse.preprocessing_info.columns_cleaned || [],
+      missing_value_stats: serverResponse.preprocessing_info.missing_value_stats || {},
+      engineered_features: serverResponse.preprocessing_info.engineered_features || [],
+      transformation_details: serverResponse.preprocessing_info.transformation_details || {}
     };
   }
   
-  // Check if results come from processing_status endpoint via joblib file
-  if (serverResponse.results) {
+  // Check if it's a "results" wrapper with nested structure (from Python backend)
+  if (serverResponse.results && typeof serverResponse.results === 'object') {
     return transformPreprocessingResults(serverResponse.results);
   }
   
-  // Check for the "report" or "preprocessing_info" structure
+  // Check for the "report" structure that might be returned from some endpoints
   if (serverResponse.report && typeof serverResponse.report === 'object') {
     const report = serverResponse.report;
     return {
@@ -155,7 +127,6 @@ function transformPreprocessingResults(serverResponse: any) {
       original_shape: report.original_shape || serverResponse.original_shape || [0, 0],
       processed_shape: report.processed_shape || serverResponse.processed_shape || [0, 0],
       columns_dropped: report.columns_dropped || [],
-      dropped_by_unique_value: report.dropped_by_unique_value || [],
       date_columns_detected: report.date_columns_detected || [],
       columns_cleaned: report.columns_cleaned || [],
       missing_value_stats: report.missing_value_stats || {},
@@ -164,217 +135,181 @@ function transformPreprocessingResults(serverResponse: any) {
     };
   }
   
-  // Try to extract directly from response
+  // Response is already in the expected format (or close enough)
   return {
     success: serverResponse.success !== false,
     original_shape: serverResponse.original_shape || [0, 0],
     processed_shape: serverResponse.processed_shape || [0, 0],
     columns_dropped: serverResponse.columns_dropped || [],
-    dropped_by_unique_value: serverResponse.dropped_by_unique_value || [],
     date_columns_detected: serverResponse.date_columns_detected || [],
     columns_cleaned: serverResponse.columns_cleaned || [],
     missing_value_stats: serverResponse.missing_value_stats || {},
     engineered_features: serverResponse.engineered_features || [],
     transformation_details: serverResponse.transformation_details || {}
   };
-}
+};
 
- const uploadData = async () => {
-  if (files.length === 0) {
-    setError("Please select at least one file to upload");
-    return;
-  }
-
-  setIsUploading(true);
-  setError(null);
-  setUploadProgress(0);
-  
-  // First check if the server is available
-  try {
-    const serverCheckResponse = await fetch('http://localhost:8000/', { 
-      method: 'GET',
-      signal: AbortSignal.timeout(3000) // 3 second timeout
-    }).catch(err => {
-      console.error("Server check failed:", err);
-      throw new Error("Cannot connect to preprocessing server. Please make sure it's running at http://localhost:8000");
-    });
-    
-    if (!serverCheckResponse.ok) {
-      throw new Error(`Preprocessing server is not responding properly: ${serverCheckResponse.statusText}`);
-    }
-  } catch (err) {
-    const errorMessage = err instanceof Error ? err.message : 'Server connection failed';
-    setError(errorMessage);
-    console.error('Server check error:', err);
-    setIsUploading(false);
-    return;
-  }
-  
-  try {
-    // Step 1: Upload to Python for preprocessing
-    const pythonFormData = new FormData();
-    files.forEach(file => {
-      pythonFormData.append('files', file);
-    });
-    
-    setUploadProgress(10);
-    console.log("Uploading files to Python backend...");
-    
-    // Send to Python backend with timeout
-    const pythonResponse = await fetch('http://localhost:8000/upload/', {
-      method: 'POST',
-      body: pythonFormData,
-      signal: AbortSignal.timeout(30000) // 30 second timeout
-    }).catch(err => {
-      console.error("Error connecting to Python backend:", err);
-      throw new Error("Failed to connect to preprocessing server. Please make sure it's running.");
-    });
-
-    if (!pythonResponse.ok) {
-      const errorData = await pythonResponse.json();
-      throw new Error(errorData.detail || `Preprocessing failed: ${pythonResponse.statusText}`);
+  const uploadData = async () => {
+    if (files.length === 0) {
+      setError("Please select at least one file to upload");
+      return;
     }
 
-    const preprocessingResult = await pythonResponse.json();
-    console.log("Received preprocessing result:", preprocessingResult);
-    setUploadProgress(50);
+    setIsUploading(true);
+    setError(null);
+    setUploadProgress(0);
     
-    // Initialize status tracking for preprocessing
-    const processingInfo = (preprocessingResult.processing_info || []) as ProcessingInfo[];
-    const initialStatus: Record<string, any> = {};
-    processingInfo.forEach((info: ProcessingInfo) => {
-      initialStatus[info.filename] = {
-        status: info.status.status,
-        progress: info.status.progress,
-        message: info.status.message
-      };
-    });
-
-    setProcessingStatus(initialStatus);
-    
-    // Step 2: Poll processing status
-    const fileNames = processingInfo.map((info: ProcessingInfo) => info.filename);
-    if (fileNames.length > 0) {
-      console.log("Tracking processing status for files:", fileNames);
-      const processingSuccess = await trackProcessingStatus(fileNames);
+    try {
+      // Step 1: Upload to Python for preprocessing
+      const pythonFormData = new FormData();
+      files.forEach(file => {
+        pythonFormData.append('files', file);
+      });
       
-      // If processing completely failed, we can try to continue with just the files
-      if (!processingSuccess) {
-        console.log("Processing status tracking failed. Continuing with upload only...");
-        toast({
-          variant: "warning",
-          title: "Processing Incomplete",
-          description: "Will continue with file upload without preprocessing.",
-        });
+      setUploadProgress(10);
+      
+      // Send to Python backend
+      const pythonResponse = await fetch('http://localhost:8000/upload/', {
+        method: 'POST',
+        body: pythonFormData,
+      });
+
+      if (!pythonResponse.ok) {
+        const errorData = await pythonResponse.json();
+        throw new Error(errorData.detail || 'Preprocessing failed');
       }
-    }
 
-    setUploadProgress(60);
-    
-    // Create a local copy of preprocessing data to use for upload
-    const preprocessingData = {};
-    for (const fileName of fileNames) {
-      const statusInfo = processingStatus[fileName];
-      if (statusInfo && (statusInfo.results || statusInfo.preprocessing_details)) {
-        preprocessingData[fileName] = statusInfo.preprocessing_details || statusInfo.results;
+      const preprocessingResult = await pythonResponse.json();
+      setUploadProgress(50);
+      
+      // Initialize status tracking for preprocessing
+      const processingInfo = (preprocessingResult.processing_info || []) as ProcessingInfo[];
+      const initialStatus: Record<string, any> = {};
+      processingInfo.forEach((info: ProcessingInfo) => {
+        initialStatus[info.filename] = {
+          status: info.status.status,
+          progress: info.status.progress,
+          message: info.status.message
+        };
+      });
+
+      setProcessingStatus(initialStatus);
+      
+      // Step 2: Poll processing status
+     const fileNames = processingInfo.map((info: ProcessingInfo) => info.filename);
+      if (fileNames.length > 0) {
+        await trackProcessingStatus(fileNames);
       }
-    }
-    
-    // Step 3: Upload to database even if preprocessing failed
-    setUploadProgress(70);
-    const uploadResults: UploadResult[] = [];
 
-    for (const file of files) {
-      // Find the matching processed file
-      const processedFileName = fileNames.find(fn => fn.includes(file.name));
-      
-      // Create a new FormData for each file
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('preprocessed', Object.keys(preprocessingData).length > 0 ? 'true' : 'false');
-
-      // Include preprocessing results if available
-      const filePreprocessingResult = processedFileName ? preprocessingData[processedFileName] : null;
-      
-      if (filePreprocessingResult) {
-        console.log(`Adding preprocessing results for ${file.name}`);
-        formData.append('preprocessing_results', JSON.stringify(filePreprocessingResult));
-      } else {
-        console.log(`No preprocessing results found for ${file.name}. Uploading without preprocessing.`);
-      }
-      
-      try {
-        console.log(`Uploading ${file.name} to database...`);
-        // Use relative URL for API endpoint
-        const response = await fetch('/api/upload', {
-          method: 'POST',
-          body: formData,
-          signal: AbortSignal.timeout(30000) // 30 second timeout
-        });
-
-        const result = await response.json();
+      setUploadProgress(60);
+      if (fileNames.length > 0 && Object.values(processingStatus).every(status => status.progress === 100)) {
+        setUploadProgress(70);
         
-        if (!response.ok) {
-          console.error(`Upload failed for ${file.name}:`, result);
+        try {
+          // Get preprocessing results to add engineered features to the metadata
+          const preprocessingData = {};
+          for (const fileName of fileNames) {
+            const statusInfo = processingStatus[fileName];
+            // Check if statusInfo and results exist before accessing
+            if (statusInfo && statusInfo.results) {
+              console.log(`Preprocessing results for ${fileName}:`, statusInfo.results);
+              preprocessingData[fileName] = statusInfo.results;
+            }
+          }
+          
+          // Store preprocessing results in state
+          setFilePreprocessingResults(preprocessingData);
+          
+          setUploadProgress(80);
+        } catch (err) {
+          console.error('Error processing transformations:', err);
+        }
+      }
+      
+      // Step 3: Upload preprocessed files to database
+      setUploadProgress(70);
+      const uploadResults: UploadResult[] = [];
+
+
+      
+      for (const file of files) {
+        // Create a new FormData for each file
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('preprocessed', 'true');
+
+        if (filePreprocessingResults[file.name]) {
+        formData.append('preprocessing_results', JSON.stringify(filePreprocessingResults[file.name]));
+        }
+        
+        try {
+          // Use relative URL for API endpoint
+          const response = await fetch('/api/upload', {
+            method: 'POST',
+            body: formData,
+          });
+
+          const result = await response.json();
+          
+          if (!response.ok) {
+            uploadResults.push({
+              name: file.name,
+              success: false
+            });
+            console.error(`Upload failed for ${file.name}:`, result.error || result.details);
+          } else {
+            uploadResults.push({
+              name: file.name,
+              success: true
+            });
+          }
+        } catch (err) {
           uploadResults.push({
             name: file.name,
             success: false
           });
-        } else {
-          console.log(`Successfully uploaded ${file.name} to database:`, result);
-          uploadResults.push({
-            name: file.name,
-            success: true,
-            metadata: result.metadata
-          });
+          console.error(`Exception during upload for ${file.name}:`, err);
         }
-      } catch (err) {
-        console.error(`Exception during upload for ${file.name}:`, err);
-        uploadResults.push({
-          name: file.name,
-          success: false
+      }
+      
+      // Prepare upload summary
+      const successCount = uploadResults.filter(r => r.success).length;
+      
+      setUploadSummary({
+        totalFiles: files.length,
+        successCount: successCount,
+        filesProcessed: uploadResults
+      });
+      
+      setUploadProgress(100);
+      setUploadComplete(true);
+      
+      if (successCount === files.length) {
+        // All files uploaded successfully
+        toast({
+          title: "Success",
+          description: `All ${files.length} files have been uploaded and preprocessed successfully`,
+        });
+      } else {
+        // Some files failed
+        toast({
+          variant: "destructive",
+          title: "Partial success",
+          description: `Uploaded ${successCount} of ${files.length} files successfully`,
         });
       }
+      
+      // Move to next step in wizard
+      setCurrentStep(3);
+      
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Upload failed';
+      setError(errorMessage);
+      console.error('Upload error:', err);
+    } finally {
+      setIsUploading(false);
     }
-    
-    // Prepare upload summary
-    const successCount = uploadResults.filter(r => r.success).length;
-    
-    setUploadSummary({
-      totalFiles: files.length,
-      successCount: successCount,
-      filesProcessed: uploadResults
-    });
-    
-    setUploadProgress(100);
-    setUploadComplete(true);
-    
-    if (successCount === files.length) {
-      // All files uploaded successfully
-      toast({
-        title: "Success",
-        description: `All ${files.length} files have been uploaded successfully`,
-      });
-    } else {
-      // Some files failed
-      toast({
-        variant: "destructive",
-        title: "Partial success",
-        description: `Uploaded ${successCount} of ${files.length} files successfully`,
-      });
-    }
-    
-    // Move to next step in wizard
-    setCurrentStep(3);
-    
-  } catch (err) {
-    const errorMessage = err instanceof Error ? err.message : 'Upload failed';
-    setError(errorMessage);
-    console.error('Upload error:', err);
-  } finally {
-    setIsUploading(false);
-  }
-};
+  };
 
 
 
@@ -450,33 +385,7 @@ useEffect(() => {
 const trackProcessingStatus = async (fileNames: string[]) => {
   let allCompleted = false;
   let attempts = 0;
-  const maxAttempts = 30; // Timeout after 30 attempts
-
-  // Add server availability check first
-  try {
-    // Simple health check to the root endpoint
-    const healthCheck = await fetch('http://localhost:8000/', { 
-      method: 'GET',
-      // Add a short timeout to fail fast if server is unreachable
-      signal: AbortSignal.timeout(3000)
-    });
-    
-    if (!healthCheck.ok) {
-      console.error("Python backend server is not responding properly:", await healthCheck.text());
-      // Still continue since the server might be partially functioning
-    }
-  } catch (err) {
-    console.error("Cannot connect to Python backend server:", err);
-    // Create a toast notification to inform the user
-    toast({
-      variant: "destructive",
-      title: "Server Connection Error",
-      description: "Cannot connect to the preprocessing server. Please make sure it's running at http://localhost:8000",
-    });
-    
-    // Return false to indicate failure
-    return false;
-  }
+  const maxAttempts = 30; // Timeout after 30 attempts (5 minutes with 10-second interval)
   
   while (!allCompleted && attempts < maxAttempts) {
     attempts++;
@@ -484,108 +393,55 @@ const trackProcessingStatus = async (fileNames: string[]) => {
     
     for (const fileName of fileNames) {
       try {
-        console.log(`Checking processing status for ${fileName}, attempt ${attempts}...`);
-        
-        // Add timeout to the fetch request
-        const response = await fetch(`http://localhost:8000/processing-status/${fileName}`, {
-          signal: AbortSignal.timeout(5000) // 5 second timeout
-        });
-        
-        if (!response.ok) {
-          console.error(`Error fetching status for ${fileName}: ${response.statusText}`);
-          continue;
-        }
-        
-        const status = await response.json();
-        
-        // Update the processing status in state
-        setProcessingStatus(prev => {
-          const updatedStatus = {
+        const response = await fetch(`http://localhost:8000/processing-status/${fileName}`);
+        if (response.ok) {
+          const status = await response.json();
+          
+          // Log the complete structure of results for debugging
+          if (status.results) {
+            console.log(`[DEBUG] Full results structure for ${fileName}:`, 
+              JSON.stringify(status.results, null, 2));
+          }
+          
+          setProcessingStatus(prev => ({
             ...prev,
             [fileName]: {
               status: status.status,
               progress: status.progress,
               message: status.message,
-              results: status.results || status.preprocessing_details
+              results: status.results
             }
-          };
+          }));
           
-          console.log(`Updated status for ${fileName}:`, updatedStatus[fileName]);
-          
-          return updatedStatus;
-        });
-        
-        if (status.progress === 100 || status.progress === -1) {
-          completedCount++;
-          console.log(`Processing completed for ${fileName} (${completedCount}/${fileNames.length})`);
+          if (status.progress === 100 || status.progress === -1) {
+            completedCount++;
+          }
         }
       } catch (error) {
         console.error(`Error checking status for ${fileName}:`, error);
-        // If we've tried a few times and still can't connect, notify the user
-        if (attempts > 3) {
-          toast({
-            variant: "destructive",
-            title: "Connection Error",
-            description: "Having trouble connecting to the preprocessing server. Please check if it's running.",
-          });
-        }
       }
     }
     
     if (completedCount === fileNames.length) {
-      console.log("All files completed processing");
       allCompleted = true;
       
-      // Try to get final results, but don't fail if we can't
-      try {
-        // After all files are processed, do one final gathering of results
-        const preprocessingData = {};
-        
-        for (const fileName of fileNames) {
-          try {
-            // Make one final status check for each file
-            const response = await fetch(`http://localhost:8000/processing-status/${fileName}`, {
-              signal: AbortSignal.timeout(5000) // 5 second timeout
-            });
-            
-            if (response.ok) {
-              const finalStatus = await response.json();
-              const resultData = finalStatus.results || finalStatus.preprocessing_details;
-              
-              if (resultData) {
-                console.log(`Final preprocessing results for ${fileName}:`, resultData);
-                
-                // Store the results
-                preprocessingData[fileName] = resultData;
-              }
-            }
-          } catch (error) {
-            console.error(`Error getting final status for ${fileName}:`, error);
-          }
+      // After all files are processed, do one final gathering of results 
+      // to ensure we have the most up-to-date information
+      const preprocessingData = {};
+      for (const fileName of fileNames) {
+        const statusInfo = processingStatus[fileName];
+        if (statusInfo && statusInfo.results) {
+          console.log(`Final preprocessing results for ${fileName}:`, statusInfo.results);
+          preprocessingData[fileName] = statusInfo.results;
         }
-        
-        // Update state with all preprocessing results
-        if (Object.keys(preprocessingData).length > 0) {
-          console.log("Updating filePreprocessingResults with:", preprocessingData);
-          setFilePreprocessingResults(preprocessingData);
-        }
-      } catch (err) {
-        console.error("Error getting final preprocessing results:", err);
       }
+      
+      // Update state with all preprocessing results
+      setFilePreprocessingResults(preprocessingData);
     } else {
-      // Wait before next poll
-      console.log(`Waiting for next status check... (${completedCount}/${fileNames.length} completed)`);
-      await new Promise(resolve => setTimeout(resolve, 5000));
+      // Wait 10 seconds before next poll
+      await new Promise(resolve => setTimeout(resolve, 10000));
     }
-  }
-  
-  if (attempts >= maxAttempts) {
-    console.warn("Reached maximum polling attempts, some files may not have completed processing");
-    toast({
-      variant: "destructive",
-      title: "Processing Timeout",
-      description: "Processing is taking longer than expected. Proceeding with available results.",
-    });
   }
   
   return allCompleted;
@@ -947,245 +803,293 @@ const trackProcessingStatus = async (fileNames: string[]) => {
           )}
           
           {/* Step 3: Upload & Process */}
-          {currentStep === 3 && (
-  <Card className="shadow-sm">
-    <CardHeader>
-      <CardTitle className="flex items-center gap-2">
-        <CheckCircle2 className="h-5 w-5 text-green-500" />
-        <span>Upload Complete</span>
-      </CardTitle>
-      <CardDescription>
-        Your data is ready for analysis and machine learning
-      </CardDescription>
-    </CardHeader>
-    <CardContent>
-      <div className="bg-green-50 border border-green-200 rounded-lg p-6 mb-6">
-        <h3 className="text-lg font-medium text-green-800 mb-2">Upload Summary</h3>
-        <p className="text-green-700 mb-4">
-          Successfully uploaded {uploadSummary.successCount} of {uploadSummary.totalFiles} files
-        </p>
-        
-        {uploadSummary.filesProcessed.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-4">
-            {uploadSummary.filesProcessed.map((file, index) => (
-              <div key={index} className="flex items-center gap-2 text-sm">
-                {file.success ? (
-                  <CheckCircle2 className="h-4 w-4 text-green-600" />
-                ) : (
-                  <X className="h-4 w-4 text-red-600" />
-                )}
-                <span className={file.success ? "text-green-700" : "text-red-700"}>
-                  {file.name}
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-      
-      {/* Detailed Preprocessing Reports Section */}
-      {uploadSummary.filesProcessed.some(file => filePreprocessingResults[file.name]) && (
-        <div className="mb-6">
-          <h3 className="text-xl font-bold mb-4">Data Preprocessing Report</h3>
-          <div className="space-y-6">
-            {uploadSummary.filesProcessed.map((file, index) => {
-              if (file.success && filePreprocessingResults[file.name]) {
-                // Transform the results to match the expected format
-                const transformedResults = transformPreprocessingResults(filePreprocessingResults[file.name]);
+          {currentStep === 2 && (
+            <Card className="shadow-sm">
+              <CardHeader>
+                <CardTitle>Uploading & Processing Your Data</CardTitle>
+                <CardDescription>
+                  Please wait while we upload and preprocess your files
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="mt-2 mb-8">
+                  <p className="text-sm font-medium mb-2">Overall Progress</p>
+                  <Progress value={uploadProgress} className="h-2 w-full" />
+                  <p className="text-xs text-muted-foreground mt-2">
+                    {uploadProgress < 100 
+                      ? `Processing ${files.length} files...` 
+                      : `Completed processing ${files.length} files`}
+                  </p>
+                </div>
                 
-                // Debug logging to verify the structure
-                console.log(`Transformed results for ${file.name}:`, transformedResults);
-                
-                if (!transformedResults) {
-                  return (
-                    <div key={index} className="border rounded-lg p-4 bg-amber-50">
-                      <h4 className="font-medium text-lg mb-2">{file.name}</h4>
-                      <p className="text-amber-700">No preprocessing details available for this file.</p>
-                    </div>
-                  );
-                }
-                
-                return (
-                  <div key={index} className="border rounded-lg p-6">
-                    <h4 className="font-medium text-lg mb-4">{file.name}</h4>
-                    
-                    {/* Preprocessing Summary Stats */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                      <div className="bg-blue-50 p-3 rounded-md">
-                        <div className="text-sm text-blue-700 font-medium">Original Rows</div>
-                        <div className="text-xl font-bold">{transformedResults.original_shape?.[0] || 0}</div>
-                      </div>
-                      <div className="bg-blue-50 p-3 rounded-md">
-                        <div className="text-sm text-blue-700 font-medium">Processed Rows</div>
-                        <div className="text-xl font-bold">{transformedResults.processed_shape?.[0] || 0}</div>
-                      </div>
-                      <div className="bg-blue-50 p-3 rounded-md">
-                        <div className="text-sm text-blue-700 font-medium">Original Columns</div>
-                        <div className="text-xl font-bold">{transformedResults.original_shape?.[1] || 0}</div>
-                      </div>
-                      <div className="bg-blue-50 p-3 rounded-md">
-                        <div className="text-sm text-blue-700 font-medium">Processed Columns</div>
-                        <div className="text-xl font-bold">{transformedResults.processed_shape?.[1] || 0}</div>
-                      </div>
-                    </div>
-                    
-                    {/* Columns Dropped */}
-                    {transformedResults.columns_dropped && transformedResults.columns_dropped.length > 0 && (
-                      <div className="mb-4">
-                        <h5 className="text-base font-semibold mb-2">Columns Dropped</h5>
-                        <div className="flex flex-wrap gap-2">
-                          {transformedResults.columns_dropped.map((column, idx) => (
-                            <Badge key={idx} variant="outline" className="bg-red-50 text-red-700">
-                              {column}
-                            </Badge>
-                          ))}
+                {Object.keys(processingStatus).length > 0 && (
+                  <div className="mt-4">
+                    <p className="text-sm font-medium mb-3">File Status:</p>
+                    {Object.entries(processingStatus).map(([filename, status]) => (
+                      <div key={filename} className="mb-3">
+                        <div className="flex justify-between text-xs">
+                          <span className="font-medium">{filename}</span>
+                          <span>{status.message}</span>
                         </div>
+                        <Progress 
+                          value={status.progress < 0 ? 100 : status.progress} 
+                          className={`h-2 w-full ${status.progress < 0 ? 'bg-red-300' : ''}`} 
+                        />
                       </div>
-                    )}
-
-                    {/* Columns Dropped by Unique Value */}
-                    {transformedResults.dropped_by_unique_value && transformedResults.dropped_by_unique_value.length > 0 && (
-                      <div className="mb-4">
-                        <h5 className="text-base font-semibold mb-2">Columns Dropped (Single Value)</h5>
-                        <div className="flex flex-wrap gap-2">
-                          {transformedResults.dropped_by_unique_value.map((column, idx) => (
-                            <Badge key={idx} variant="outline" className="bg-orange-50 text-orange-700">
-                              {column}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    
-                    {/* Date Columns Detected */}
-                    {transformedResults.date_columns_detected && transformedResults.date_columns_detected.length > 0 && (
-                      <div className="mb-4">
-                        <h5 className="text-base font-semibold mb-2">Date Columns Detected</h5>
-                        <div className="flex flex-wrap gap-2">
-                          {transformedResults.date_columns_detected.map((column, idx) => (
-                            <Badge key={idx} variant="outline" className="bg-blue-50 text-blue-700">
-                              {column}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    
-                    {/* Columns with Missing Values Cleaned */}
-                    {transformedResults.columns_cleaned && transformedResults.columns_cleaned.length > 0 && (
-                      <div className="mb-4">
-                        <h5 className="text-base font-semibold mb-2">Columns with Missing Values Handled</h5>
-                        <div className="flex flex-wrap gap-2">
-                          {transformedResults.columns_cleaned.map((column, idx) => (
-                            <Badge key={idx} variant="outline" className="bg-green-50 text-green-700">
-                              {column}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    
-                    {/* Missing Value Details */}
-                    {transformedResults.missing_value_stats && Object.keys(transformedResults.missing_value_stats).length > 0 && (
-                      <div className="mb-4">
-                        <h5 className="text-base font-semibold mb-2">Missing Value Details</h5>
-                        <div className="bg-gray-50 p-3 rounded-md max-h-40 overflow-y-auto">
-                          <table className="w-full text-sm">
-                            <thead>
-                              <tr className="border-b">
-                                <th className="text-left py-1 px-2">Column</th>
-                                <th className="text-right py-1 px-2">Missing Count</th>
-                                <th className="text-right py-1 px-2">Missing %</th>
-                                <th className="text-right py-1 px-2">Imputation Method</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {Object.entries(transformedResults.missing_value_stats).map(([column, stats], idx) => (
-                                <tr key={idx} className="border-b">
-                                  <td className="py-1 px-2">{column}</td>
-                                  <td className="text-right py-1 px-2">{stats.missing_count}</td>
-                                  <td className="text-right py-1 px-2">{stats.missing_percentage}%</td>
-                                  <td className="text-right py-1 px-2">
-                                    <Badge variant="outline" className="bg-blue-50 text-blue-700">
-                                      {stats.imputation_method || "None"}
-                                    </Badge>
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      </div>
-                    )}
-                    
-                    {/* Engineered Features */}
-                    {transformedResults.engineered_features && transformedResults.engineered_features.length > 0 && (
-                      <div className="mb-4">
-                        <h5 className="text-base font-semibold mb-2">Engineered Features</h5>
-                        <div className="flex flex-wrap gap-2">
-                          {transformedResults.engineered_features.map((feature, idx) => (
-                            <Badge key={idx} variant="outline" className="bg-purple-50 text-purple-700">
-                              {feature}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    {(!transformedResults.columns_dropped || transformedResults.columns_dropped.length === 0) &&
-                    (!transformedResults.date_columns_detected || transformedResults.date_columns_detected.length === 0) &&
-                    (!transformedResults.columns_cleaned || transformedResults.columns_cleaned.length === 0) &&
-                    (!transformedResults.missing_value_stats || Object.keys(transformedResults.missing_value_stats).length === 0) && (
-                      <AutoPreprocessingReport
-                        processingResults={transformedResults}
-                        fileName={file.name}
-                        isLoading={false}
-                      />
-                    )}
+                    ))}
                   </div>
-                );
-              }
-              return null;
-            })}
-          </div>
-        </div>
-      )}
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base">Feature Engineering</CardTitle>
-            <CardDescription>Create new features for ML</CardDescription>
-          </CardHeader>
-          <CardContent className="text-sm pb-2">
-            Transform your data and create new features to improve machine learning model performance
-          </CardContent>
-          <CardFooter>
-            <Button variant="outline" onClick={() => handleFinish('feature-engineering')} className="w-full gap-2">
-              <ChevronRight className="h-4 w-4" />
-              <span>Go to Feature Engineering</span>
-            </Button>
-          </CardFooter>
-        </Card>
-        
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base">Dashboard</CardTitle>
-            <CardDescription>Return to dashboard</CardDescription>
-          </CardHeader>
-          <CardContent className="text-sm pb-2">
-            Go back to the dashboard to view all your uploaded files and explore other options
-          </CardContent>
-          <CardFooter>
-            <Button onClick={() => handleFinish('dashboard')} className="w-full gap-2">
-              <ChevronRight className="h-4 w-4" />
-              <span>Return to Dashboard</span>
-            </Button>
-          </CardFooter>
-        </Card>
-      </div>
-    </CardContent>
-  </Card>
-)}
+                )}
+                
+                {error && (
+                  <Alert variant="destructive" className="mt-4">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>Error During Processing</AlertTitle>
+                    <AlertDescription>{error}</AlertDescription>
+                  </Alert>
+                )}
+              </CardContent>
+              <CardFooter className="justify-between">
+                <Button variant="outline" disabled={true}>
+                  Back
+                </Button>
+                <Button 
+                  onClick={() => setCurrentStep(3)} 
+                  disabled={!uploadComplete && !error}
+                >
+                  Continue
+                </Button>
+              </CardFooter>
+            </Card>
+          )}
+          
+          {/* Step 4: Complete */}
+          {currentStep === 3 && (
+          <Card className="shadow-sm">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <CheckCircle2 className="h-5 w-5 text-green-500" />
+                <span>Upload Complete</span>
+              </CardTitle>
+              <CardDescription>
+                Your data is ready for analysis and machine learning
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="bg-green-50 border border-green-200 rounded-lg p-6 mb-6">
+                <h3 className="text-lg font-medium text-green-800 mb-2">Upload Summary</h3>
+                <p className="text-green-700 mb-4">
+                  Successfully uploaded {uploadSummary.successCount} of {uploadSummary.totalFiles} files
+                </p>
+                
+                {uploadSummary.filesProcessed.length > 0 && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-4">
+                    {uploadSummary.filesProcessed.map((file, index) => (
+                      <div key={index} className="flex items-center gap-2 text-sm">
+                        {file.success ? (
+                          <CheckCircle2 className="h-4 w-4 text-green-600" />
+                        ) : (
+                          <X className="h-4 w-4 text-red-600" />
+                        )}
+                        <span className={file.success ? "text-green-700" : "text-red-700"}>
+                          {file.name}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              
+              {/* Detailed Preprocessing Reports Section */}
+              {uploadSummary.filesProcessed.some(file => filePreprocessingResults[file.name]) && (
+                <div className="mb-6">
+                  <h3 className="text-xl font-bold mb-4">Data Preprocessing Report</h3>
+                  <div className="space-y-6">
+                    {uploadSummary.filesProcessed.map((file, index) => {
+                      if (file.success && filePreprocessingResults[file.name]) {
+                        // Transform the results to match the expected format
+                        const transformedResults = transformPreprocessingResults(filePreprocessingResults[file.name]);
+                        
+                        // Debug logging to verify the structure
+                        console.log(`Transformed results for ${file.name}:`, transformedResults);
+                        
+                        if (!transformedResults) {
+                          return (
+                            <div key={index} className="border rounded-lg p-4 bg-amber-50">
+                              <h4 className="font-medium text-lg mb-2">{file.name}</h4>
+                              <p className="text-amber-700">No preprocessing details available for this file.</p>
+                            </div>
+                          );
+                        }
+                        
+                        return (
+                          <div key={index} className="border rounded-lg p-6">
+                            <h4 className="font-medium text-lg mb-4">{file.name}</h4>
+                            
+                            {/* Preprocessing Summary Stats */}
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                              <div className="bg-blue-50 p-3 rounded-md">
+                                <div className="text-sm text-blue-700 font-medium">Original Rows</div>
+                                <div className="text-xl font-bold">{transformedResults.original_shape?.[0] || 0}</div>
+                              </div>
+                              <div className="bg-blue-50 p-3 rounded-md">
+                                <div className="text-sm text-blue-700 font-medium">Processed Rows</div>
+                                <div className="text-xl font-bold">{transformedResults.processed_shape?.[0] || 0}</div>
+                              </div>
+                              <div className="bg-blue-50 p-3 rounded-md">
+                                <div className="text-sm text-blue-700 font-medium">Original Columns</div>
+                                <div className="text-xl font-bold">{transformedResults.original_shape?.[1] || 0}</div>
+                              </div>
+                              <div className="bg-blue-50 p-3 rounded-md">
+                                <div className="text-sm text-blue-700 font-medium">Processed Columns</div>
+                                <div className="text-xl font-bold">{transformedResults.processed_shape?.[1] || 0}</div>
+                              </div>
+                            </div>
+                            
+                            {/* Columns Dropped */}
+                            {transformedResults.columns_dropped && transformedResults.columns_dropped.length > 0 && (
+                              <div className="mb-4">
+                                <h5 className="text-base font-semibold mb-2">Columns Dropped</h5>
+                                <div className="flex flex-wrap gap-2">
+                                  {transformedResults.columns_dropped.map((column, idx) => (
+                                    <Badge key={idx} variant="outline" className="bg-red-50 text-red-700">
+                                      {column}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                            
+                            {/* Date Columns Detected */}
+                            {transformedResults.date_columns_detected && transformedResults.date_columns_detected.length > 0 && (
+                              <div className="mb-4">
+                                <h5 className="text-base font-semibold mb-2">Date Columns Detected</h5>
+                                <div className="flex flex-wrap gap-2">
+                                  {transformedResults.date_columns_detected.map((column, idx) => (
+                                    <Badge key={idx} variant="outline" className="bg-blue-50 text-blue-700">
+                                      {column}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                            
+                            {/* Columns with Missing Values Cleaned */}
+                            {transformedResults.columns_cleaned && transformedResults.columns_cleaned.length > 0 && (
+                              <div className="mb-4">
+                                <h5 className="text-base font-semibold mb-2">Columns with Missing Values Handled</h5>
+                                <div className="flex flex-wrap gap-2">
+                                  {transformedResults.columns_cleaned.map((column, idx) => (
+                                    <Badge key={idx} variant="outline" className="bg-green-50 text-green-700">
+                                      {column}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                            
+                            {/* Missing Value Details */}
+                            {transformedResults.missing_value_stats && Object.keys(transformedResults.missing_value_stats).length > 0 && (
+                              <div className="mb-4">
+                                <h5 className="text-base font-semibold mb-2">Missing Value Details</h5>
+                                <div className="bg-gray-50 p-3 rounded-md max-h-40 overflow-y-auto">
+                                  <table className="w-full text-sm">
+                                    <thead>
+                                      <tr className="border-b">
+                                        <th className="text-left py-1 px-2">Column</th>
+                                        <th className="text-right py-1 px-2">Missing Count</th>
+                                        <th className="text-right py-1 px-2">Missing %</th>
+                                        <th className="text-right py-1 px-2">Imputation Method</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      {Object.entries(transformedResults.missing_value_stats).map(([column, stats], idx) => (
+                                        <tr key={idx} className="border-b">
+                                          <td className="py-1 px-2">{column}</td>
+                                          <td className="text-right py-1 px-2">{stats.missing_count}</td>
+                                          <td className="text-right py-1 px-2">{stats.missing_percentage}%</td>
+                                          <td className="text-right py-1 px-2">
+                                            <Badge variant="outline" className="bg-blue-50 text-blue-700">
+                                              {stats.imputation_method || "None"}
+                                            </Badge>
+                                          </td>
+                                        </tr>
+                                      ))}
+                                    </tbody>
+                                  </table>
+                                </div>
+                              </div>
+                            )}
+                            
+                            {/* Engineered Features */}
+                            {transformedResults.engineered_features && transformedResults.engineered_features.length > 0 && (
+                              <div className="mb-4">
+                                <h5 className="text-base font-semibold mb-2">Engineered Features</h5>
+                                <div className="flex flex-wrap gap-2">
+                                  {transformedResults.engineered_features.map((feature, idx) => (
+                                    <Badge key={idx} variant="outline" className="bg-purple-50 text-purple-700">
+                                      {feature}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                            
+                            {/* Use AutoPreprocessingReport as fallback if nothing else to show */}
+                            {(!transformedResults.columns_dropped || transformedResults.columns_dropped.length === 0) &&
+                            (!transformedResults.date_columns_detected || transformedResults.date_columns_detected.length === 0) &&
+                            (!transformedResults.columns_cleaned || transformedResults.columns_cleaned.length === 0) &&
+                            (!transformedResults.missing_value_stats || Object.keys(transformedResults.missing_value_stats).length === 0) && (
+                              <AutoPreprocessingReport
+                                processingResults={transformedResults}
+                                fileName={file.name}
+                                isLoading={false}
+                              />
+                            )}
+                          </div>
+                        );
+                      }
+                      return null;
+                    })}
+                  </div>
+                </div>
+              )}
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base">Feature Engineering</CardTitle>
+                    <CardDescription>Create new features for ML</CardDescription>
+                  </CardHeader>
+                  <CardContent className="text-sm pb-2">
+                    Transform your data and create new features to improve machine learning model performance
+                  </CardContent>
+                  <CardFooter>
+                    <Button variant="outline" onClick={() => handleFinish('feature-engineering')} className="w-full gap-2">
+                      <ChevronRight className="h-4 w-4" />
+                      <span>Go to Feature Engineering</span>
+                    </Button>
+                  </CardFooter>
+                </Card>
+                
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base">Dashboard</CardTitle>
+                    <CardDescription>Return to dashboard</CardDescription>
+                  </CardHeader>
+                  <CardContent className="text-sm pb-2">
+                    Go back to the dashboard to view all your uploaded files and explore other options
+                  </CardContent>
+                  <CardFooter>
+                    <Button onClick={() => handleFinish('dashboard')} className="w-full gap-2">
+                      <ChevronRight className="h-4 w-4" />
+                      <span>Return to Dashboard</span>
+                    </Button>
+                  </CardFooter>
+                </Card>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         </div>
       </div>
