@@ -20,7 +20,7 @@ export async function POST(request: Request) {
     
     // Get preprocessing results if available
     const preprocessingResults = formData.get('preprocessing_results') ? 
-      JSON.parse(formData.get('preprocessing_results') as string) : null;
+  JSON.parse(formData.get('preprocessing_results') as string) : null;
     
     if (!file) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 });
@@ -52,23 +52,25 @@ export async function POST(request: Request) {
     
     // Extract metadata
     const metadata = await extractMetadata(file);
+
+    
     
     // Prepare preprocessing info if available
     const preprocessingInfo = preprocessingResults ? {
-    is_preprocessed: true,
-    preprocessing_date: new Date().toISOString(),
-    columns_cleaned: preprocessingResults.columns_cleaned || [],
-    auto_detected_dates: preprocessingResults.date_columns_detected || [],
-    dropped_columns: preprocessingResults.columns_dropped || [],
-    missing_value_stats: preprocessingResults.missing_value_stats || {},
-    engineered_features: preprocessingResults.engineered_features || [],
-    transformation_details: preprocessingResults.transformation_details || {},
-    original_shape: preprocessingResults.original_shape || [],
-    processed_shape: preprocessingResults.processed_shape || []
-  } : {
-    is_preprocessed: isPreprocessed,
-    preprocessing_date: isPreprocessed ? new Date().toISOString() : null
-  };
+  is_preprocessed: true,
+  preprocessing_date: new Date().toISOString(),
+  columns_cleaned: preprocessingResults.columns_cleaned || [],
+  auto_detected_dates: preprocessingResults.date_columns_detected || [],
+  dropped_columns: preprocessingResults.columns_dropped || [],
+  missing_value_stats: preprocessingResults.missing_value_stats || {},
+  engineered_features: preprocessingResults.engineered_features || [],
+  transformation_details: preprocessingResults.transformation_details || {},
+  original_shape: preprocessingResults.original_shape || [],
+  processed_shape: preprocessingResults.processed_shape || []
+} : {
+  is_preprocessed: isPreprocessed,
+  preprocessing_date: isPreprocessed ? new Date().toISOString() : null
+};
     
     // Save metadata to database
     const { data: fileRecord, error: dbError } = await supabase
