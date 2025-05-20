@@ -9,6 +9,7 @@ import time
 import json
 import uuid
 import tempfile
+import joblib
 from typing import List
 
 # Import custom modules
@@ -150,20 +151,32 @@ async def download_file(filename: str):
 
 @app.get("/processing-status/{filename}")
 async def get_processing_status(filename: str):
-    """Get the processing status and progress of a file"""
+    """Get the processing status and progress of a file, including pipeline data"""
     status_path = STATUS_FOLDER / f"{filename}_status.json"
     
     if status_path.exists():
         with open(status_path, 'r') as f:
             status = json.load(f)
             
-        # If processing is complete, add preprocessing details
+        # If processing is complete, add preprocessing details from the joblib file
         if status.get("progress") == 100:
-            pipeline_path = PROCESSED_FOLDER / f"processed_{filename}_pipeline.joblib"
+            processed_filename = f"processed_{filename}"
+            pipeline_path = PROCESSED_FOLDER / f"{processed_filename}_pipeline.joblib"
+            
             if pipeline_path.exists():
                 try:
-                    preprocessing_data = joblib.load(pipeline_path)
-                    status["preprocessing_details"] = preprocessing_data["preprocessing_info"]
+                    logger.info(f"Loading pipeline data from {pipeline_path}")
+                    pipeline_data = joblib.load(pipeline_path)
+                    
+                    # Extract the preprocessing_info from the pipeline
+                    if "preprocessing_info" in pipeline_data:
+                        logger.info(f"Successfully loaded preprocessing details from pipeline")
+                        status["results"] = {
+                            "success": True,
+                            "original_shape": pipeline_data.get("original_shape", [0, 0]),
+                            "processed_shape": pipeline_data.get("final_shape", [0, 0]),
+                            **pipeline_data["preprocessing_info"]
+                        }
                 except Exception as e:
                     logger.error(f"Error loading pipeline data: {e}")
         
