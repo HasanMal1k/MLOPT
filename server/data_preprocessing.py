@@ -1,32 +1,151 @@
-# Import required libraries
 import pandas as pd
 import numpy as np
+import polars as pl
 from pathlib import Path
-from typing import List, Tuple, Dict, Any, Union, Optional
-import time
-import json
-import uuid
-import os
-import re
 import logging
+import time
 import warnings
+import traceback
+import re
+import os
+import json
+from typing import Dict, List, Tuple, Any, Optional, Union
 
-# Set up logging
-logger = logging.getLogger('data_preprocessing')
+# Sklearn imports
+from sklearn.preprocessing import OrdinalEncoder
+from sklearn.pipeline import Pipeline
+from sklearn.impute import KNNImputer, SimpleImputer
+from sklearn.compose import ColumnTransformer
+from sklearn.base import BaseEstimator, TransformerMixin
+import joblib
 
-# Define date detection patterns
-DATE_PATTERNS = [
-    r'\d{4}-\d{2}-\d{2}',  # YYYY-MM-DD
-    r'\d{2}/\d{2}/\d{4}',  # MM/DD/YYYY
-    r'\d{2}-\d{2}-\d{4}',  # MM-DD-YYYY
-    r'\d{4}/\d{2}/\d{2}',  # YYYY/MM/DD
-    r'\d{2}\.\d{2}\.\d{4}',  # DD.MM.YYYY
-    r'\d{4}\.\d{2}\.\d{2}'   # YYYY.MM.DD
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler("preprocessing.log"),
+        logging.StreamHandler()
+    ]
+)
+logger = logging.getLogger("robust_preprocessing")
+
+# Comprehensive list of missing value indicators
+MISSING_VALUES = [
+    'na', 'n/a', 'N/A', 'NAN', 'NA', 'Null', 'null', 'NULL', 
+    'Nan', 'nan', 'Unknown', 'unknown', 'UNKNOWN', '-', '--', 
+    '---', '----', '', ' ', '  ', '   ', '    ', '?', '??', 
+    '???', '????', 'Missing', 'missing', 'MISSING', '#N/A',
+    '#NA', 'None', 'none', 'NONE', 'nil', 'NIL', 'NaN', '####'
 ]
+
+# Comprehensive date patterns
+DATE_PATTERNS = [
+    r"\b\d{4}-\d{2}-\d{2}\b",                        # YYYY-MM-DD
+    r"\b\d{2}/\d{2}/\d{4}\b",                        # MM/DD/YYYY
+    r"\b\d{2}-\d{2}-\d{4}\b",                        # DD-MM-YYYY
+    r"\b\d{4}/\d{2}/\d{2}\b",                        # YYYY/MM/DD
+    r"\b\d{2}\.\d{2}\.\d{4}\b",                      # DD.MM.YYYY
+    r"\b\d{4}\.\d{2}\.\d{2}\b",                      # YYYY.MM.DD
+    r"\b\d{1,2}-[A-Za-z]{3}-\d{4}\b",                # D-MMM-YYYY
+    r"\b\d{1,2}\s[A-Za-z]{3,9}\s\d{4}\b",            # D Month YYYY
+    r"\b[A-Za-z]{3,9}\s\d{1,2},?\s\d{4}\b",          # Month D, YYYY
+    r"\b\d{1,2}[/-][A-Za-z]{3}[/-]\d{2,4}\b",        # D/MMM/YY or D-MMM-YYYY
+    r"\b\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.*\b",    # ISO datetime
+    r"\b\d{2}[/-]\d{2}[/-]\d{2,4}\b",                # Generic D/M/Y or M/D/Y
+    r"\b\d{4}\d{2}\d{2}\b"                          # YYYYMMDD
+]
+
+# Column name patterns that suggest dates
+DATE_COLUMN_PATTERNS = [
+    r"(?i)date", r"(?i)time", r"(?i)year", r"(?i)month", r"(?i)day",
+    r"(?i)created", r"(?i)modified", r"(?i)timestamp", r"(?i)period"
+]
+
+class ModeImputer(BaseEstimator, TransformerMixin):
+    """Custom imputer that uses the mode for each column."""
+    
+    def __init__(self, strategy='most_frequent'):
+        self.strategy = strategy
+        self.modes_ = None
+        
+    def fit(self, X, y=None):
+        """Learn the most frequent value for each column."""
+        try:
+            # Attempt to get mode through pandas
+            if isinstance(X, pd.DataFrame):
+                self.modes_ = X.mode().iloc[0]
+            else:
+                # Convert numpy array to pandas for mode calculation
+                self.modes_ = pd.DataFrame(X).mode().iloc[0].values
+            return self
+        except Exception as e:
+            logger.warning(f"Error in ModeImputer fit: {e}. Falling back to SimpleImputer.")
+            # Fallback to sklearn SimpleImputer
+            self.imputer_ = SimpleImputer(strategy=self.strategy)
+            self.imputer_.fit(X)
+            return self
+    
+    def transform(self, X):
+        """Impute missing values using the modes from fit."""
+        try:
+            if hasattr(self, 'imputer_'):
+                # Use fallback imputer
+                return self.imputer_.transform(X)
+            
+            if isinstance(X, pd.DataFrame):
+                # Handle DataFrame
+                result = X.copy()
+                for i, col in enumerate(X.columns):
+                    result[col] = result[col].fillna(self.modes_[i])
+                return result
+            else:
+                # Handle numpy array
+                result = np.copy(X)
+                mask = np.isnan(result)
+                indices = np.where(mask)
+                result[indices] = np.take(self.modes_, indices[1])
+                return result
+        except Exception as e:
+            logger.error(f"Error in ModeImputer transform: {e}")
+            # Return original data if transform fails
+            return X
+
+def update_status(filename: str, status_folder: Path, 
+                 progress: int, message: str, 
+                 results: Optional[Dict] = None) -> Dict:
+    """
+    Update the processing status of a file with detailed information.
+    
+    Args:
+        filename: Name of the file being processed
+        status_folder: Directory to save status files
+        progress: Progress percentage (0-100)
+        message: Status message
+        results: Optional results to include in the status
+        
+    Returns:
+        Status dictionary
+    """
+    status = {
+        "status": "processing" if progress < 100 else "completed",
+        "progress": progress,
+        "message": message,
+        "timestamp": time.time()
+    }
+    
+    if results is not None:
+        status["results"] = results
+    
+    status_path = status_folder / f"{filename}_status.json"
+    with open(status_path, 'w') as f:
+        json.dump(status, f)
+    
+    return status
 
 def detect_date_columns(df: pd.DataFrame) -> List[str]:
     """
-    Intelligently detect columns containing dates
+    Identify columns that likely contain date information using multiple methods.
     
     Args:
         df: Input dataframe
@@ -41,111 +160,107 @@ def detect_date_columns(df: pd.DataFrame) -> List[str]:
     date_columns.extend(datetime_cols)
     
     # Check for columns with date-like names
-    date_name_columns = [col for col in df.columns 
-                         if any(term in col.lower() 
-                                for term in ['date', 'time', 'timestamp', 'year', 'month', 'day'])]
-    
-    # For columns with date-like names or object type, try to detect date patterns
-    for col in df.select_dtypes(include=['object']).columns:
-        # Skip if already identified as date
+    for col in df.columns:
+        # Skip if already identified
         if col in date_columns:
             continue
-        
+            
         # Check if column name suggests it's a date
-        is_date_name = col in date_name_columns
+        if any(re.search(pattern, col) for pattern in DATE_COLUMN_PATTERNS):
+            # Sample the column to verify it contains date-like strings
+            if df[col].dtype in ['object', 'string']:
+                sample = df[col].dropna().astype(str).head(20).tolist()
+                
+                # If it has date patterns, add to list
+                if any(any(re.search(pattern, str(val)) for pattern in DATE_PATTERNS) 
+                       for val in sample if val is not None):
+                    date_columns.append(col)
+                    continue
+    
+    # For remaining string columns, check for date patterns directly
+    string_cols = [col for col in df.select_dtypes(include=['object', 'string']).columns 
+                  if col not in date_columns]
+    
+    for col in string_cols:
+        sample = df[col].dropna().astype(str).head(20).tolist()
+        pattern_matches = 0
         
-        # Sample the first few non-null values
-        sample = df[col].dropna().head(5)
-        if len(sample) == 0:
-            continue
+        for val in sample:
+            if any(re.search(pattern, str(val)) for pattern in DATE_PATTERNS):
+                pattern_matches += 1
         
-        # Try to match patterns
-        has_date_pattern = False
-        for pattern in DATE_PATTERNS:
-            if any(bool(re.search(pattern, str(val))) for val in sample):
-                has_date_pattern = True
-                break
-        
-        # Try converting to datetime as final check
-        can_convert_to_date = False
-        if has_date_pattern or is_date_name:
-            # Suppress dateutil parser warnings
-            with warnings.catch_warnings():
-                warnings.filterwarnings('ignore', 
-                                      message="Could not infer format, so each element will be parsed individually", 
-                                      category=UserWarning)
-                try:
-                    test_conversion = pd.to_datetime(sample, errors='coerce')
-                    # If at least half of the samples converted successfully
-                    if test_conversion.notna().sum() >= len(sample) / 2:
-                        can_convert_to_date = True
-                except Exception as e:
-                    logger.debug(f"Failed to test convert {col} to datetime: {e}")
-        
-        # Add to date columns if it passes our tests
-        if (is_date_name and can_convert_to_date) or (has_date_pattern and can_convert_to_date):
-            date_columns.append(col)
+        # If more than 50% of sampled values match date patterns
+        if pattern_matches > len(sample) * 0.5 and len(sample) > 0:
+            # Confirm by attempting conversion
+            try:
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore")
+                    converted = pd.to_datetime(df[col].head(20), errors='coerce')
+                    # If more than 50% converted successfully
+                    if converted.notna().sum() > len(converted) * 0.5:
+                        date_columns.append(col)
+            except:
+                pass
     
     return date_columns
 
-def convert_date_columns(df: pd.DataFrame, date_columns: List[str]) -> Tuple[pd.DataFrame, List[str]]:
+def safe_read_file(file_path: Path, missing_values: List[str] = None) -> Tuple[pd.DataFrame, bool, str]:
     """
-    Convert detected date columns to datetime type
+    Safely read a data file with multiple fallback options.
     
     Args:
-        df: Input dataframe
-        date_columns: List of columns to convert
+        file_path: Path to the file
+        missing_values: List of strings to interpret as missing values
         
     Returns:
-        Tuple of (updated dataframe, successfully converted columns)
+        Tuple of (dataframe, success, error_message)
     """
-    df_result = df.copy()
-    successfully_converted = []
+    error_msg = ""
     
-    # Suppress dateutil parser warnings
-    with warnings.catch_warnings():
-        warnings.filterwarnings('ignore', category=UserWarning)
-        
-        for col in date_columns:
-            try:
-                if col in df_result.columns:
-                    df_result[col] = pd.to_datetime(df_result[col], errors='coerce')
-                    successfully_converted.append(col)
-            except Exception as e:
-                logger.warning(f"Failed to convert {col} to datetime: {e}")
+    # First try with Polars for better performance
+    try:
+        logger.info(f"Reading {file_path} with Polars")
+        df = pl.read_csv(file_path, null_values=missing_values or MISSING_VALUES, 
+                         ignore_errors=True)
+        return df.to_pandas(), True, ""
+    except Exception as e:
+        error_msg = f"Polars read failed: {e}. "
+        logger.warning(f"Polars read failed for {file_path}: {e}")
     
-    return df_result, successfully_converted
-
-def update_status(filename: str, status_folder: Path, progress: int, message: str) -> Dict:
-    """
-    Update the processing status of a file
+    # Fall back to pandas with different options
+    try:
+        logger.info(f"Reading {file_path} with pandas")
+        if file_path.suffix.lower() == '.csv':
+            df = pd.read_csv(file_path, na_values=missing_values or MISSING_VALUES, 
+                            keep_default_na=True, on_bad_lines='warn')
+            return df, True, ""
+        elif file_path.suffix.lower() in ['.xlsx', '.xls']:
+            df = pd.read_excel(file_path, na_values=missing_values or MISSING_VALUES)
+            return df, True, ""
+    except Exception as e:
+        error_msg += f"Pandas standard read failed: {e}. "
+        logger.warning(f"Pandas standard read failed for {file_path}: {e}")
     
-    Args:
-        filename: Name of the file being processed
-        status_folder: Directory to save status files
-        progress: Progress percentage (0-100)
-        message: Status message
-        
-    Returns:
-        Status dictionary
-    """
-    status = {
-        "status": "processing" if progress < 100 else "completed",
-        "progress": progress,
-        "message": message,
-        "timestamp": time.time()
-    }
+    # Last resort - try more permissive options
+    try:
+        logger.info(f"Trying permissive read for {file_path}")
+        if file_path.suffix.lower() == '.csv':
+            df = pd.read_csv(file_path, na_values=missing_values or MISSING_VALUES,
+                            keep_default_na=True, on_bad_lines='skip', 
+                            encoding='latin1', low_memory=False)
+            logger.info(f"Permissive read succeeded with {len(df)} rows")
+            return df, True, "Used permissive reading (some rows may have been skipped)"
+    except Exception as e:
+        error_msg += f"All reading methods failed: {e}"
+        logger.error(f"All methods failed to read {file_path}: {e}")
+        return pd.DataFrame(), False, error_msg
     
-    status_path = status_folder / f"{filename}_status.json"
-    with open(status_path, 'w') as f:
-        json.dump(status, f)
-    
-    return status
+    return pd.DataFrame(), False, "Unknown error reading file"
 
 def preprocess_file(file_path: Path, output_path: Path, 
                    status_folder: Path, progress_callback=None) -> Dict:
     """
-    Main preprocessing function with improved performance and reporting
+    Enhanced preprocessing function with robust error handling and comprehensive cleaning.
     
     Args:
         file_path: Path to the input file
@@ -157,134 +272,334 @@ def preprocess_file(file_path: Path, output_path: Path,
         Dictionary with preprocessing results
     """
     filename = file_path.name
+    logger.info(f"Starting preprocessing of {filename}")
     
-    # 1. Read the file
-    if progress_callback:
-        progress_callback(10, "Reading file")
-    update_status(filename, status_folder, 10, "Reading file")
-    
-    try:
-        if file_path.suffix.lower() == '.csv':
-            df = pd.read_csv(file_path)
-        else:  # Excel file
-            df = pd.read_excel(file_path)
-    except Exception as e:
-        logger.error(f"Error reading file: {e}")
-        update_status(filename, status_folder, -1, f"Error: {str(e)}")
-        return {"success": False, "error": str(e)}
-    
-    # Save original shape for reporting
-    original_shape = df.shape
-    
-    # Processing results
+    # Setup preprocessing info structure
     preprocessing_info = {
         "columns_dropped": [],
         "date_columns_detected": [],
         "columns_cleaned": [],
-        "missing_value_stats": {}
+        "missing_value_stats": {},
+        "dropped_by_unique_value": [],
+        "engineered_features": []
     }
     
-    # 2. Simple cleaning - drop columns with all missing values
-    update_status(filename, status_folder, 20, "Cleaning data")
+    # 1. Read the file
+    update_status(filename, status_folder, 5, "Reading file")
     if progress_callback:
-        progress_callback(20, "Cleaning data")
+        progress_callback(5, "Reading file")
     
-    # Drop columns with all missing values
-    null_columns = df.columns[df.isnull().all()].tolist()
-    if null_columns:
-        df = df.drop(columns=null_columns)
-        preprocessing_info["columns_dropped"].extend(null_columns)
+    df, read_success, read_message = safe_read_file(file_path, MISSING_VALUES)
     
-    # 3. Save basic statistics about missing values
-    for col in df.columns:
-        missing_count = df[col].isnull().sum()
-        if missing_count > 0:
-            missing_percentage = round((missing_count / len(df)) * 100, 2)
-            preprocessing_info["missing_value_stats"][col] = {
-                "missing_count": int(missing_count),
-                "missing_percentage": missing_percentage,
-                "imputation_method": "None"  # Default value, will be updated if imputation is applied
-            }
+    if not read_success:
+        error_msg = f"Failed to read file: {read_message}"
+        logger.error(error_msg)
+        update_status(filename, status_folder, -1, error_msg)
+        return {"success": False, "error": error_msg}
     
-    # 4. Detect and drop columns with very high missing values (e.g., > 95%)
-    high_missing_cols = [col for col in df.columns 
-                        if df[col].isnull().sum() > 0.95 * len(df)]
+    # Save original shape for reporting
+    original_shape = df.shape
+    logger.info(f"Original shape: {original_shape}")
     
-    if high_missing_cols:
-        df = df.drop(columns=high_missing_cols)
-        preprocessing_info["columns_dropped"].extend(high_missing_cols)
+    if original_shape[0] == 0 or original_shape[1] == 0:
+        error_msg = f"File is empty or has no columns: {original_shape}"
+        logger.error(error_msg)
+        update_status(filename, status_folder, -1, error_msg)
+        return {"success": False, "error": error_msg}
     
-    # 5. Detect and convert date columns
-    update_status(filename, status_folder, 40, "Detecting date columns")
+    # 2. Handle whitespace and make a copy for safety
+    update_status(filename, status_folder, 10, "Initial cleaning")
     if progress_callback:
-        progress_callback(40, "Detecting date columns")
-    
-    # Suppress warnings during date processing
-    with warnings.catch_warnings():
-        warnings.filterwarnings('ignore', category=UserWarning, 
-                               message="Could not infer format, so each element will be parsed individually")
-        
-        date_columns = detect_date_columns(df)
-        df, converted_date_columns = convert_date_columns(df, date_columns)
-    
-    preprocessing_info["date_columns_detected"] = converted_date_columns
-    
-    # 6. Handle missing values in remaining columns
-    update_status(filename, status_folder, 60, "Handling missing values")
-    if progress_callback:
-        progress_callback(60, "Handling missing values")
-    
-    columns_with_missing = [col for col in df.columns if df[col].isnull().sum() > 0]
-    
-    for col in columns_with_missing:
-        # If it's a numeric column, fill with median
-        if pd.api.types.is_numeric_dtype(df[col]):
-            median_value = df[col].median()
-            df[col] = df[col].fillna(median_value)
-            preprocessing_info["columns_cleaned"].append(col)
-            if col in preprocessing_info["missing_value_stats"]:
-                preprocessing_info["missing_value_stats"][col]["imputation_method"] = "median"
-        
-        # If it's a categorical/string column, fill with mode (most common value)
-        elif pd.api.types.is_string_dtype(df[col]) or pd.api.types.is_categorical_dtype(df[col]):
-            mode_value = df[col].mode()[0] if not df[col].mode().empty else "Unknown"
-            df[col] = df[col].fillna(mode_value)
-            preprocessing_info["columns_cleaned"].append(col)
-            if col in preprocessing_info["missing_value_stats"]:
-                preprocessing_info["missing_value_stats"][col]["imputation_method"] = "mode"
-        
-        # For datetime columns, just leave as NaT (pandas null value for datetime)
-        else:
-            # No special handling needed
-            pass
-    
-    # 7. Save the cleaned dataframe
-    update_status(filename, status_folder, 80, "Saving processed file")
-    if progress_callback:
-        progress_callback(80, "Saving processed file")
+        progress_callback(10, "Initial cleaning")
     
     try:
+        # Remove whitespace in string cells
+        df = df.replace(r'^\s*$', np.nan, regex=True)
+        
+        # Drop rows with all missing values
+        initial_row_count = len(df)
+        df.dropna(how='all', inplace=True)
+        dropped_rows = initial_row_count - len(df)
+        
+        if dropped_rows > 0:
+            logger.info(f"Dropped {dropped_rows} rows that were completely empty")
+    except Exception as e:
+        logger.warning(f"Error in initial cleaning: {e}")
+        # Continue despite errors in this step
+    
+    # 3. Gather statistics about missing values
+    update_status(filename, status_folder, 15, "Analyzing missing values")
+    if progress_callback:
+        progress_callback(15, "Analyzing missing values")
+    
+    try:
+        for col in df.columns:
+            missing_count = df[col].isna().sum()
+            if missing_count > 0:
+                missing_percentage = round((missing_count / len(df)) * 100, 2)
+                preprocessing_info["missing_value_stats"][col] = {
+                    "missing_count": int(missing_count),
+                    "missing_percentage": missing_percentage,
+                    "imputation_method": "None"  # Will be updated later
+                }
+        logger.info(f"Found {len(preprocessing_info['missing_value_stats'])} columns with missing values")
+    except Exception as e:
+        logger.warning(f"Error analyzing missing values: {e}")
+    
+    # 4. Drop problematic columns
+    update_status(filename, status_folder, 20, "Removing problematic columns")
+    if progress_callback:
+        progress_callback(20, "Removing problematic columns")
+    
+    try:
+        # Drop duplicate column names (retaining first)
+        if len(df.columns) != len(df.columns.unique()):
+            df = df.loc[:, ~df.columns.duplicated()]
+            logger.info("Removed duplicate column names")
+        
+        # Drop columns with extremely high missing values
+        high_missing_cols = [col for col in df.columns 
+                            if df[col].isna().sum() > 0.95 * len(df)]
+        
+        if high_missing_cols:
+            df = df.drop(columns=high_missing_cols)
+            preprocessing_info["columns_dropped"].extend(high_missing_cols)
+            logger.info(f"Dropped {len(high_missing_cols)} columns with >95% missing values")
+    except Exception as e:
+        logger.warning(f"Error removing problematic columns: {e}")
+    
+    # 5. Detect and convert date columns
+    update_status(filename, status_folder, 30, "Processing date columns")
+    if progress_callback:
+        progress_callback(30, "Processing date columns")
+    
+    try:
+        date_columns = detect_date_columns(df)
+        
+        # Convert detected date columns
+        for col in date_columns:
+            if col in df.columns:  # Safety check
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore")
+                    df[col] = pd.to_datetime(df[col], errors='coerce')
+        
+        preprocessing_info["date_columns_detected"] = date_columns
+        logger.info(f"Detected and converted {len(date_columns)} date columns")
+    except Exception as e:
+        logger.warning(f"Error processing date columns: {e}")
+    
+    # 6. Prepare for imputation
+    update_status(filename, status_folder, 40, "Preparing for imputation")
+    if progress_callback:
+        progress_callback(40, "Preparing for imputation")
+    
+    try:
+        # Identify column types for imputation
+        nominal_columns = [col for col in df.columns 
+                          if col not in date_columns and 
+                          df[col].dtype in ['object', 'category', 'string', 'bool']]
+        
+        non_nominal_columns = [col for col in df.columns 
+                              if col not in nominal_columns and 
+                              col not in date_columns]
+        
+        logger.info(f"Column types: {len(nominal_columns)} categorical, " 
+                   f"{len(non_nominal_columns)} numeric, {len(date_columns)} date")
+    except Exception as e:
+        logger.warning(f"Error preparing for imputation: {e}")
+        # Define in case of error
+        nominal_columns = []
+        non_nominal_columns = []
+    
+    # 7. Handle missing values with advanced techniques
+    update_status(filename, status_folder, 50, "Handling missing values")
+    if progress_callback:
+        progress_callback(50, "Handling missing values")
+    
+    try:
+        # Create a copy of the dataframe for safety during imputation
+        df_copy = df.copy()
+        
+        # For categorical columns
+        if nominal_columns:
+            # Use mode imputation for categorical columns
+            mode_imputer = ModeImputer()
+            mode_imputer.fit(df_copy[nominal_columns])
+            
+            for col in nominal_columns:
+                if col in preprocessing_info["missing_value_stats"]:
+                    if df_copy[col].isna().sum() > 0:
+                        try:
+                            # Get the mode for this column
+                            mode_val = df_copy[col].mode().iloc[0] if not df_copy[col].mode().empty else "Unknown"
+                            df_copy[col] = df_copy[col].fillna(mode_val)
+                            preprocessing_info["columns_cleaned"].append(col)
+                            preprocessing_info["missing_value_stats"][col]["imputation_method"] = "mode"
+                        except Exception as e:
+                            logger.warning(f"Error imputing column {col}: {e}")
+        
+        # For numeric columns
+        if non_nominal_columns:
+            try:
+                # Try using KNN imputation for numeric columns
+                missing_in_numeric = any(df_copy[col].isna().sum() > 0 for col in non_nominal_columns)
+                
+                if missing_in_numeric and len(df_copy) > 10 and len(non_nominal_columns) > 0:
+                    # Determine optimal k for KNN (smaller of 5 or half the dataset)
+                    k = min(5, max(2, len(df_copy) // 2))
+                    
+                    # Fill any lingering NaNs with column means first to avoid KNN errors
+                    for col in non_nominal_columns:
+                        if df_copy[col].isna().sum() > 0:
+                            df_copy[col] = df_copy[col].fillna(df_copy[col].mean())
+                    
+                    # Apply KNN imputation
+                    imputer = KNNImputer(n_neighbors=k)
+                    non_nominal_values = df_copy[non_nominal_columns].values
+                    imputed_values = imputer.fit_transform(non_nominal_values)
+                    
+                    # Update the dataframe with imputed values
+                    for i, col in enumerate(non_nominal_columns):
+                        if col in preprocessing_info["missing_value_stats"]:
+                            df_copy[col] = imputed_values[:, i]
+                            preprocessing_info["columns_cleaned"].append(col)
+                            preprocessing_info["missing_value_stats"][col]["imputation_method"] = "knn"
+                
+                else:
+                    # Fall back to simpler imputation if KNN doesn't make sense
+                    for col in non_nominal_columns:
+                        if col in preprocessing_info["missing_value_stats"] and df_copy[col].isna().sum() > 0:
+                            # Use median for imputation
+                            median_val = df_copy[col].median()
+                            df_copy[col] = df_copy[col].fillna(median_val)
+                            preprocessing_info["columns_cleaned"].append(col)
+                            preprocessing_info["missing_value_stats"][col]["imputation_method"] = "median"
+            
+            except Exception as e:
+                logger.warning(f"Error in KNN imputation: {e}, falling back to median")
+                
+                # Fall back to median imputation for numeric columns
+                for col in non_nominal_columns:
+                    if col in preprocessing_info["missing_value_stats"] and df_copy[col].isna().sum() > 0:
+                        median_val = df_copy[col].median()
+                        df_copy[col] = df_copy[col].fillna(median_val)
+                        preprocessing_info["columns_cleaned"].append(col)
+                        preprocessing_info["missing_value_stats"][col]["imputation_method"] = "median"
+        
+        # Update the main dataframe after imputation
+        df = df_copy
+        
+        logger.info(f"Cleaned {len(preprocessing_info['columns_cleaned'])} columns with missing values")
+    except Exception as e:
+        logger.error(f"Error handling missing values: {e}")
+        # Continue despite errors, using the original dataframe
+    
+    # 8. Remove columns with single value (no variance)
+    update_status(filename, status_folder, 70, "Final cleaning")
+    if progress_callback:
+        progress_callback(70, "Final cleaning")
+    
+    try:
+        single_value_cols = [col for col in df.columns if df[col].nunique() <= 1]
+        if single_value_cols:
+            df = df.drop(columns=single_value_cols)
+            preprocessing_info["dropped_by_unique_value"] = single_value_cols
+            logger.info(f"Dropped {len(single_value_cols)} columns with only a single value")
+    except Exception as e:
+        logger.warning(f"Error removing single-value columns: {e}")
+    
+    # 9. Verify data quality and ensure no missing values remain
+    update_status(filename, status_folder, 80, "Final quality check")
+    if progress_callback:
+        progress_callback(80, "Final quality check")
+    
+    try:
+        # Check for any remaining missing values
+        remaining_missing = df.isna().sum().sum()
+        
+        if remaining_missing > 0:
+            logger.warning(f"There are still {remaining_missing} missing values after processing")
+            
+            # Last resort fill with meaningful constants
+            for col in df.columns:
+                if df[col].isna().sum() > 0:
+                    if pd.api.types.is_numeric_dtype(df[col]):
+                        df[col] = df[col].fillna(0)
+                    else:
+                        df[col] = df[col].fillna("Unknown")
+                    
+                    if col not in preprocessing_info["columns_cleaned"]:
+                        preprocessing_info["columns_cleaned"].append(col)
+        
+        # Ensure we still have data
+        if len(df) == 0 or len(df.columns) == 0:
+            error_msg = f"No data remains after preprocessing. Original: {original_shape}, Current: {df.shape}"
+            logger.error(error_msg)
+            update_status(filename, status_folder, -1, error_msg)
+            return {"success": False, "error": error_msg}
+    except Exception as e:
+        logger.warning(f"Error in final quality check: {e}")
+    
+    # 10. Save the processed file
+    update_status(filename, status_folder, 90, "Saving processed file")
+    if progress_callback:
+        progress_callback(90, "Saving processed file")
+    
+    try:
+        # Create a directory if it doesn't exist
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        
+        # Save to the correct format
         if output_path.suffix.lower() == '.csv':
             df.to_csv(output_path, index=False)
-        else:  # Excel file
+        elif output_path.suffix.lower() in ['.xlsx', '.xls']:
             df.to_excel(output_path, index=False)
+        else:
+            # Default to CSV if extension is not recognized
+            output_csv = output_path.with_suffix('.csv')
+            df.to_csv(output_csv, index=False)
+            logger.info(f"Unrecognized extension, saved as CSV: {output_csv}")
+        
+        logger.info(f"Successfully saved processed file to {output_path}")
     except Exception as e:
-        logger.error(f"Error saving file: {e}")
-        update_status(filename, status_folder, -1, f"Error: {str(e)}")
-        return {"success": False, "error": str(e)}
+        error_msg = f"Error saving processed file: {str(e)}"
+        logger.error(f"{error_msg}\n{traceback.format_exc()}")
+        update_status(filename, status_folder, -1, error_msg)
+        return {"success": False, "error": error_msg}
     
-    # 8. Complete and return report
-    update_status(filename, status_folder, 100, "Processing complete")
-    if progress_callback:
-        progress_callback(100, "Processing complete")
+    # 11. Complete processing and return report
+    final_shape = df.shape
+    processed_percentage = round((len(preprocessing_info["columns_cleaned"]) / original_shape[1]) * 100, 1)
+    
+    logger.info(f"Preprocessing complete. Original shape: {original_shape}, Final shape: {final_shape}")
+    logger.info(f"Processed {len(preprocessing_info['columns_cleaned'])} columns ({processed_percentage}%)")
+    
+    # Save preprocessing pipeline for reproducibility
+    try:
+        pipeline_path = output_path.with_name(f"{output_path.stem}_pipeline.joblib")
+        preprocessing_pipeline = {
+            "missing_values": MISSING_VALUES,
+            "date_patterns": DATE_PATTERNS,
+            "preprocessing_info": preprocessing_info,
+            "original_shape": original_shape,
+            "final_shape": final_shape
+        }
+        joblib.dump(preprocessing_pipeline, pipeline_path)
+    except Exception as e:
+        logger.warning(f"Could not save preprocessing pipeline: {e}")
     
     # Final report
     report = {
         "success": True,
         "original_shape": original_shape,
-        "processed_shape": df.shape,
-        "preprocessing_info": preprocessing_info
+        "processed_shape": final_shape,
+        "preprocessing_info": preprocessing_info,
+        "message": f"Successfully processed {filename}. Cleaned {len(preprocessing_info['columns_cleaned'])} columns."
     }
+    
+    update_status(filename, status_folder, 100, "Processing complete", report)
+    if progress_callback:
+        progress_callback(100, "Processing complete")
     
     return report
 

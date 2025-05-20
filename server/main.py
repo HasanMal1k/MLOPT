@@ -156,10 +156,21 @@ async def get_processing_status(filename: str):
     if status_path.exists():
         with open(status_path, 'r') as f:
             status = json.load(f)
+            
+        # If processing is complete, add preprocessing details
+        if status.get("progress") == 100:
+            pipeline_path = PROCESSED_FOLDER / f"processed_{filename}_pipeline.joblib"
+            if pipeline_path.exists():
+                try:
+                    preprocessing_data = joblib.load(pipeline_path)
+                    status["preprocessing_details"] = preprocessing_data["preprocessing_info"]
+                except Exception as e:
+                    logger.error(f"Error loading pipeline data: {e}")
+        
         return status
     else:
         return {"status": "not_found", "message": f"No processing status found for {filename}"}
-
+    
 @app.post("/generate_report/", response_class=HTMLResponse)
 async def generate_report(file: UploadFile = File(...)):
     """
