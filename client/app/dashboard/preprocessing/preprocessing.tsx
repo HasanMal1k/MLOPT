@@ -1,11 +1,11 @@
 'use client'
 
-import { useState, useEffect, Suspense } from 'react'
+import { useState, useEffect } from 'react'
 import { createClient } from '@/utils/supabase/client'
 import { type FileMetadata } from '@/components/FilePreview'
 import { useSearchParams } from 'next/navigation'
 import FilePreview from '@/components/FilePreview'
-import PreprocessingReport from '@/components/PreprocessingReport'
+
 import { 
   Card,
   CardContent,
@@ -30,19 +30,12 @@ import {
   Download,
   Eye,
   CheckCircle2,
-  Calendar,
-  SlidersHorizontal,
-  Check,
-  X,
-  ArrowUpDown,
-  Filter,
   FileText,
   Trash2
 } from "lucide-react"
-import { Badge } from "@/components/ui/badge"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Progress } from "@/components/ui/progress"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Checkbox } from "@/components/ui/checkbox"
 import {
   Select,
   SelectContent,
@@ -50,35 +43,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Separator } from "@/components/ui/separator"
-import { 
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Checkbox } from "@/components/ui/checkbox"
 
 // Define interfaces for column analysis from backend
 interface ColumnAnalysis {
   name: string;
   current_type: string;
   suggested_type: string;
-  possible_types: string[];
   sample_values: string[];
-  missing_percentage: number;
-  unique_count: number;
-  unique_percentage: number;
-  value_distribution?: Record<string, number>;
 }
 
 interface FileAnalysis {
@@ -95,64 +67,43 @@ interface TransformationResult {
   transformed_file: string;
   report_file: string;
   report: {
-    column_changes: Record<string, any>;
-    row_count: {
-      before: number;
-      after: number;
-    };
     data_types: Record<string, {
       original: string;
       converted_to: string;
     }>;
-    missing_values: Record<string, {
-      before: number;
-      after: number;
-      method: string;
-    }>;
+    columns_dropped: string[];
     transformations_applied: string[];
   };
 }
 
-interface ProcessedResult {
-  success: boolean;
-  operations_applied: string[];
-  message: string;
-  result_file: string;
-  statistics?: {
-    rows_affected: number;
-    outliers_removed?: number;
-    features_encoded?: string[];
+interface PreviewData {
+  original: Record<string, any>[];
+  transformed: Record<string, any>[];
+  columns: {
+    original: string[];
+    transformed: string[];
   };
 }
-
-const operationNames: Record<string, string> = {
-  missing_values: "Handle Missing Values",
-  outliers: "Detect & Remove Outliers",
-  feature_encoding: "Categorical Encoding",
-  feature_scaling: "Feature Scaling",
-  date_features: "Extract Date Features"
-};
 
 export default function CustomPreprocessing() {
   // State
   const [activeTab, setActiveTab] = useState<string>("file_selection")
   const [files, setFiles] = useState<FileMetadata[]>([])
   const [selectedFile, setSelectedFile] = useState<FileMetadata | null>(null)
-  const [processedResult, setProcessedResult] = useState<ProcessedResult | null>(null);
   const [isLoading, setIsLoading] = useState(true)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [fileAnalysis, setFileAnalysis] = useState<FileAnalysis | null>(null)
   const [columnEdits, setColumnEdits] = useState<Record<string, {
     newType?: string;
-    missingValueAction?: string;
-    missingValueFillValue?: string;
     drop?: boolean;
   }>>({})
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [isApplyingTransformations, setIsApplyingTransformations] = useState(false)
   const [transformationResult, setTransformationResult] = useState<TransformationResult | null>(null)
-  const [selectedColumns, setSelectedColumns] = useState<string[]>([])
   const [isPreviewOpen, setIsPreviewOpen] = useState(false)
+  const [downloadUrl, setDownloadUrl] = useState<string | null>(null)
+  const [previewData, setPreviewData] = useState<PreviewData | null>(null)
+  const [isLoadingPreview, setIsLoadingPreview] = useState(false)
   
   const searchParams = useSearchParams()
   const fileId = searchParams.get('file')
@@ -207,7 +158,7 @@ export default function CustomPreprocessing() {
     setFileAnalysis(null)
     setColumnEdits({})
     setTransformationResult(null)
-    setSelectedColumns([])
+    setPreviewData(null)
     setActiveTab("file_analysis")
   }
   
@@ -258,14 +209,10 @@ export default function CustomPreprocessing() {
       analysisResult.columns_info.forEach((col: ColumnAnalysis) => {
         initialEdits[col.name] = {
           newType: col.suggested_type,
-          missingValueAction: col.missing_percentage > 0 ? "none" : undefined,
           drop: false
         }
       })
       setColumnEdits(initialEdits)
-      
-      // Select all columns by default
-      setSelectedColumns(analysisResult.columns_info.map((col: ColumnAnalysis) => col.name))
       
       setActiveTab("column_types")
     } catch (error) {
@@ -274,15 +221,6 @@ export default function CustomPreprocessing() {
     } finally {
       setIsAnalyzing(false)
     }
-  }
-  
-  // Toggle column selection
-  const toggleColumnSelection = (columnName: string) => {
-    setSelectedColumns(prev => 
-      prev.includes(columnName)
-        ? prev.filter(name => name !== columnName)
-        : [...prev, columnName]
-    )
   }
   
   // Update column edit
@@ -294,6 +232,79 @@ export default function CustomPreprocessing() {
         [field]: value
       }
     }))
+    
+    // Trigger preview update after a short delay
+    setTimeout(() => {
+      updatePreview();
+    }, 300);
+  }
+  
+  // Get preview of transformations
+  const updatePreview = async () => {
+    if (!selectedFile || !fileAnalysis) return
+    
+    setIsLoadingPreview(true)
+    
+    try {
+      // Download the file content
+      const { data: { publicUrl } } = supabase.storage
+        .from('data-files')
+        .getPublicUrl(`${selectedFile.user_id}/${selectedFile.filename}`)
+      
+      // Fetch the file
+      const response = await fetch(publicUrl)
+      if (!response.ok) {
+        throw new Error(`Failed to download file: ${response.statusText}`)
+      }
+      
+      const fileBlob = await response.blob()
+      const fileObj = new File([fileBlob], selectedFile.original_filename, { 
+        type: selectedFile.mime_type 
+      })
+      
+      // Prepare transformation config
+      const transformationConfig = {
+        data_types: {} as Record<string, string>,
+        columns_to_drop: [] as string[]
+      }
+      
+      // Add data type transformations and collect columns to drop
+      Object.entries(columnEdits).forEach(([colName, edit]) => {
+        if (edit.newType) {
+          transformationConfig.data_types[colName] = edit.newType
+        }
+        
+        if (edit.drop) {
+          transformationConfig.columns_to_drop.push(colName)
+        }
+      })
+      
+      // Create form data
+      const formData = new FormData()
+      formData.append('file', fileObj)
+      formData.append('transformations', JSON.stringify(transformationConfig))
+      
+      // Send to backend for preview
+      const previewResponse = await fetch('http://localhost:8000/custom-preprocessing/preview-transformation/', {
+        method: 'POST',
+        body: formData
+      })
+      
+      if (!previewResponse.ok) {
+        const errorData = await previewResponse.json()
+        throw new Error(errorData.detail || 'Preview failed')
+      }
+      
+      const result = await previewResponse.json()
+      if (result.success && result.preview) {
+        setPreviewData(result.preview)
+      }
+    } catch (error) {
+      console.error('Error generating preview:', error)
+      // Don't set an error message as this is a background operation
+    } finally {
+      setIsLoadingPreview(false)
+    }
   }
   
   // Apply transformations
@@ -323,33 +334,17 @@ export default function CustomPreprocessing() {
       // Prepare transformation config
       const transformationConfig = {
         data_types: {} as Record<string, string>,
-        missing_values: {} as Record<string, any>,
-        column_operations: [] as any[]
+        columns_to_drop: [] as string[]
       }
       
-      // Only process selected columns
-      selectedColumns.forEach(colName => {
-        const edit = columnEdits[colName]
-        
-        // Data type transformation
+      // Add data type transformations and collect columns to drop
+      Object.entries(columnEdits).forEach(([colName, edit]) => {
         if (edit.newType) {
           transformationConfig.data_types[colName] = edit.newType
         }
         
-        // Missing value handling
-        if (edit.missingValueAction && edit.missingValueAction !== "none") {
-          transformationConfig.missing_values[colName] = {
-            method: edit.missingValueAction,
-            value: edit.missingValueFillValue || ""
-          }
-        }
-        
-        // Column drop
         if (edit.drop) {
-          transformationConfig.column_operations.push({
-            type: "drop",
-            column: colName
-          })
+          transformationConfig.columns_to_drop.push(colName)
         }
       })
       
@@ -371,6 +366,10 @@ export default function CustomPreprocessing() {
       
       const result = await transformResponse.json()
       setTransformationResult(result)
+      
+      // Create a download URL
+      setDownloadUrl(`http://localhost:8000/preprocessing_results/${result.transformed_file}`)
+      
       setActiveTab("results")
     } catch (error) {
       console.error('Error applying transformations:', error)
@@ -387,21 +386,16 @@ export default function CustomPreprocessing() {
     }
   }
   
-  // Format percentage with 2 decimal places
-  const formatPercentage = (value: number) => {
-    return `${value.toFixed(2)}%`
-  }
-  
   // Format data type for display
   const formatDataType = (type: string) => {
     switch (type) {
+      case 'int':
       case 'int64':
       case 'int32':
-      case 'integer':
         return 'Integer'
+      case 'float':
       case 'float64':
       case 'float32':
-      case 'float':
         return 'Decimal'
       case 'object':
       case 'string':
@@ -409,40 +403,28 @@ export default function CustomPreprocessing() {
       case 'datetime64[ns]':
       case 'datetime':
         return 'Date & Time'
-      case 'category':
-        return 'Category'
       default:
         return type
     }
   }
   
-  // Get icon for data type
-  const getDataTypeIcon = (type: string) => {
-    switch (type) {
-      case 'int64':
-      case 'int32':
-      case 'integer':
-      case 'float64':
-      case 'float32':
-      case 'float':
-        return <ArrowUpDown className="h-4 w-4" />
-      case 'object':
-      case 'string':
-        return <FileText className="h-4 w-4" />
-      case 'datetime64[ns]':
-      case 'datetime':
-        return <Calendar className="h-4 w-4" />
-      case 'category':
-        return <Filter className="h-4 w-4" />
-      default:
-        return <SlidersHorizontal className="h-4 w-4" />
+  const handleDownload = () => {
+    if (downloadUrl) {
+      window.open(downloadUrl, '_blank')
     }
   }
+  
+  // Initialize preview when opening the column types tab
+  useEffect(() => {
+    if (activeTab === "column_types" && fileAnalysis && !previewData && !isLoadingPreview) {
+      updatePreview()
+    }
+  }, [activeTab, fileAnalysis, previewData, isLoadingPreview])
   
   return (
     <section className="h-screen w-[100%] px-6 md:px-10 py-10 overflow-y-auto">
       <div className="text-4xl font-bold mb-8">
-        Custom Preprocessing
+        CSV Data Transformation Tool
       </div>
       
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -452,7 +434,7 @@ export default function CustomPreprocessing() {
             File Analysis
           </TabsTrigger>
           <TabsTrigger value="column_types" className="flex-1" disabled={!fileAnalysis}>
-            Column Types
+            Data Transformation
           </TabsTrigger>
           <TabsTrigger value="results" className="flex-1" disabled={!transformationResult}>
             Results
@@ -476,21 +458,20 @@ export default function CustomPreprocessing() {
             <div className="grid gap-6">
               <Card>
                 <CardHeader>
-                  <CardTitle>Select a File for Custom Preprocessing</CardTitle>
+                  <CardTitle>Select a CSV File</CardTitle>
                   <CardDescription>
-                    Choose a file to analyze and customize preprocessing steps for your data
+                    Choose a file to transform
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <Table>
-                    <TableCaption>Your available files for preprocessing</TableCaption>
+                    <TableCaption>Your available files</TableCaption>
                     <TableHeader>
                       <TableRow>
                         <TableHead>Filename</TableHead>
                         <TableHead>Size</TableHead>
                         <TableHead>Rows</TableHead>
                         <TableHead>Columns</TableHead>
-                        <TableHead>Status</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -501,17 +482,6 @@ export default function CustomPreprocessing() {
                           <TableCell>{(file.file_size / 1048576).toFixed(2)} MB</TableCell>
                           <TableCell>{file.row_count}</TableCell>
                           <TableCell>{file.column_names.length}</TableCell>
-                          <TableCell>
-                            {file.preprocessing_info?.is_preprocessed ? (
-                              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                                Auto Preprocessed
-                              </Badge>
-                            ) : (
-                              <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                                Raw
-                              </Badge>
-                            )}
-                          </TableCell>
                           <TableCell className="text-right">
                             <Button
                               variant="outline"
@@ -539,9 +509,9 @@ export default function CustomPreprocessing() {
                 <CardHeader>
                   <div className="flex justify-between items-center">
                     <div>
-                      <CardTitle>File Analysis</CardTitle>
+                      <CardTitle>Preview of Data</CardTitle>
                       <CardDescription>
-                        Analyze {selectedFile.original_filename} for custom preprocessing
+                        Preview {selectedFile.original_filename} before transformation
                       </CardDescription>
                     </div>
                     <Button variant="ghost" size="icon" onClick={() => setActiveTab("file_selection")}>
@@ -567,13 +537,13 @@ export default function CustomPreprocessing() {
                   
                   {fileAnalysis ? (
                     <div>
-                      <h3 className="text-lg font-medium mb-2">Column Analysis</h3>
+                      <h3 className="text-lg font-medium mb-2">File Analysis Complete</h3>
                       <p className="text-sm text-muted-foreground mb-4">
-                        The file has been analyzed. You can now proceed to the next step to customize column types and preprocessing steps.
+                        The file has been analyzed. You can now proceed to the next step to customize data types and transformations.
                       </p>
                       <Button onClick={() => setActiveTab("column_types")}>
                         <ChevronRight className="mr-2 h-4 w-4" />
-                        Configure Column Types
+                        Continue to Data Transformation
                       </Button>
                     </div>
                   ) : (
@@ -586,7 +556,7 @@ export default function CustomPreprocessing() {
                       ) : (
                         <>
                           <p className="text-center text-gray-500 mb-4">
-                            Click the button below to analyze the file and get column information for custom preprocessing.
+                            Click the button below to analyze the file and proceed with transformation.
                           </p>
                           <Button onClick={analyzeFile} disabled={isAnalyzing}>
                             {isAnalyzing ? "Analyzing..." : "Analyze File"}
@@ -597,10 +567,10 @@ export default function CustomPreprocessing() {
                   )}
                 </CardContent>
                 <CardFooter className="flex justify-between">
-                <Button variant="outline" onClick={() => handlePreview()}>
-                <Eye className="mr-2 h-4 w-4" />
-                  Preview Data
-                </Button>
+                  <Button variant="outline" onClick={() => handlePreview()}>
+                    <Eye className="mr-2 h-4 w-4" />
+                    Preview Data
+                  </Button>
                 </CardFooter>
               </Card>
               
@@ -614,7 +584,7 @@ export default function CustomPreprocessing() {
           )}
         </TabsContent>
         
-        {/* Column Types Tab */}
+        {/* Column Types and Transformations Tab */}
         <TabsContent value="column_types" className="border-none p-0">
           {fileAnalysis && (
             <div className="grid gap-6">
@@ -622,9 +592,9 @@ export default function CustomPreprocessing() {
                 <CardHeader>
                   <div className="flex justify-between items-center">
                     <div>
-                      <CardTitle>Configure Column Types</CardTitle>
+                      <CardTitle>Data Transformation</CardTitle>
                       <CardDescription>
-                        Customize data types and preprocessing for each column
+                        Select data types and choose columns to drop
                       </CardDescription>
                     </div>
                     <Button variant="ghost" size="icon" onClick={() => setActiveTab("file_analysis")}>
@@ -633,142 +603,93 @@ export default function CustomPreprocessing() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex justify-end mb-4">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => setSelectedColumns(fileAnalysis.columns_info.map(col => col.name))}
-                      className="mr-2"
-                    >
-                      Select All
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => setSelectedColumns([])}
-                    >
-                      Deselect All
-                    </Button>
+                  <div className="mb-8">
+                    <h3 className="text-lg font-medium mb-2">Data Type Selection</h3>
+                    <div className="rounded-md border">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Column Name</TableHead>
+                            <TableHead>Current Type</TableHead>
+                            <TableHead>New Type</TableHead>
+                            <TableHead>Drop Column</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {fileAnalysis.columns_info.map((column) => (
+                            <TableRow key={column.name}>
+                              <TableCell className="font-medium">{column.name}</TableCell>
+                              <TableCell>{formatDataType(column.current_type)}</TableCell>
+                              <TableCell>
+                                <Select
+                                  value={columnEdits[column.name]?.newType || column.suggested_type}
+                                  onValueChange={(value) => updateColumnEdit(column.name, 'newType', value)}
+                                  disabled={columnEdits[column.name]?.drop}
+                                >
+                                  <SelectTrigger className="w-full">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="string">Text (String)</SelectItem>
+                                    <SelectItem value="int">Integer</SelectItem>
+                                    <SelectItem value="float">Decimal (Float)</SelectItem>
+                                    <SelectItem value="datetime">Date & Time</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </TableCell>
+                              <TableCell>
+                                <Checkbox 
+                                  checked={!!columnEdits[column.name]?.drop}
+                                  onCheckedChange={(checked) => updateColumnEdit(column.name, 'drop', checked)}
+                                  id={`drop-${column.name}`}
+                                />
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
                   </div>
                   
-                  <div className="border rounded-md">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="w-[50px]">Select</TableHead>
-                          <TableHead>Column Name</TableHead>
-                          <TableHead>Original Type</TableHead>
-                          <TableHead>New Type</TableHead>
-                          <TableHead>Missing Values</TableHead>
-                          <TableHead>Actions</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {fileAnalysis.columns_info.map((column) => (
-                          <TableRow key={column.name}>
-                            <TableCell>
-                              <Checkbox 
-                                checked={selectedColumns.includes(column.name)}
-                                onCheckedChange={() => toggleColumnSelection(column.name)}
-                              />
-                            </TableCell>
-                            <TableCell className="font-medium">
-                              <div className="flex flex-col">
-                                <span>{column.name}</span>
-                                <span className="text-xs text-muted-foreground">
-                                  {column.unique_count} unique values ({formatPercentage(column.unique_percentage)})
-                                </span>
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex items-center gap-1">
-                                {getDataTypeIcon(column.current_type)}
-                                <span>{formatDataType(column.current_type)}</span>
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <Select
-                                value={columnEdits[column.name]?.newType || column.suggested_type}
-                                onValueChange={(value) => updateColumnEdit(column.name, 'newType', value)}
-                                disabled={!selectedColumns.includes(column.name)}
-                              >
-                                <SelectTrigger className="w-full">
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="string">Text (String)</SelectItem>
-                                  <SelectItem value="integer">Integer</SelectItem>
-                                  <SelectItem value="float">Decimal (Float)</SelectItem>
-                                  <SelectItem value="datetime">Date & Time</SelectItem>
-                                  <SelectItem value="category">Category</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </TableCell>
-                            <TableCell>
-                              {column.missing_percentage > 0 ? (
-                                <div className="flex flex-col gap-2">
-                                  <div className="flex items-center gap-1">
-                                    <span className="text-sm text-muted-foreground">
-                                      {formatPercentage(column.missing_percentage)} missing
-                                    </span>
-                                  </div>
-                                  <Select
-                                    value={columnEdits[column.name]?.missingValueAction || "none"}
-                                    onValueChange={(value) => updateColumnEdit(column.name, 'missingValueAction', value)}
-                                    disabled={!selectedColumns.includes(column.name)}
-                                  >
-                                    <SelectTrigger className="w-full h-8 text-xs">
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="none">No Action</SelectItem>
-                                      <SelectItem value="drop">Drop Rows</SelectItem>
-                                      <SelectItem value="fill_value">Fill with Value</SelectItem>
-                                      <SelectItem value="mean">Fill with Mean</SelectItem>
-                                      <SelectItem value="median">Fill with Median</SelectItem>
-                                    </SelectContent>
-                                  </Select>
-                                  
-                                  {columnEdits[column.name]?.missingValueAction === "fill_value" && (
-                                    <Input
-                                      className="h-8 text-xs"
-                                      placeholder="Fill value"
-                                      value={columnEdits[column.name]?.missingValueFillValue || ""}
-                                      onChange={(e) => updateColumnEdit(column.name, 'missingValueFillValue', e.target.value)}
-                                      disabled={!selectedColumns.includes(column.name)}
-                                    />
-                                  )}
-                                </div>
-                              ) : (
-                                <span className="text-xs text-green-600">No missing values</span>
-                              )}
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex items-center">
-                                <TooltipProvider>
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => updateColumnEdit(column.name, 'drop', !columnEdits[column.name]?.drop)}
-                                        disabled={!selectedColumns.includes(column.name)}
-                                        className={columnEdits[column.name]?.drop ? "text-red-500" : ""}
-                                      >
-                                        {columnEdits[column.name]?.drop ? <X className="h-4 w-4" /> : <Trash2 className="h-4 w-4" />}
-                                      </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                      {columnEdits[column.name]?.drop ? "Cancel Drop" : "Drop Column"}
-                                    </TooltipContent>
-                                  </Tooltip>
-                                </TooltipProvider>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
+                  {/* Live Preview */}
+                  <div className="mt-8">
+                    <h3 className="text-lg font-medium mb-2">Live Preview</h3>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      This shows how your data will look after transformation (first 5 rows)
+                    </p>
+                    
+                    {isLoadingPreview ? (
+                      <div className="flex justify-center items-center p-6">
+                        <p>Loading preview...</p>
+                      </div>
+                    ) : previewData ? (
+                      <div className="border rounded-md overflow-x-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              {previewData.columns.transformed.map((col, idx) => (
+                                <TableHead key={idx}>{col}</TableHead>
+                              ))}
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {previewData.transformed.map((row, rowIdx) => (
+                              <TableRow key={rowIdx}>
+                                {previewData.columns.transformed.map((col, colIdx) => (
+                                  <TableCell key={colIdx}>
+                                    {row[col] !== null && row[col] !== undefined ? String(row[col]) : "null"}
+                                  </TableCell>
+                                ))}
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    ) : (
+                      <div className="border rounded-md p-6 text-center text-muted-foreground">
+                        No preview available. Make changes to see a live preview.
+                      </div>
+                    )}
                   </div>
                 </CardContent>
                 <CardFooter className="flex justify-between">
@@ -778,7 +699,7 @@ export default function CustomPreprocessing() {
                   </Button>
                   <Button 
                     onClick={applyTransformations} 
-                    disabled={selectedColumns.length === 0 || isApplyingTransformations}
+                    disabled={isApplyingTransformations}
                   >
                     {isApplyingTransformations ? "Processing..." : "Apply Transformations"}
                   </Button>
@@ -797,18 +718,18 @@ export default function CustomPreprocessing() {
         
         {/* Results Tab */}
         <TabsContent value="results" className="border-none p-0">
-          {selectedFile && processedResult && (
+          {transformationResult && (
             <div className="grid gap-6">
               <Card>
                 <CardHeader>
                   <div className="flex justify-between items-center">
                     <div>
-                      <CardTitle>Processing Results</CardTitle>
+                      <CardTitle>Transformed Data</CardTitle>
                       <CardDescription>
-                        Results for {selectedFile.original_filename}
+                        Your data has been transformed successfully
                       </CardDescription>
                     </div>
-                    <Button variant="ghost" size="icon" onClick={() => setActiveTab("operations")}>
+                    <Button variant="ghost" size="icon" onClick={() => setActiveTab("column_types")}>
                       <ArrowLeft className="h-4 w-4" />
                     </Button>
                   </div>
@@ -817,104 +738,50 @@ export default function CustomPreprocessing() {
                   <div className="flex items-center justify-center p-6 bg-green-50 rounded-md mb-6">
                     <CheckCircle2 className="h-8 w-8 text-green-500 mr-3" />
                     <div>
-                      <h3 className="font-medium">Processing Completed Successfully</h3>
+                      <h3 className="font-medium">Transformation Completed Successfully</h3>
                       <p className="text-sm text-gray-500">
-                        Your custom preprocessing operations have been applied.
+                        Your transformations have been applied to the data.
                       </p>
                     </div>
                   </div>
-
-                  <div className="grid gap-6">
-                    <div>
-                      <h3 className="text-lg font-medium mb-3">Operations Applied</h3>
+                  
+                  <div className="mt-6">
+                    <h3 className="text-lg font-medium mb-2">Applied Transformations</h3>
+                    {transformationResult.report.transformations_applied.length > 0 ? (
+                      <ul className="list-disc pl-6 space-y-1">
+                        {transformationResult.report.transformations_applied.map((transformation, index) => (
+                          <li key={index}>{transformation}</li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-muted-foreground">No transformations were applied</p>
+                    )}
+                  </div>
+                  
+                  {transformationResult.report.columns_dropped && transformationResult.report.columns_dropped.length > 0 && (
+                    <div className="mt-6">
+                      <h3 className="text-lg font-medium mb-2">Dropped Columns</h3>
                       <div className="flex flex-wrap gap-2">
-                        {processedResult.operations_applied.map(op => (
-                          <Badge key={op} className="bg-blue-50 text-blue-700 border-blue-200">
-                            {operationNames[op] || op}
-                          </Badge>
+                        {transformationResult.report.columns_dropped.map((column, idx) => (
+                          <div key={idx} className="px-3 py-1 bg-red-50 text-red-700 rounded-md flex items-center gap-1">
+                            <Trash2 className="h-3 w-3" />
+                            {column}
+                          </div>
                         ))}
                       </div>
                     </div>
-                    
-                    {processedResult.statistics && (
-                      <div>
-                        <h3 className="text-lg font-medium mb-3">Statistics</h3>
-                        <table className="w-full text-sm">
-                          <tbody>
-                            <tr className="border-b">
-                              <td className="py-2 font-medium">Rows Affected</td>
-                              <td className="py-2 text-right">{processedResult.statistics.rows_affected}</td>
-                            </tr>
-                            
-                            {processedResult.statistics.outliers_removed !== undefined && processedResult.statistics.outliers_removed > 0 && (
-                              <tr className="border-b">
-                                <td className="py-2 font-medium">Outliers Removed</td>
-                                <td className="py-2 text-right">{processedResult.statistics.outliers_removed}</td>
-                              </tr>
-                            )}
-                            
-                            {processedResult.statistics.features_encoded && processedResult.statistics.features_encoded.length > 0 && (
-                              <tr className="border-b">
-                                <td className="py-2 font-medium">Categorical Features Encoded</td>
-                                <td className="py-2 text-right">
-                                  {processedResult.statistics.features_encoded.join(", ")}
-                                </td>
-                              </tr>
-                            )}
-                          </tbody>
-                        </table>
-                      </div>
-                    )}
-                  </div>
+                  )}
                 </CardContent>
                 <CardFooter className="flex justify-end gap-3">
-                <Button variant="outline" onClick={() => handlePreview()}>
-                    <Eye className="mr-2 h-4 w-4" />
-                    Preview Data
-                </Button>
-                  <Button>
+                  <Button 
+                    onClick={handleDownload}
+                    disabled={!downloadUrl}
+                  >
                     <Download className="mr-2 h-4 w-4" />
-                    Download Processed File
+                    Download Transformed CSV
                   </Button>
                 </CardFooter>
               </Card>
-              
-              {/* Add comprehensive preprocessing report if available */}
-              {selectedFile.preprocessing_info?.is_preprocessed && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Automatic Preprocessing Report</CardTitle>
-                    <CardDescription>
-                      Detailed analysis of the automatic preprocessing performed on this file
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid gap-6">
-                      <div className="bg-amber-50 border border-amber-200 rounded-md p-4">
-                        <p className="text-sm text-amber-800">
-                          <strong>Note:</strong> This report shows the automatic preprocessing that was previously applied 
-                          to this file during upload. This is separate from the custom operations you just applied.
-                        </p>
-                      </div>
-                      
-                      {/* Import and use the PreprocessingReport component */}
-                      {selectedFile.preprocessing_info && (
-                        <PreprocessingReport 
-                          report={{
-                            columns_dropped: selectedFile.preprocessing_info.dropped_columns || [],
-                            columns_cleaned: selectedFile.preprocessing_info.columns_cleaned || [],
-                            date_columns_detected: selectedFile.preprocessing_info.auto_detected_dates || [],
-                            missing_value_stats: selectedFile.preprocessing_info.missing_value_stats || {},
-                            original_shape: [selectedFile.row_count, selectedFile.column_names.length],
-                            processed_shape: [selectedFile.row_count, selectedFile.column_names.length]
-                          }} 
-                          onDownload={() => {}} 
-                        />
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
             </div>
           )}
         </TabsContent>
