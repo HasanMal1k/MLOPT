@@ -15,6 +15,7 @@ from typing import List
 from data_preprocessing import process_data_file, update_status, generate_eda_report
 from custom_preprocessing import router as custom_preprocessing_router
 from transformations import router as transformations_router
+from time_series_preprocessing import router as time_series_router  # Import the new time series router
 
 # Configure logging
 logging.basicConfig(
@@ -33,6 +34,7 @@ app = FastAPI(
 # Register custom routers
 app.include_router(custom_preprocessing_router)
 app.include_router(transformations_router)
+app.include_router(time_series_router)  # Register the time series router
 
 # Configure CORS
 origins = [
@@ -162,6 +164,7 @@ async def get_processing_status(filename: str):
             pipeline_path = PROCESSED_FOLDER / f"processed_{filename}_pipeline.joblib"
             if pipeline_path.exists():
                 try:
+                    import joblib
                     preprocessing_data = joblib.load(pipeline_path)
                     status["preprocessing_details"] = preprocessing_data["preprocessing_info"]
                 except Exception as e:
