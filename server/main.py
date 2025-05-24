@@ -10,7 +10,9 @@ import json
 import uuid
 import tempfile
 from typing import Dict, List, Tuple, Any, Optional, Union  # Add all these typing imports
-
+from fastapi import FastAPI, File, UploadFile, HTTPException, BackgroundTasks, Form
+from fastapi.responses import  FileResponse
+from fastapi.staticfiles import StaticFiles
 # Import custom modules
 from data_preprocessing import process_data_file, update_status, generate_eda_report
 from custom_preprocessing import router as custom_preprocessing_router
@@ -35,6 +37,7 @@ app = FastAPI(
 app.include_router(custom_preprocessing_router)
 app.include_router(transformations_router)
 app.include_router(time_series_router)  # Register the time series router
+# @router.post("/time-series")
 
 # Configure CORS
 origins = [
@@ -173,20 +176,68 @@ async def upload_files(background_tasks: BackgroundTasks, files: list[UploadFile
             }
         )
 
-@app.get("/processed-files/")
-async def get_processed_files():
-    """Get a list of all processed files"""
-    files = [f.name for f in PROCESSED_FOLDER.glob("*") if f.is_file() and not (f.name.endswith('.joblib') or f.name.endswith('.json'))]
-    return {"processed_files": files}
+@app.get("/processed-files/{filename}")
+async def serve_processed_file(filename: str):
+    """
+    Serve processed files directly
+    """
+    try:
+        # Try different possible file paths
+        possible_paths = [
+            PROCESSED_FOLDER / filename,
+            PROCESSED_FOLDER / f"processed_{filename}",
+        ]
+        
+        for file_path in possible_paths:
+            if file_path.exists() and file_path.is_file():
+                return FileResponse(
+                    path=str(file_path),
+                    filename=filename,
+                    media_type='application/octet-stream'
+                )
+        
+        # If no file found, return 404
+        raise HTTPException(status_code=404, detail=f"File {filename} not found")
+        
+    except Exception as e:
+        logger.error(f"Error serving file {filename}: {e}")
+        raise HTTPException(status_code=500, detail=f"Error serving file: {str(e)}")
 
 @app.get("/download/{filename}")
-async def download_file(filename: str):
-    """Get a processed file by filename"""
-    file_path = PROCESSED_FOLDER / filename
-    if not file_path.exists():
-        raise HTTPException(status_code=404, detail="File not found")
-    
-    return {"file_url": f"/processed_files/{filename}"}
+async def download_processed_file(filename: str):
+    """
+    Download a processed file with proper headers
+    """
+    try:
+        # Check both with and without 'processed_' prefix
+        possible_paths = [
+            PROCESSED_FOLDER / filename,
+            PROCESSED_FOLDER / f"processed_{filename}",
+        ]
+        
+        file_path = None
+        for path in possible_paths:
+            if path.exists() and path.is_file():
+                file_path = path
+                break
+        
+        if not file_path:
+            raise HTTPException(status_code=404, detail=f"File {filename} not found")
+        
+        return FileResponse(
+            path=str(file_path),
+            filename=filename,
+            media_type='text/csv',
+            headers={
+                "Content-Disposition": f"attachment; filename={filename}",
+                "Access-Control-Allow-Origin": "*"
+            }
+        )
+        
+    except Exception as e:
+        logger.error(f"Error downloading file {filename}: {e}")
+        raise HTTPException(status_code=500, detail=f"Error downloading file: {str(e)}")
+
 
 @app.get("/processing-status/{filename}")
 async def get_processing_status(filename: str):
@@ -276,7 +327,7 @@ def update_status(filename: str, status_folder: Path,
                  progress: int, message: str, 
                  results: Optional[Dict] = None) -> Dict:
     """
-    Update the processing status of a file with better error handling.
+    Update the processing status of a file with better error handling and file tracking.
     """
     try:
         status = {
@@ -288,6 +339,20 @@ def update_status(filename: str, status_folder: Path,
         
         if results is not None:
             status["results"] = results
+        
+        # Add file mapping information
+        if progress == 100:  # When processing is complete
+            processed_filename = f"processed_{filename}"
+            processed_path = PROCESSED_FOLDER / processed_filename
+            
+            status["file_mapping"] = {
+                "original_filename": filename,
+                "processed_filename": processed_filename,
+                "processed_file_exists": processed_path.exists(),
+                "processed_file_size": processed_path.stat().st_size if processed_path.exists() else 0
+            }
+            
+            logger.info(f"File mapping for {filename}: processed file exists = {processed_path.exists()}")
         
         status_path = status_folder / f"{filename}_status.json"
         
@@ -310,6 +375,42 @@ def update_status(filename: str, status_folder: Path,
             "message": f"Error updating status: {str(e)}",
             "timestamp": time.time()
         }
+        
+        
+@app.get("/list-processed-files/")
+async def list_processed_files():
+    """
+    List all available processed files for debugging
+    """
+    try:
+        files = []
+        if PROCESSED_FOLDER.exists():
+            for file_path in PROCESSED_FOLDER.iterdir():
+                if file_path.is_file() and not file_path.name.endswith(('.joblib', '.json')):
+                    files.append({
+                        "filename": file_path.name,
+                        "size": file_path.stat().st_size,
+                        "exists": True
+                    })
+        
+        return {
+            "processed_files": files,
+            "count": len(files),
+            "folder_path": str(PROCESSED_FOLDER)
+        }
+        
+    except Exception as e:
+        logger.error(f"Error listing processed files: {e}")
+        return {"error": str(e), "processed_files": [], "count": 0}
+
+# Optional: Mount static files (add this after creating the app but before the endpoints)
+# This creates a static file server for the processed_files directory
+try:
+    app.mount("/static/processed", StaticFiles(directory=str(PROCESSED_FOLDER)), name="processed_files")
+    logger.info(f"Mounted static files from {PROCESSED_FOLDER}")
+except Exception as e:
+    logger.warning(f"Could not mount static files: {e}")
+        
     
 @app.post("/generate_report/", response_class=HTMLResponse)
 async def generate_report(file: UploadFile = File(...)):
@@ -451,6 +552,117 @@ async def batch_process(
         "message": f"Batch processing started for {len(results)} files",
         "results": results
     }
+
+@app.get("/files/processed/{filename}")
+async def get_processed_file_alt(filename: str):
+    """
+    Alternative endpoint to serve processed files with better path resolution
+    """
+    try:
+        logger.info(f"Requesting processed file: {filename}")
+        
+        # List of possible file locations and names
+        possible_files = [
+            PROCESSED_FOLDER / filename,
+            PROCESSED_FOLDER / f"processed_{filename}",
+            PROCESSED_FOLDER / f"{filename.split('.')[0]}_processed.csv",
+        ]
+        
+        # Also check for files that might have been renamed during processing
+        if PROCESSED_FOLDER.exists():
+            for existing_file in PROCESSED_FOLDER.iterdir():
+                if existing_file.is_file() and filename.lower() in existing_file.name.lower():
+                    possible_files.append(existing_file)
+        
+        # Try each possible file location
+        for file_path in possible_files:
+            if file_path.exists() and file_path.is_file():
+                logger.info(f"Found processed file at: {file_path}")
+                
+                # Get file size for logging
+                file_size = file_path.stat().st_size
+                logger.info(f"Serving file: {file_path.name}, size: {file_size} bytes")
+                
+                return FileResponse(
+                    path=str(file_path),
+                    filename=file_path.name,
+                    media_type='text/csv',
+                    headers={
+                        "Access-Control-Allow-Origin": "*",
+                        "Content-Length": str(file_size)
+                    }
+                )
+        
+        # If no file found, log available files
+        available_files = []
+        if PROCESSED_FOLDER.exists():
+            available_files = [f.name for f in PROCESSED_FOLDER.iterdir() if f.is_file()]
+        
+        logger.warning(f"File {filename} not found. Available files: {available_files}")
+        
+        raise HTTPException(
+            status_code=404, 
+            detail={
+                "message": f"File {filename} not found",
+                "available_files": available_files,
+                "searched_paths": [str(p) for p in possible_files]
+            }
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error serving processed file {filename}: {e}")
+        raise HTTPException(status_code=500, detail=f"Error serving file: {str(e)}")
+
+# Health check endpoint that also tests file system
+@app.get("/health/files")
+async def health_check_files():
+    """
+    Health check that includes file system status
+    """
+    try:
+        health_info = {
+            "status": "healthy",
+            "timestamp": time.time(),
+            "folders": {},
+            "permissions": {}
+        }
+        
+        # Check each required folder
+        folders_to_check = {
+            "upload": UPLOAD_FOLDER,
+            "processed": PROCESSED_FOLDER,
+            "status": STATUS_FOLDER
+        }
+        
+        for folder_name, folder_path in folders_to_check.items():
+            health_info["folders"][folder_name] = {
+                "path": str(folder_path),
+                "exists": folder_path.exists(),
+                "is_directory": folder_path.is_dir() if folder_path.exists() else False,
+                "file_count": len(list(folder_path.iterdir())) if folder_path.exists() and folder_path.is_dir() else 0
+            }
+            
+            # Test write permissions
+            try:
+                test_file = folder_path / f"test_write_{int(time.time())}.tmp"
+                folder_path.mkdir(exist_ok=True, parents=True)
+                test_file.write_text("test")
+                test_file.unlink()
+                health_info["permissions"][folder_name] = "write_ok"
+            except Exception as e:
+                health_info["permissions"][folder_name] = f"write_error: {str(e)}"
+        
+        return health_info
+        
+    except Exception as e:
+        return {
+            "status": "unhealthy",
+            "error": str(e),
+            "timestamp": time.time()
+        }
+
 
 if __name__ == "__main__":
     import uvicorn

@@ -1,4 +1,4 @@
-// components/upload/AutoPreprocessing.tsx
+// components/upload/AutoPreprocessing.tsx - IMPROVED VERSION
 'use client'
 
 import { useState, useEffect } from "react"
@@ -11,6 +11,8 @@ import AutoPreprocessingReport from "@/components/AutoPreprocessingReport"
 
 interface ProcessingInfo {
   filename: string;
+  original_filename: string;
+  processed_filename: string;
   status: {
     status: string;
     progress: number;
@@ -43,15 +45,19 @@ export default function AutoPreprocessing({
     setProcessingProgress(0)
     
     try {
+      console.log('Starting preprocessing for files:', files.map(f => f.name))
+      
       // Step 1: Upload files to Python backend for preprocessing
       const pythonFormData = new FormData()
-      files.forEach(file => {
+      files.forEach((file, index) => {
         pythonFormData.append('files', file)
+        console.log(`Adding file ${index}: ${file.name} (${file.size} bytes)`)
       })
       
       setProcessingProgress(10)
       
       // Send to Python backend
+      console.log('Sending files to Python backend...')
       const pythonResponse = await fetch('http://localhost:8000/upload/', {
         method: 'POST',
         body: pythonFormData,
@@ -60,7 +66,7 @@ export default function AutoPreprocessing({
       if (!pythonResponse.ok) {
         const errorText = await pythonResponse.text()
         console.error('Python backend error:', errorText)
-        throw new Error(`Backend returned ${pythonResponse.status}: ${pythonResponse.statusText}`)
+        throw new Error(`Backend returned status ${pythonResponse.status}: ${pythonResponse.statusText}`)
       }
 
       const preprocessingResult = await pythonResponse.json()
@@ -80,71 +86,34 @@ export default function AutoPreprocessing({
         return
       }
 
+      // Set up initial status tracking
       const initialStatus: Record<string, any> = {}
+      const fileMapping: Record<string, string> = {}
+      
       processingInfo.forEach((info: ProcessingInfo) => {
-        initialStatus[info.filename] = {
+        const safeFilename = info.filename
+        initialStatus[safeFilename] = {
           status: info.status.status,
           progress: info.status.progress,
-          message: info.status.message
+          message: info.status.message,
+          original_filename: info.original_filename,
+          processed_filename: info.processed_filename
         }
+        fileMapping[info.original_filename] = safeFilename
       })
 
       setProcessingStatus(initialStatus)
+      console.log('Initial status set:', initialStatus)
       
-      // Step 2: Poll processing status with improved error handling
-      const fileNames = processingInfo.map((info: ProcessingInfo) => info.filename)
-      console.log('Tracking status for files:', fileNames)
+      // Step 2: Poll processing status
+      const safeFilenames = processingInfo.map((info: ProcessingInfo) => info.filename)
+      console.log('Tracking status for files:', safeFilenames)
       
-      const finalResults = await trackProcessingStatus(fileNames)
+      const finalResults = await trackProcessingStatus(safeFilenames, fileMapping)
       setProcessingProgress(70)
       
-      // Step 3: Handle preprocessed files
-      const finalFiles: File[] = []
-      const results: Record<string, any> = {}
-      
-      for (let i = 0; i < files.length; i++) {
-        const originalFile = files[i]
-        const fileName = fileNames[i] || `${i}_${originalFile.name}`
-        
-        try {
-          // Get the processing results from final status
-          if (finalResults[fileName] && finalResults[fileName].results) {
-            results[originalFile.name] = finalResults[fileName].results
-            console.log(`Results for ${originalFile.name}:`, finalResults[fileName].results)
-          }
-          
-          // Try to get the processed file
-          let processedFile: File | null = null
-          
-          try {
-            const fileResponse = await fetch(`http://localhost:8000/processed-files/${fileName}`)
-            if (fileResponse.ok) {
-              const blob = await fileResponse.blob()
-              processedFile = new File([blob], originalFile.name, { type: 'text/csv' })
-              console.log(`Successfully downloaded processed file: ${fileName}`)
-            } else {
-              console.log(`Processed file not available for ${fileName} (${fileResponse.status}): using original file`)
-            }
-          } catch (fileErr) {
-            console.log(`Error downloading processed file for ${fileName}:`, fileErr)
-          }
-          
-          // Use processed file if available, otherwise use original
-          finalFiles.push(processedFile || originalFile)
-          
-        } catch (err) {
-          console.error(`Error handling file ${fileName}:`, err)
-          // Always include the original file as fallback
-          finalFiles.push(originalFile)
-        }
-      }
-      
-      setProcessedFiles(finalFiles)
-      setProcessingResults(results)
-      setProcessingProgress(100)
-      setIsComplete(true)
-      
-      console.log(`Auto preprocessing complete. Processed ${finalFiles.length} files with results for ${Object.keys(results).length} files`)
+      // Step 3: Attempt to retrieve processed files
+      await retrieveProcessedFiles(files, finalResults, fileMapping)
       
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Preprocessing failed'
@@ -159,14 +128,17 @@ export default function AutoPreprocessing({
     }
   }
 
-  const trackProcessingStatus = async (fileNames: string[]): Promise<Record<string, any>> => {
+  const trackProcessingStatus = async (
+    safeFilenames: string[], 
+    fileMapping: Record<string, string>
+  ): Promise<Record<string, any>> => {
     let allCompleted = false
     let attempts = 0
-    const maxAttempts = 24 // Reduced max attempts to prevent infinite loops
-    const pollInterval = 5000 // 5 seconds
+    const maxAttempts = 20
+    const pollInterval = 3000 // 3 seconds
     let finalResults: Record<string, any> = {}
     
-    console.log(`Starting status tracking for ${fileNames.length} files`)
+    console.log(`Starting status tracking for ${safeFilenames.length} files`)
     
     while (!allCompleted && attempts < maxAttempts) {
       attempts++
@@ -176,43 +148,47 @@ export default function AutoPreprocessing({
       console.log(`Status check attempt ${attempts}/${maxAttempts}`)
       
       // Check status for each file
-      for (const fileName of fileNames) {
+      for (const safeFilename of safeFilenames) {
         try {
-          const response = await fetch(`http://localhost:8000/processing-status/${fileName}`)
+          const response = await fetch(`http://localhost:8000/processing-status/${safeFilename}`)
           
           if (response.ok) {
             const status = await response.json()
-            console.log(`Status for ${fileName}:`, status)
+            console.log(`Status for ${safeFilename}:`, status)
             
-            currentStatuses[fileName] = {
+            currentStatuses[safeFilename] = {
               status: status.status || 'processing',
               progress: status.progress || 0,
               message: status.message || 'Processing...',
-              results: status.results || null
+              results: status.results || null,
+              file_mapping: status.file_mapping || null
             }
             
             // Count as completed if progress is 100 or status is completed
-            if (status.progress === 100 || status.status === 'completed' || status.progress === -1) {
+            if (status.progress === 100 || status.status === 'completed') {
               completedCount++
               if (status.results) {
-                finalResults[fileName] = { results: status.results }
+                finalResults[safeFilename] = { results: status.results }
               }
+            } else if (status.progress === -1 || status.status === 'error') {
+              // Also count errors as "completed" to avoid infinite loop
+              completedCount++
+              console.warn(`File ${safeFilename} failed processing:`, status.message)
             }
           } else {
-            console.warn(`Failed to get status for ${fileName}: ${response.status} ${response.statusText}`)
-            // For non-200 responses, assume completed to avoid infinite loop
-            currentStatuses[fileName] = {
+            console.warn(`Failed to get status for ${safeFilename}: ${response.status}`)
+            // Assume completed on HTTP errors
+            currentStatuses[safeFilename] = {
               status: 'unknown',
               progress: 100,
-              message: 'Status check failed - assuming completed',
+              message: 'Status check failed',
               results: null
             }
             completedCount++
           }
         } catch (error) {
-          console.error(`Network error checking status for ${fileName}:`, error)
-          // On network error, assume complete to avoid infinite loop
-          currentStatuses[fileName] = {
+          console.error(`Network error checking status for ${safeFilename}:`, error)
+          currentStatuses[safeFilename] = {
             status: 'error',
             progress: 100,
             message: 'Network error during status check',
@@ -223,16 +199,20 @@ export default function AutoPreprocessing({
       }
       
       // Update the processing status state
-      setProcessingStatus(currentStatuses)
+      setProcessingStatus(prev => ({ ...prev, ...currentStatuses }))
+      
+      // Update overall progress
+      const overallProgress = 30 + (completedCount / safeFilenames.length) * 40
+      setProcessingProgress(Math.min(overallProgress, 70))
       
       // Check if all files are completed
-      if (completedCount >= fileNames.length) {
+      if (completedCount >= safeFilenames.length) {
         allCompleted = true
         console.log('All files completed processing')
         break
       }
       
-      // If not all completed, wait before next poll
+      // Wait before next poll
       if (!allCompleted && attempts < maxAttempts) {
         console.log(`Waiting ${pollInterval}ms before next status check...`)
         await new Promise(resolve => setTimeout(resolve, pollInterval))
@@ -241,14 +221,91 @@ export default function AutoPreprocessing({
     
     if (!allCompleted) {
       console.warn(`Processing status tracking timed out after ${attempts} attempts`)
-      // Return whatever results we have
     }
     
     return finalResults
   }
 
+  const retrieveProcessedFiles = async (
+    originalFiles: File[], 
+    finalResults: Record<string, any>,
+    fileMapping: Record<string, string>
+  ) => {
+    console.log('Starting file retrieval...')
+    
+    const retrievedFiles: File[] = []
+    const results: Record<string, any> = {}
+    
+    for (const originalFile of originalFiles) {
+      const safeFilename = fileMapping[originalFile.name]
+      let processedFile: File | null = null
+      
+      console.log(`Processing file: ${originalFile.name} -> ${safeFilename}`)
+      
+      // Collect results if available
+      if (safeFilename && finalResults[safeFilename]?.results) {
+        results[originalFile.name] = finalResults[safeFilename].results
+        console.log(`Results collected for ${originalFile.name}`)
+      }
+      
+      // Try multiple endpoints to retrieve the processed file
+      const possibleEndpoints = [
+        `http://localhost:8000/processed-files/${safeFilename}`,
+        `http://localhost:8000/processed-files/processed_${safeFilename}`,
+        `http://localhost:8000/files/processed/${safeFilename}`,
+        `http://localhost:8000/files/processed/processed_${safeFilename}`,
+        `http://localhost:8000/download/${safeFilename}`,
+        `http://localhost:8000/download/processed_${safeFilename}`,
+      ]
+      
+      for (const endpoint of possibleEndpoints) {
+        try {
+          console.log(`Trying to fetch from: ${endpoint}`)
+          const fileResponse = await fetch(endpoint)
+          
+          if (fileResponse.ok) {
+            const blob = await fileResponse.blob()
+            if (blob.size > 0) { // Make sure we got actual content
+              processedFile = new File([blob], originalFile.name, { type: 'text/csv' })
+              console.log(`✓ Successfully retrieved processed file from: ${endpoint}`)
+              console.log(`File size: ${blob.size} bytes`)
+              break
+            } else {
+              console.log(`Empty response from: ${endpoint}`)
+            }
+          } else {
+            console.log(`Failed to fetch from ${endpoint}: ${fileResponse.status}`)
+          }
+        } catch (error) {
+          console.log(`Error fetching from ${endpoint}:`, error)
+        }
+      }
+      
+      // Use processed file if found, otherwise use original
+      if (processedFile) {
+        retrievedFiles.push(processedFile)
+        console.log(`✓ Using processed version of ${originalFile.name}`)
+      } else {
+        retrievedFiles.push(originalFile)
+        console.log(`⚠ Using original version of ${originalFile.name} (processed file not found)`)
+      }
+    }
+    
+    console.log(`File retrieval complete: ${retrievedFiles.length} files total`)
+    console.log(`Results collected for ${Object.keys(results).length} files`)
+    
+    setProcessedFiles(retrievedFiles)
+    setProcessingResults(results)
+    setProcessingProgress(100)
+    setIsComplete(true)
+  }
+
   const handleContinue = () => {
     onContinue(processedFiles, processingResults)
+  }
+
+  const handleSkipPreprocessing = () => {
+    onContinue(files, {})
   }
 
   if (isComplete) {
@@ -267,7 +324,7 @@ export default function AutoPreprocessing({
           <div className="bg-green-50 border border-green-200 rounded-lg p-6 mb-6">
             <h3 className="text-lg font-medium text-green-800 mb-2">Preprocessing Summary</h3>
             <p className="text-green-700 mb-4">
-              Successfully preprocessed {processedFiles.length} of {files.length} files
+              Successfully processed {processedFiles.length} of {files.length} files
             </p>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-4">
@@ -279,21 +336,6 @@ export default function AutoPreprocessing({
               ))}
             </div>
           </div>
-          
-          {/* Show preprocessing reports */}
-          {Object.keys(processingResults).length > 0 && (
-            <div className="space-y-6">
-              <h3 className="text-xl font-bold mb-4">Auto Preprocessing Reports</h3>
-              {Object.entries(processingResults).map(([fileName, results]) => (
-                <AutoPreprocessingReport
-                  key={fileName}
-                  processingResults={results}
-                  fileName={fileName}
-                  isLoading={false}
-                />
-              ))}
-            </div>
-          )}
         </CardContent>
         <CardFooter className="flex justify-between">
           <Button variant="outline" onClick={onBack}>
@@ -339,21 +381,20 @@ export default function AutoPreprocessing({
               </ul>
             </div>
             
-            <Button onClick={startPreprocessing} size="lg" className="gap-2">
-              <RefreshCw className="h-4 w-4" />
-              Start Auto Preprocessing
-            </Button>
-            
-            <p className="text-xs text-muted-foreground mt-4">
-              Or skip preprocessing and continue with original files
-            </p>
-            <Button 
-              variant="outline" 
-              onClick={() => onContinue(files, {})}
-              className="mt-2"
-            >
-              Skip Auto Preprocessing
-            </Button>
+            <div className="flex gap-4 justify-center">
+              <Button onClick={startPreprocessing} size="lg" className="gap-2">
+                <RefreshCw className="h-4 w-4" />
+                Start Auto Preprocessing
+              </Button>
+              
+              <Button 
+                variant="outline" 
+                onClick={handleSkipPreprocessing}
+                size="lg"
+              >
+                Skip Preprocessing
+              </Button>
+            </div>
           </div>
         ) : (
           <div className="space-y-6">
@@ -369,7 +410,7 @@ export default function AutoPreprocessing({
               <Progress value={processingProgress} className="h-3 w-full" />
               <p className="text-xs text-muted-foreground mt-2">
                 {processingProgress < 100 
-                  ? `Processing ${files.length} files...` 
+                  ? `Processing ${files.length} files... (${Math.round(processingProgress)}%)` 
                   : `Completed processing ${files.length} files`}
               </p>
             </div>
@@ -380,12 +421,22 @@ export default function AutoPreprocessing({
                 {Object.entries(processingStatus).map(([filename, status]) => (
                   <div key={filename} className="mb-3">
                     <div className="flex justify-between text-xs">
-                      <span className="font-medium">{filename}</span>
-                      <span>{status.message}</span>
+                      <span className="font-medium">
+                        {status.original_filename || filename}
+                      </span>
+                      <span className={`
+                        ${status.status === 'completed' ? 'text-green-600' : ''}
+                        ${status.status === 'error' ? 'text-red-600' : ''}
+                      `}>
+                        {status.message}
+                      </span>
                     </div>
                     <Progress 
                       value={status.progress < 0 ? 100 : status.progress} 
-                      className={`h-2 w-full ${status.progress < 0 ? 'bg-red-300' : ''}`} 
+                      className={`h-2 w-full ${
+                        status.progress < 0 ? 'bg-red-300' : 
+                        status.status === 'completed' ? 'bg-green-300' : ''
+                      }`} 
                     />
                   </div>
                 ))}
@@ -420,9 +471,8 @@ export default function AutoPreprocessing({
               Retry
             </Button>
           )}
-          <Button onClick={handleContinue} className="gap-2">
-            <span>Continue to Custom Cleaning</span>
-            <Settings2 className="h-4 w-4" />
+          <Button onClick={handleSkipPreprocessing} variant="outline">
+            Skip & Continue
           </Button>
         </div>
       </CardFooter>
