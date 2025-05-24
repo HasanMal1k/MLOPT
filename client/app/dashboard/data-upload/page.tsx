@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useDropzone, type FileRejection } from "react-dropzone";
 import { 
   FilePlus2, 
@@ -12,7 +12,10 @@ import {
   Upload, 
   CheckCircle2, 
   AlertCircle, 
-  Eye
+  Eye,
+  Settings2,
+  ArrowLeft,
+  Loader2
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -47,11 +50,45 @@ import {
   DialogFooter 
 } from "@/components/ui/dialog";
 import { Stepper, Step, StepDescription, StepLabel, StepTitle } from "@/components/ui/steppar";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 
 import FilePreview from "@/components/FilePreview";
 import EdaReportViewer from "@/components/EdaReportViewer";
 import KaggleUpload from "@/components/KaggleUpload";
 import AutoPreprocessingReport from "@/components/AutoPreprocessingReport";
+
+// Define interfaces for custom cleaning
+interface ColumnAnalysis {
+  name: string;
+  current_type: string;
+  suggested_type: string;
+  sample_values: string[];
+}
+
+interface FileAnalysis {
+  success: boolean;
+  filename: string;
+  row_count: number;
+  column_count: number;
+  columns_info: ColumnAnalysis[];
+}
+
+interface PreviewData {
+  original: Record<string, any>[];
+  transformed: Record<string, any>[];
+  columns: {
+    original: string[];
+    transformed: string[];
+  };
+}
 
 interface ProcessingInfo {
   filename: string;
@@ -67,7 +104,7 @@ interface UploadResult {
   success: boolean;
 }
 
-export default function DataUpload() {
+export default function EnhancedDataUpload() {
   const [files, setFiles] = useState<File[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -82,93 +119,248 @@ export default function DataUpload() {
   const [reviewedFiles, setReviewedFiles] = useState<Set<string>>(new Set());
   const [uploadComplete, setUploadComplete] = useState(false);
   const [uploadSummary, setUploadSummary] = useState<{
-  totalFiles: number;
-  successCount: number;
-  filesProcessed: UploadResult[];
-}>({
-  totalFiles: 0,
-  successCount: 0,
-  filesProcessed: []
-});
+    totalFiles: number;
+    successCount: number;
+    filesProcessed: UploadResult[];
+  }>({
+    totalFiles: 0,
+    successCount: 0,
+    filesProcessed: []
+  });
   const [preprocessingResults, setPreprocessingResults] = useState<any>(null);
   const [filePreprocessingResults, setFilePreprocessingResults] = useState<Record<string, any>>({});
 
- const transformPreprocessingResults = (serverResponse) => {
-  // If the response is null or undefined, return null
-  if (!serverResponse) return null;
+  // Custom cleaning states (always enabled now)
+  const [fileAnalysisData, setFileAnalysisData] = useState<Record<string, FileAnalysis>>({});
+  const [columnEdits, setColumnEdits] = useState<Record<string, Record<string, {
+    newType?: string;
+    drop?: boolean;
+  }>>>({});
+  const [isAnalyzingFiles, setIsAnalyzingFiles] = useState(false);
+  const [previewData, setPreviewData] = useState<Record<string, PreviewData>>({});
+  const [isLoadingPreview, setIsLoadingPreview] = useState(false);
+  const [previewNeedsUpdate, setPreviewNeedsUpdate] = useState(false);
+  const [autoProcessingComplete, setAutoProcessingComplete] = useState(false);
 
-  console.log("Transforming server response:", serverResponse);
+  // Use refs for debouncing and tracking the latest edits
+  const previewTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const latestColumnEditsRef = useRef<Record<string, any>>({});
 
-  // Check if results are nested under preprocessing_info
-  if (serverResponse.preprocessing_info) {
+  const transformPreprocessingResults = (serverResponse) => {
+    // If the response is null or undefined, return null
+    if (!serverResponse) return null;
+
+    console.log("Transforming server response:", serverResponse);
+
+    // Check if results are nested under preprocessing_info
+    if (serverResponse.preprocessing_info) {
+      return {
+        success: serverResponse.success !== false,
+        original_shape: serverResponse.original_shape || [0, 0],
+        processed_shape: serverResponse.processed_shape || [0, 0],
+        columns_dropped: serverResponse.preprocessing_info.columns_dropped || [],
+        date_columns_detected: serverResponse.preprocessing_info.date_columns_detected || [],
+        columns_cleaned: serverResponse.preprocessing_info.columns_cleaned || [],
+        missing_value_stats: serverResponse.preprocessing_info.missing_value_stats || {},
+        engineered_features: serverResponse.preprocessing_info.engineered_features || [],
+        transformation_details: serverResponse.preprocessing_info.transformation_details || {}
+      };
+    }
+    
+    // Check if it's a "results" wrapper with nested structure (from Python backend)
+    if (serverResponse.results && typeof serverResponse.results === 'object') {
+      return transformPreprocessingResults(serverResponse.results);
+    }
+    
+    // Check for the "report" structure that might be returned from some endpoints
+    if (serverResponse.report && typeof serverResponse.report === 'object') {
+      const report = serverResponse.report;
+      return {
+        success: serverResponse.success !== false,
+        original_shape: report.original_shape || serverResponse.original_shape || [0, 0],
+        processed_shape: report.processed_shape || serverResponse.processed_shape || [0, 0],
+        columns_dropped: report.columns_dropped || [],
+        date_columns_detected: report.date_columns_detected || [],
+        columns_cleaned: report.columns_cleaned || [],
+        missing_value_stats: report.missing_value_stats || {},
+        engineered_features: report.engineered_features || [],
+        transformation_details: report.transformation_details || {}
+      };
+    }
+    
+    // Response is already in the expected format (or close enough)
     return {
       success: serverResponse.success !== false,
       original_shape: serverResponse.original_shape || [0, 0],
       processed_shape: serverResponse.processed_shape || [0, 0],
-      columns_dropped: serverResponse.preprocessing_info.columns_dropped || [],
-      date_columns_detected: serverResponse.preprocessing_info.date_columns_detected || [],
-      columns_cleaned: serverResponse.preprocessing_info.columns_cleaned || [],
-      missing_value_stats: serverResponse.preprocessing_info.missing_value_stats || {},
-      engineered_features: serverResponse.preprocessing_info.engineered_features || [],
-      transformation_details: serverResponse.preprocessing_info.transformation_details || {}
+      columns_dropped: serverResponse.columns_dropped || [],
+      date_columns_detected: serverResponse.date_columns_detected || [],
+      columns_cleaned: serverResponse.columns_cleaned || [],
+      missing_value_stats: serverResponse.missing_value_stats || {},
+      engineered_features: serverResponse.engineered_features || [],
+      transformation_details: serverResponse.transformation_details || {}
     };
-  }
-  
-  // Check if it's a "results" wrapper with nested structure (from Python backend)
-  if (serverResponse.results && typeof serverResponse.results === 'object') {
-    return transformPreprocessingResults(serverResponse.results);
-  }
-  
-  // Check for the "report" structure that might be returned from some endpoints
-  if (serverResponse.report && typeof serverResponse.report === 'object') {
-    const report = serverResponse.report;
-    return {
-      success: serverResponse.success !== false,
-      original_shape: report.original_shape || serverResponse.original_shape || [0, 0],
-      processed_shape: report.processed_shape || serverResponse.processed_shape || [0, 0],
-      columns_dropped: report.columns_dropped || [],
-      date_columns_detected: report.date_columns_detected || [],
-      columns_cleaned: report.columns_cleaned || [],
-      missing_value_stats: report.missing_value_stats || {},
-      engineered_features: report.engineered_features || [],
-      transformation_details: report.transformation_details || {}
-    };
-  }
-  
-  // Response is already in the expected format (or close enough)
-  return {
-    success: serverResponse.success !== false,
-    original_shape: serverResponse.original_shape || [0, 0],
-    processed_shape: serverResponse.processed_shape || [0, 0],
-    columns_dropped: serverResponse.columns_dropped || [],
-    date_columns_detected: serverResponse.date_columns_detected || [],
-    columns_cleaned: serverResponse.columns_cleaned || [],
-    missing_value_stats: serverResponse.missing_value_stats || {},
-    engineered_features: serverResponse.engineered_features || [],
-    transformation_details: serverResponse.transformation_details || {}
   };
-};
 
-  const uploadData = async () => {
-    if (files.length === 0) {
-      setError("Please select at least one file to upload");
+  // Analyze files for custom cleaning (always enabled now)
+  const analyzeFilesForCustomCleaning = async () => {
+    if (files.length === 0) return;
+
+    setIsAnalyzingFiles(true);
+    const analysisResults: Record<string, FileAnalysis> = {};
+    const initialColumnEdits: Record<string, Record<string, any>> = {};
+
+    for (const file of files) {
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const response = await fetch('http://localhost:8000/custom-preprocessing/analyze-file/', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          analysisResults[file.name] = result;
+
+          // Initialize column edits for this file
+          const fileColumnEdits: Record<string, any> = {};
+          result.columns_info.forEach((col: ColumnAnalysis) => {
+            fileColumnEdits[col.name] = {
+              newType: col.suggested_type,
+              drop: false
+            };
+          });
+          initialColumnEdits[file.name] = fileColumnEdits;
+        }
+      } catch (error) {
+        console.error(`Error analyzing ${file.name}:`, error);
+      }
+    }
+
+    setFileAnalysisData(analysisResults);
+    setColumnEdits(initialColumnEdits);
+    latestColumnEditsRef.current = initialColumnEdits;
+    setIsAnalyzingFiles(false);
+  };
+
+  // Update preview for custom cleaning
+  const updatePreviewForFile = useCallback(async (fileName: string) => {
+    const file = files.find(f => f.name === fileName);
+    const fileAnalysis = fileAnalysisData[fileName];
+    
+    if (!file || !fileAnalysis) return;
+
+    if (isLoadingPreview) {
+      setPreviewNeedsUpdate(true);
       return;
     }
+
+    setIsLoadingPreview(true);
+    setPreviewNeedsUpdate(false);
+
+    try {
+      const transformationConfig = {
+        data_types: {} as Record<string, string>,
+        columns_to_drop: [] as string[]
+      };
+
+      const currentEdits = latestColumnEditsRef.current[fileName] || {};
+
+      Object.entries(currentEdits).forEach(([colName, edit]) => {
+        if (edit.newType) {
+          transformationConfig.data_types[colName] = edit.newType;
+        }
+        if (edit.drop) {
+          transformationConfig.columns_to_drop.push(colName);
+        }
+      });
+
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('transformations', JSON.stringify(transformationConfig));
+
+      const previewResponse = await fetch('http://localhost:8000/custom-preprocessing/preview-transformation/', {
+        method: 'POST',
+        body: formData
+      });
+
+      if (previewResponse.ok) {
+        const result = await previewResponse.json();
+        if (result.success && result.preview) {
+          setPreviewData(prev => ({
+            ...prev,
+            [fileName]: result.preview
+          }));
+        }
+      }
+    } catch (error) {
+      console.error('Error generating preview:', error);
+    } finally {
+      setIsLoadingPreview(false);
+      
+      if (previewNeedsUpdate) {
+        setTimeout(() => {
+          updatePreviewForFile(fileName);
+        }, 100);
+      }
+    }
+  }, [files, fileAnalysisData, isLoadingPreview]);
+
+  // Update column edit for custom cleaning
+  const updateColumnEdit = (fileName: string, columnName: string, field: string, value: any) => {
+    setColumnEdits(prev => {
+      const newEdits = {
+        ...prev,
+        [fileName]: {
+          ...prev[fileName],
+          [columnName]: {
+            ...prev[fileName]?.[columnName],
+            [field]: value
+          }
+        }
+      };
+      
+      latestColumnEditsRef.current = newEdits;
+      return newEdits;
+    });
+
+    // Clear any existing timeout
+    if (previewTimeoutRef.current) {
+      clearTimeout(previewTimeoutRef.current);
+    }
+
+    // Update preview with debouncing
+    if (field === 'drop') {
+      setTimeout(() => {
+        updatePreviewForFile(fileName);
+      }, 10);
+    } else {
+      previewTimeoutRef.current = setTimeout(() => {
+        updatePreviewForFile(fileName);
+      }, 300);
+    }
+  };
+
+  // Auto processing step - processes files for EDA and initial analysis
+  const performAutoProcessing = async () => {
+    if (files.length === 0) return;
 
     setIsUploading(true);
     setError(null);
     setUploadProgress(0);
     
     try {
-      // Step 1: Upload to Python for preprocessing
+      // Step 1: Upload to Python for initial auto preprocessing
       const pythonFormData = new FormData();
       files.forEach(file => {
         pythonFormData.append('files', file);
       });
       
-      setUploadProgress(10);
+      setUploadProgress(20);
       
-      // Send to Python backend
+      // Send to Python backend for auto preprocessing
       const pythonResponse = await fetch('http://localhost:8000/upload/', {
         method: 'POST',
         body: pythonFormData,
@@ -176,11 +368,11 @@ export default function DataUpload() {
 
       if (!pythonResponse.ok) {
         const errorData = await pythonResponse.json();
-        throw new Error(errorData.detail || 'Preprocessing failed');
+        throw new Error(errorData.detail || 'Auto preprocessing failed');
       }
 
       const preprocessingResult = await pythonResponse.json();
-      setUploadProgress(50);
+      setUploadProgress(60);
       
       // Initialize status tracking for preprocessing
       const processingInfo = (preprocessingResult.processing_info || []) as ProcessingInfo[];
@@ -196,54 +388,114 @@ export default function DataUpload() {
       setProcessingStatus(initialStatus);
       
       // Step 2: Poll processing status
-     const fileNames = processingInfo.map((info: ProcessingInfo) => info.filename);
+      const fileNames = processingInfo.map((info: ProcessingInfo) => info.filename);
       if (fileNames.length > 0) {
-        await trackProcessingStatus(fileNames);
+        await trackAutoProcessingStatus(fileNames);
       }
 
-      setUploadProgress(60);
-      if (fileNames.length > 0 && Object.values(processingStatus).every(status => status.progress === 100)) {
-        setUploadProgress(70);
-        
+      setUploadProgress(100);
+      setAutoProcessingComplete(true);
+      
+      toast({
+        title: "Auto Processing Complete",
+        description: `${files.length} files have been automatically processed and are ready for custom cleaning`,
+      });
+      
+      // Move to custom cleaning step
+      setCurrentStep(2);
+      setIsUploading(false);
+      
+      // Start analysis for custom cleaning
+      await analyzeFilesForCustomCleaning();
+      
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Auto processing failed';
+      setError(errorMessage);
+      console.error('Auto processing error:', err);
+      setIsUploading(false);
+    }
+  };
+
+  // Track auto processing status
+  const trackAutoProcessingStatus = async (fileNames: string[]) => {
+    let allCompleted = false;
+    let attempts = 0;
+    const maxAttempts = 30;
+    
+    while (!allCompleted && attempts < maxAttempts) {
+      attempts++;
+      let completedCount = 0;
+      
+      for (const fileName of fileNames) {
         try {
-          // Get preprocessing results to add engineered features to the metadata
-          const preprocessingData = {};
-          for (const fileName of fileNames) {
-            const statusInfo = processingStatus[fileName];
-            // Check if statusInfo and results exist before accessing
-            if (statusInfo && statusInfo.results) {
-              console.log(`Preprocessing results for ${fileName}:`, statusInfo.results);
-              preprocessingData[fileName] = statusInfo.results;
+          const response = await fetch(`http://localhost:8000/processing-status/${fileName}`);
+          if (response.ok) {
+            const status = await response.json();
+            
+            setProcessingStatus(prev => ({
+              ...prev,
+              [fileName]: {
+                status: status.status,
+                progress: status.progress,
+                message: status.message,
+                results: status.results
+              }
+            }));
+            
+            if (status.progress === 100 || status.progress === -1) {
+              completedCount++;
             }
           }
-          
-          // Store preprocessing results in state
-          setFilePreprocessingResults(preprocessingData);
-          
-          setUploadProgress(80);
-        } catch (err) {
-          console.error('Error processing transformations:', err);
+        } catch (error) {
+          console.error(`Error checking status for ${fileName}:`, error);
         }
       }
       
-      // Step 3: Upload preprocessed files to database
-      setUploadProgress(70);
+      if (completedCount === fileNames.length) {
+        allCompleted = true;
+        
+        const preprocessingData = {};
+        for (const fileName of fileNames) {
+          const statusInfo = processingStatus[fileName];
+          if (statusInfo && statusInfo.results) {
+            preprocessingData[fileName] = statusInfo.results;
+          }
+        }
+        
+        setFilePreprocessingResults(preprocessingData);
+      } else {
+        await new Promise(resolve => setTimeout(resolve, 5000));
+      }
+    }
+    
+    return allCompleted;
+  };
+
+  // Apply custom transformations and final upload
+  const applyCustomTransformationsAndUpload = async () => {
+    setIsUploading(true);
+    setError(null);
+    setUploadProgress(0);
+    
+    try {
+      // Step 1: Apply custom transformations
+      setUploadProgress(20);
+      const transformedFiles = await applyCustomTransformations();
+      
+      // Step 2: Upload to database
+      setUploadProgress(50);
       const uploadResults: UploadResult[] = [];
 
-
-      
-      for (const file of files) {
-        // Create a new FormData for each file
+      for (const file of transformedFiles) {
         const formData = new FormData();
         formData.append('file', file);
         formData.append('preprocessed', 'true');
 
         if (filePreprocessingResults[file.name]) {
-        formData.append('preprocessing_results', JSON.stringify(filePreprocessingResults[file.name]));
+          formData.append('preprocessing_results', JSON.stringify(filePreprocessingResults[file.name]));
         }
         
         try {
-          // Use relative URL for API endpoint
           const response = await fetch('/api/upload', {
             method: 'POST',
             body: formData,
@@ -276,7 +528,7 @@ export default function DataUpload() {
       const successCount = uploadResults.filter(r => r.success).length;
       
       setUploadSummary({
-        totalFiles: files.length,
+        totalFiles: transformedFiles.length,
         successCount: successCount,
         filesProcessed: uploadResults
       });
@@ -284,23 +536,21 @@ export default function DataUpload() {
       setUploadProgress(100);
       setUploadComplete(true);
       
-      if (successCount === files.length) {
-        // All files uploaded successfully
+      if (successCount === transformedFiles.length) {
         toast({
           title: "Success",
-          description: `All ${files.length} files have been uploaded and preprocessed successfully`,
+          description: `All ${transformedFiles.length} files have been uploaded successfully with custom transformations applied`,
         });
       } else {
-        // Some files failed
         toast({
           variant: "destructive",
           title: "Partial success",
-          description: `Uploaded ${successCount} of ${files.length} files successfully`,
+          description: `Uploaded ${successCount} of ${transformedFiles.length} files successfully`,
         });
       }
       
-      // Move to next step in wizard
-      setCurrentStep(3);
+      // Move to final step
+      setCurrentStep(4);
       
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Upload failed';
@@ -311,141 +561,67 @@ export default function DataUpload() {
     }
   };
 
+  // Apply custom transformations (always enabled now)
+  const applyCustomTransformations = async () => {
+    const transformedFiles: File[] = [];
 
-
-
-// Helper function to debug the preprocessing results structure
-const debugPreprocessingResults = () => {
-  console.group("Debugging Preprocessing Results");
-  
-  // Log the overall state
-  console.log("filePreprocessingResults state:", filePreprocessingResults);
-  
-  // Check each file's preprocessing results
-  if (uploadSummary.filesProcessed.length > 0) {
-    uploadSummary.filesProcessed.forEach(file => {
-      const results = filePreprocessingResults[file.name];
-      console.group(`File: ${file.name}`);
-      
-      if (!results) {
-        console.log("No preprocessing results found for this file");
-      } else {
-        // Log the structure of results
-        console.log("Raw results:", results);
-        
-        // Check for preprocessing_info
-        if (results.preprocessing_info) {
-          console.log("preprocessing_info found:", results.preprocessing_info);
-          
-          // Check for important properties
-          console.log("- columns_dropped:", results.preprocessing_info.columns_dropped || "none");
-          console.log("- date_columns_detected:", results.preprocessing_info.date_columns_detected || "none");
-          console.log("- columns_cleaned:", results.preprocessing_info.columns_cleaned || "none");
-          console.log("- missing_value_stats:", 
-            Object.keys(results.preprocessing_info.missing_value_stats || {}).length, "columns");
-        } else {
-          console.log("No preprocessing_info found in results");
-        }
-        
-        // Test the transformation function
-        const transformed = transformPreprocessingResults(results);
-        console.log("Transformed results:", transformed);
+    for (const file of files) {
+      const fileEdits = columnEdits[file.name];
+      if (!fileEdits) {
+        transformedFiles.push(file);
+        continue;
       }
-      
-      console.groupEnd();
-    });
-  } else {
-    console.log("No processed files available");
-  }
-  
-  console.groupEnd();
-};
 
-// Call this in useEffect after upload completes
-useEffect(() => {
-  if (uploadComplete && uploadSummary.filesProcessed.length > 0) {
-    debugPreprocessingResults();
-  }
-}, [uploadComplete, uploadSummary.filesProcessed]);
-
-useEffect(() => {
-  console.log("Current filePreprocessingResults:", filePreprocessingResults);
-  console.log("Current uploadSummary:", uploadSummary);
-  
-  if (uploadSummary.filesProcessed.length > 0) {
-    const hasPreprocessingData = uploadSummary.filesProcessed.some(
-      file => filePreprocessingResults[file.name]
-    );
-    console.log("Has preprocessing data:", hasPreprocessingData);
-  }
-}, [filePreprocessingResults, uploadSummary]);
-  
-  // Function to poll processing status
-  // Enhanced trackProcessingStatus function with better results handling
-const trackProcessingStatus = async (fileNames: string[]) => {
-  let allCompleted = false;
-  let attempts = 0;
-  const maxAttempts = 30; // Timeout after 30 attempts (5 minutes with 10-second interval)
-  
-  while (!allCompleted && attempts < maxAttempts) {
-    attempts++;
-    let completedCount = 0;
-    
-    for (const fileName of fileNames) {
       try {
-        const response = await fetch(`http://localhost:8000/processing-status/${fileName}`);
+        const transformationConfig = {
+          data_types: {} as Record<string, string>,
+          columns_to_drop: [] as string[]
+        };
+
+        Object.entries(fileEdits).forEach(([colName, edit]) => {
+          if (edit.newType) {
+            transformationConfig.data_types[colName] = edit.newType;
+          }
+          if (edit.drop) {
+            transformationConfig.columns_to_drop.push(colName);
+          }
+        });
+
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('transformations', JSON.stringify(transformationConfig));
+
+        const response = await fetch('http://localhost:8000/custom-preprocessing/apply-transformations/', {
+          method: 'POST',
+          body: formData
+        });
+
         if (response.ok) {
-          const status = await response.json();
-          
-          // Log the complete structure of results for debugging
-          if (status.results) {
-            console.log(`[DEBUG] Full results structure for ${fileName}:`, 
-              JSON.stringify(status.results, null, 2));
-          }
-          
-          setProcessingStatus(prev => ({
-            ...prev,
-            [fileName]: {
-              status: status.status,
-              progress: status.progress,
-              message: status.message,
-              results: status.results
+          const result = await response.json();
+          if (result.success && result.transformed_file) {
+            // Download the transformed file
+            const downloadResponse = await fetch(`http://localhost:8000/preprocessing_results/${result.transformed_file}`);
+            if (downloadResponse.ok) {
+              const blob = await downloadResponse.blob();
+              const transformedFile = new File([blob], file.name, { type: file.type });
+              transformedFiles.push(transformedFile);
+            } else {
+              transformedFiles.push(file);
             }
-          }));
-          
-          if (status.progress === 100 || status.progress === -1) {
-            completedCount++;
+          } else {
+            transformedFiles.push(file);
           }
+        } else {
+          transformedFiles.push(file);
         }
       } catch (error) {
-        console.error(`Error checking status for ${fileName}:`, error);
+        console.error(`Error transforming ${file.name}:`, error);
+        transformedFiles.push(file);
       }
     }
-    
-    if (completedCount === fileNames.length) {
-      allCompleted = true;
-      
-      // After all files are processed, do one final gathering of results 
-      // to ensure we have the most up-to-date information
-      const preprocessingData = {};
-      for (const fileName of fileNames) {
-        const statusInfo = processingStatus[fileName];
-        if (statusInfo && statusInfo.results) {
-          console.log(`Final preprocessing results for ${fileName}:`, statusInfo.results);
-          preprocessingData[fileName] = statusInfo.results;
-        }
-      }
-      
-      // Update state with all preprocessing results
-      setFilePreprocessingResults(preprocessingData);
-    } else {
-      // Wait 10 seconds before next poll
-      await new Promise(resolve => setTimeout(resolve, 10000));
-    }
-  }
-  
-  return allCompleted;
-};
+
+    return transformedFiles;
+  };
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     setFiles((prevFiles) => [...prevFiles, ...acceptedFiles]);
@@ -478,7 +654,6 @@ const trackProcessingStatus = async (fileNames: string[]) => {
   const handleKaggleFileImported = (file: File) => {
     setFiles((prevFiles) => [...prevFiles, file]);
     setError(null);
-    // Switch to upload tab to show the imported file
     setActiveTab("upload");
   };
   
@@ -498,19 +673,16 @@ const trackProcessingStatus = async (fileNames: string[]) => {
   const handleEdaReportClosed = () => {
     setIsEdaReportOpen(false);
     
-    // Mark the file as reviewed
     if (activeFileIndex >= 0 && activeFileIndex < files.length) {
       const fileName = files[activeFileIndex].name;
       setReviewedFiles(prev => new Set([...prev, fileName]));
     }
     
-    // If all files have been reviewed, automatically go to next step
     if (files.length > 0 && reviewedFiles.size === files.length) {
-      // Wait a brief moment to let the user see that all files are reviewed
       setTimeout(() => {
         toast({
           title: "All files reviewed",
-          description: "Ready to proceed with upload and preprocessing",
+          description: "Ready to proceed with processing",
         });
       }, 500);
     }
@@ -524,6 +696,12 @@ const trackProcessingStatus = async (fileNames: string[]) => {
     }
     setCurrentStep(1);
   };
+
+  // Continue to auto processing step
+  const handleContinueToAutoProcessing = () => {
+    setCurrentStep(1);
+    performAutoProcessing();
+  };
   
   // Start upload after all files reviewed
   const handleStartUpload = () => {
@@ -532,8 +710,8 @@ const trackProcessingStatus = async (fileNames: string[]) => {
       return;
     }
     
-    setCurrentStep(2);
-    uploadData();
+    setCurrentStep(3);
+    applyCustomTransformationsAndUpload();
   };
   
   // Remove file from selection
@@ -541,16 +719,33 @@ const trackProcessingStatus = async (fileNames: string[]) => {
     const newFiles = [...files];
     const removedFileName = newFiles[index].name;
     
-    // Remove the file
     newFiles.splice(index, 1);
     setFiles(newFiles);
     
-    // Remove from reviewed files if it exists
     if (reviewedFiles.has(removedFileName)) {
       const updatedReviewed = new Set(reviewedFiles);
       updatedReviewed.delete(removedFileName);
       setReviewedFiles(updatedReviewed);
     }
+    
+    // Clean up custom cleaning data
+    setFileAnalysisData(prev => {
+      const updated = { ...prev };
+      delete updated[removedFileName];
+      return updated;
+    });
+    
+    setColumnEdits(prev => {
+      const updated = { ...prev };
+      delete updated[removedFileName];
+      return updated;
+    });
+    
+    setPreviewData(prev => {
+      const updated = { ...prev };
+      delete updated[removedFileName];
+      return updated;
+    });
     
     toast({
       title: "File removed",
@@ -564,11 +759,60 @@ const trackProcessingStatus = async (fileNames: string[]) => {
   
   // Navigate to dashboard or feature engineering
   const handleFinish = (destination: 'dashboard' | 'feature-engineering') => {
-    // Redirect the user to the specified destination
     window.location.href = destination === 'dashboard' 
       ? '/dashboard' 
       : '/dashboard/feature-engineering';
   };
+
+  // Format data type for display
+  const formatDataType = (type: string) => {
+    switch (type) {
+      case 'int':
+      case 'int64':
+      case 'int32':
+        return 'Integer'
+      case 'float':
+      case 'float64':
+      case 'float32':
+        return 'Decimal'
+      case 'object':
+      case 'string':
+        return 'Text'
+      case 'datetime64[ns]':
+      case 'datetime':
+        return 'Date & Time'
+      default:
+        return type
+    }
+  };
+
+  // Check if any columns are marked as dropped for a file
+  const hasDroppedColumns = (fileName: string) => {
+    const fileEdits = columnEdits[fileName];
+    if (!fileEdits) return false;
+    return Object.values(fileEdits).some(edit => edit.drop);
+  };
+
+  // Check if any column types have been changed for a file
+  const hasChangedTypes = (fileName: string) => {
+    const fileAnalysis = fileAnalysisData[fileName];
+    const fileEdits = columnEdits[fileName];
+    if (!fileAnalysis || !fileEdits) return false;
+    
+    return fileAnalysis.columns_info.some(col => {
+      const edit = fileEdits[col.name];
+      return edit && edit.newType && edit.newType !== col.current_type;
+    });
+  };
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (previewTimeoutRef.current) {
+        clearTimeout(previewTimeoutRef.current);
+      }
+    };
+  }, []);
 
   return (
     <div {...getRootProps()} className="h-screen w-full px-6 md:px-10 py-10">
@@ -596,8 +840,16 @@ const trackProcessingStatus = async (fileNames: string[]) => {
             <StepDescription>Preview and analyze data</StepDescription>
           </Step>
           <Step>
-            <StepTitle>Upload & Process</StepTitle>
-            <StepDescription>Preprocess data for analysis</StepDescription>
+            <StepTitle>Auto Processing</StepTitle>
+            <StepDescription>Automatic data cleaning</StepDescription>
+          </Step>
+          <Step>
+            <StepTitle>Custom Cleaning</StepTitle>
+            <StepDescription>Configure data transformations</StepDescription>
+          </Step>
+          <Step>
+            <StepTitle>Upload & Finalize</StepTitle>
+            <StepDescription>Apply changes and upload</StepDescription>
           </Step>
           <Step>
             <StepTitle>Complete</StepTitle>
@@ -717,7 +969,7 @@ const trackProcessingStatus = async (fileNames: string[]) => {
               <CardHeader>
                 <CardTitle>Review Your Data</CardTitle>
                 <CardDescription>
-                  Preview and generate reports for your data before uploading
+                  Preview and generate reports for your data before processing
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -725,7 +977,7 @@ const trackProcessingStatus = async (fileNames: string[]) => {
                   <BarChart2 className="h-4 w-4" />
                   <AlertTitle>Review Required</AlertTitle>
                   <AlertDescription>
-                    Please review the EDA report for each file before proceeding with upload and preprocessing.
+                    Please review the EDA report for each file before proceeding with processing.
                     This helps ensure your data is suitable for analysis.
                   </AlertDescription>
                 </Alert>
@@ -791,24 +1043,24 @@ const trackProcessingStatus = async (fileNames: string[]) => {
                   Back to Files
                 </Button>
                 <Button 
-                  onClick={handleStartUpload} 
+                  onClick={handleContinueToAutoProcessing} 
                   disabled={!areAllFilesReviewed}
                   className="gap-2"
                 >
-                  <Upload className="h-4 w-4" />
-                  <span>Upload & Process Data</span>
+                  <Settings2 className="h-4 w-4" />
+                  <span>Start Auto Processing</span>
                 </Button>
               </CardFooter>
             </Card>
           )}
-          
-          {/* Step 3: Upload & Process */}
+
+          {/* Step 3: Auto Processing */}
           {currentStep === 2 && (
             <Card className="shadow-sm">
               <CardHeader>
-                <CardTitle>Uploading & Processing Your Data</CardTitle>
+                <CardTitle>Auto Processing Your Data</CardTitle>
                 <CardDescription>
-                  Please wait while we upload and preprocess your files
+                  Please wait while we automatically clean and preprocess your files
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -817,8 +1069,8 @@ const trackProcessingStatus = async (fileNames: string[]) => {
                   <Progress value={uploadProgress} className="h-2 w-full" />
                   <p className="text-xs text-muted-foreground mt-2">
                     {uploadProgress < 100 
-                      ? `Processing ${files.length} files...` 
-                      : `Completed processing ${files.length} files`}
+                      ? `Auto-processing ${files.length} files...` 
+                      : `Completed auto-processing ${files.length} files`}
                   </p>
                 </div>
                 
@@ -854,6 +1106,267 @@ const trackProcessingStatus = async (fileNames: string[]) => {
                 </Button>
                 <Button 
                   onClick={() => setCurrentStep(3)} 
+                  disabled={!autoProcessingComplete && !error}
+                >
+                  Continue to Custom Cleaning
+                </Button>
+              </CardFooter>
+            </Card>
+          )}
+
+          {/* Step 4: Custom Cleaning */}
+          {currentStep === 3 && (
+            <Card className="shadow-sm">
+              <CardHeader>
+                <CardTitle>Custom Data Cleaning</CardTitle>
+                <CardDescription>
+                  Configure data type conversions and column operations before final upload
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {isAnalyzingFiles ? (
+                  <div className="flex flex-col items-center justify-center py-8">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
+                    <p className="text-center text-muted-foreground">
+                      Analyzing files for custom cleaning options...
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    <Alert className="border-orange-200 bg-orange-50 text-orange-800">
+                      <Settings2 className="h-4 w-4" />
+                      <AlertTitle>Custom Data Transformations</AlertTitle>
+                      <AlertDescription>
+                        Configure how each column should be processed. Changes are previewed in real-time.
+                        Auto-processing has already been completed for these files.
+                      </AlertDescription>
+                    </Alert>
+
+                    {files.map((file, fileIndex) => {
+                      const fileAnalysis = fileAnalysisData[file.name];
+                      const filePreview = previewData[file.name];
+                      
+                      if (!fileAnalysis) {
+                        return (
+                          <Card key={fileIndex}>
+                            <CardHeader>
+                              <CardTitle className="text-base">{file.name}</CardTitle>
+                              <CardDescription>Analysis failed for this file</CardDescription>
+                            </CardHeader>
+                          </Card>
+                        );
+                      }
+
+                      return (
+                        <Card key={fileIndex} className="border-2">
+                          <CardHeader>
+                            <CardTitle className="text-base flex items-center gap-2">
+                              <FileText className="h-4 w-4" />
+                              {file.name}
+                            </CardTitle>
+                            <CardDescription>
+                              {fileAnalysis.row_count} rows, {fileAnalysis.column_count} columns
+                            </CardDescription>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="space-y-4">
+                              <div>
+                                <h4 className="text-sm font-medium mb-3">Column Configuration</h4>
+                                <div className="rounded-md border">
+                                  <Table>
+                                    <TableHeader>
+                                      <TableRow>
+                                        <TableHead>Column Name</TableHead>
+                                        <TableHead>Current Type</TableHead>
+                                        <TableHead>New Type</TableHead>
+                                        <TableHead>Drop Column</TableHead>
+                                        <TableHead>Sample Values</TableHead>
+                                      </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                      {fileAnalysis.columns_info.map((column) => {
+                                        const isDropped = columnEdits[file.name]?.[column.name]?.drop;
+                                        return (
+                                          <TableRow 
+                                            key={column.name}
+                                            className={`group ${isDropped ? "bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50" : "hover:bg-muted"}`}
+                                          >
+                                            <TableCell className={`font-medium ${isDropped ? "text-red-600 dark:text-red-400 line-through" : ""}`}>
+                                              {column.name}
+                                            </TableCell>
+                                            <TableCell className={isDropped ? "text-red-600 dark:text-red-400" : ""}>
+                                              {formatDataType(column.current_type)}
+                                            </TableCell>
+                                            <TableCell>
+                                              <Select
+                                                value={columnEdits[file.name]?.[column.name]?.newType || column.suggested_type}
+                                                onValueChange={(value) => updateColumnEdit(file.name, column.name, 'newType', value)}
+                                                disabled={isDropped}
+                                              >
+                                                <SelectTrigger className={`w-full ${
+                                                  !isDropped && 
+                                                  columnEdits[file.name]?.[column.name]?.newType !== column.current_type && 
+                                                  columnEdits[file.name]?.[column.name]?.newType !== column.suggested_type 
+                                                    ? 'border-amber-300 bg-amber-50 hover:bg-amber-100 dark:bg-amber-900/30 dark:border-amber-700' : ''
+                                                }`}>
+                                                  <SelectValue />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                  <SelectItem value="string">Text (String)</SelectItem>
+                                                  <SelectItem value="int">Integer</SelectItem>
+                                                  <SelectItem value="float">Decimal (Float)</SelectItem>
+                                                  <SelectItem value="datetime">Date & Time</SelectItem>
+                                                </SelectContent>
+                                              </Select>
+                                            </TableCell>
+                                            <TableCell>
+                                              <div className="flex items-center space-x-2">
+                                                <Checkbox 
+                                                  checked={!!isDropped}
+                                                  onCheckedChange={(checked) => updateColumnEdit(file.name, column.name, 'drop', checked)}
+                                                  id={`drop-${file.name}-${column.name}`}
+                                                  className="data-[state=checked]:bg-red-600 data-[state=checked]:border-red-600 focus:ring-red-200"
+                                                />
+                                                <label 
+                                                  htmlFor={`drop-${file.name}-${column.name}`}
+                                                  className={`text-sm cursor-pointer select-none ${isDropped ? "text-red-600 dark:text-red-400 font-medium" : ""}`}
+                                                >
+                                                  Drop
+                                                </label>
+                                              </div>
+                                            </TableCell>
+                                            <TableCell>
+                                              <div className="text-xs text-muted-foreground max-w-32 truncate">
+                                                {column.sample_values.slice(0, 3).join(', ')}
+                                              </div>
+                                            </TableCell>
+                                          </TableRow>
+                                        );
+                                      })}
+                                    </TableBody>
+                                  </Table>
+                                </div>
+                              </div>
+
+                              {/* Live Preview */}
+                              <div className="mt-6">
+                                <div className="flex items-center justify-between mb-2">
+                                  <h4 className="text-sm font-medium">Live Preview</h4>
+                                  {isLoadingPreview && (
+                                    <div className="flex items-center text-sm text-amber-600">
+                                      <Loader2 className="animate-spin mr-2 h-4 w-4 text-amber-600" />
+                                      Updating preview...
+                                    </div>
+                                  )}
+                                </div>
+                                <p className="text-xs text-muted-foreground mb-3">
+                                  Preview of your data after applying the configured transformations (first 5 rows).
+                                </p>
+                                
+                                <div className={`border rounded-md overflow-x-auto transition-opacity duration-200 ${isLoadingPreview ? 'opacity-50' : ''}`}>
+                                  {filePreview ? (
+                                    <Table>
+                                      <TableHeader>
+                                        <TableRow>
+                                          {filePreview.columns.transformed.map((col, idx) => (
+                                            <TableHead key={idx}>{col}</TableHead>
+                                          ))}
+                                        </TableRow>
+                                      </TableHeader>
+                                      <TableBody>
+                                        {filePreview.transformed.map((row, rowIdx) => (
+                                          <TableRow key={rowIdx}>
+                                            {filePreview.columns.transformed.map((col, colIdx) => (
+                                              <TableCell key={colIdx}>
+                                                {row[col] !== null && row[col] !== undefined ? String(row[col]) : "null"}
+                                              </TableCell>
+                                            ))}
+                                          </TableRow>
+                                        ))}
+                                      </TableBody>
+                                    </Table>
+                                  ) : (
+                                    <div className="p-6 text-center text-muted-foreground">
+                                      {isLoadingPreview ? 
+                                        "Loading preview data..." : 
+                                        "Make changes to see a live preview."}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+
+                              {/* Status indicators */}
+                              <div className="flex gap-4 text-sm">
+                                {hasChangedTypes(file.name) && (
+                                  <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
+                                    Type changes applied
+                                  </Badge>
+                                )}
+                                {hasDroppedColumns(file.name) && (
+                                  <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
+                                    Columns will be dropped
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                )}
+              </CardContent>
+              <CardFooter className="justify-between">
+                <Button variant="outline" onClick={() => setCurrentStep(2)}>
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Back to Auto Processing
+                </Button>
+                <Button 
+                  onClick={handleStartUpload} 
+                  disabled={isAnalyzingFiles}
+                  className="gap-2"
+                >
+                  <Upload className="h-4 w-4" />
+                  <span>Apply Cleaning & Upload</span>
+                </Button>
+              </CardFooter>
+            </Card>
+          )}
+          
+          {/* Step 5: Upload & Finalize */}
+          {currentStep === 4 && (
+            <Card className="shadow-sm">
+              <CardHeader>
+                <CardTitle>Finalizing Your Data</CardTitle>
+                <CardDescription>
+                  Please wait while we apply custom transformations and upload your files
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="mt-2 mb-8">
+                  <p className="text-sm font-medium mb-2">Overall Progress</p>
+                  <Progress value={uploadProgress} className="h-2 w-full" />
+                  <p className="text-xs text-muted-foreground mt-2">
+                    {uploadProgress < 100 
+                      ? `Applying transformations and uploading ${files.length} files...` 
+                      : `Completed processing ${files.length} files`}
+                  </p>
+                </div>
+                
+                {error && (
+                  <Alert variant="destructive" className="mt-4">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>Error During Upload</AlertTitle>
+                    <AlertDescription>{error}</AlertDescription>
+                  </Alert>
+                )}
+              </CardContent>
+              <CardFooter className="justify-between">
+                <Button variant="outline" disabled={true}>
+                  Back
+                </Button>
+                <Button 
+                  onClick={() => setCurrentStep(5)} 
                   disabled={!uploadComplete && !error}
                 >
                   Continue
@@ -862,234 +1375,139 @@ const trackProcessingStatus = async (fileNames: string[]) => {
             </Card>
           )}
           
-          {/* Step 4: Complete */}
-          {currentStep === 3 && (
-          <Card className="shadow-sm">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <CheckCircle2 className="h-5 w-5 text-green-500" />
-                <span>Upload Complete</span>
-              </CardTitle>
-              <CardDescription>
-                Your data is ready for analysis and machine learning
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="bg-green-50 border border-green-200 rounded-lg p-6 mb-6">
-                <h3 className="text-lg font-medium text-green-800 mb-2">Upload Summary</h3>
-                <p className="text-green-700 mb-4">
-                  Successfully uploaded {uploadSummary.successCount} of {uploadSummary.totalFiles} files
-                </p>
+          {/* Step 6: Complete */}
+          {currentStep === 5 && (
+            <Card className="shadow-sm">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <CheckCircle2 className="h-5 w-5 text-green-500" />
+                  <span>Upload Complete</span>
+                </CardTitle>
+                <CardDescription>
+                  Your data is ready for analysis and machine learning
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="bg-green-50 border border-green-200 rounded-lg p-6 mb-6">
+                  <h3 className="text-lg font-medium text-green-800 mb-2">Upload Summary</h3>
+                  <p className="text-green-700 mb-4">
+                    Successfully uploaded {uploadSummary.successCount} of {uploadSummary.totalFiles} files
+                    with auto-processing and custom data cleaning applied
+                  </p>
+                  
+                  {uploadSummary.filesProcessed.length > 0 && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-4">
+                      {uploadSummary.filesProcessed.map((file, index) => (
+                        <div key={index} className="flex items-center gap-2 text-sm">
+                          {file.success ? (
+                            <CheckCircle2 className="h-4 w-4 text-green-600" />
+                          ) : (
+                            <X className="h-4 w-4 text-red-600" />
+                          )}
+                          <span className={file.success ? "text-green-700" : "text-red-700"}>
+                            {file.name}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
                 
-                {uploadSummary.filesProcessed.length > 0 && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-4">
-                    {uploadSummary.filesProcessed.map((file, index) => (
-                      <div key={index} className="flex items-center gap-2 text-sm">
-                        {file.success ? (
-                          <CheckCircle2 className="h-4 w-4 text-green-600" />
-                        ) : (
-                          <X className="h-4 w-4 text-red-600" />
-                        )}
-                        <span className={file.success ? "text-green-700" : "text-red-700"}>
-                          {file.name}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-              
-              {/* Detailed Preprocessing Reports Section */}
-              {uploadSummary.filesProcessed.some(file => filePreprocessingResults[file.name]) && (
-                <div className="mb-6">
-                  <h3 className="text-xl font-bold mb-4">Data Preprocessing Report</h3>
-                  <div className="space-y-6">
-                    {uploadSummary.filesProcessed.map((file, index) => {
-                      if (file.success && filePreprocessingResults[file.name]) {
-                        // Transform the results to match the expected format
-                        const transformedResults = transformPreprocessingResults(filePreprocessingResults[file.name]);
-                        
-                        // Debug logging to verify the structure
-                        console.log(`Transformed results for ${file.name}:`, transformedResults);
-                        
-                        if (!transformedResults) {
+                {/* Detailed Preprocessing Reports Section */}
+                {uploadSummary.filesProcessed.some(file => filePreprocessingResults[file.name]) && (
+                  <div className="mb-6">
+                    <h3 className="text-xl font-bold mb-4">Data Processing Report</h3>
+                    <div className="space-y-6">
+                      {uploadSummary.filesProcessed.map((file, index) => {
+                        if (file.success && filePreprocessingResults[file.name]) {
+                          const transformedResults = transformPreprocessingResults(filePreprocessingResults[file.name]);
+                          
+                          console.log(`Transformed results for ${file.name}:`, transformedResults);
+                          
+                          if (!transformedResults) {
+                            return (
+                              <div key={index} className="border rounded-lg p-4 bg-amber-50">
+                                <h4 className="font-medium text-lg mb-2">{file.name}</h4>
+                                <p className="text-amber-700">No processing details available for this file.</p>
+                              </div>
+                            );
+                          }
+                          
                           return (
-                            <div key={index} className="border rounded-lg p-4 bg-amber-50">
-                              <h4 className="font-medium text-lg mb-2">{file.name}</h4>
-                              <p className="text-amber-700">No preprocessing details available for this file.</p>
-                            </div>
-                          );
-                        }
-                        
-                        return (
-                          <div key={index} className="border rounded-lg p-6">
-                            <h4 className="font-medium text-lg mb-4">{file.name}</h4>
-                            
-                            {/* Preprocessing Summary Stats */}
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                              <div className="bg-blue-50 p-3 rounded-md">
-                                <div className="text-sm text-blue-700 font-medium">Original Rows</div>
-                                <div className="text-xl font-bold">{transformedResults.original_shape?.[0] || 0}</div>
-                              </div>
-                              <div className="bg-blue-50 p-3 rounded-md">
-                                <div className="text-sm text-blue-700 font-medium">Processed Rows</div>
-                                <div className="text-xl font-bold">{transformedResults.processed_shape?.[0] || 0}</div>
-                              </div>
-                              <div className="bg-blue-50 p-3 rounded-md">
-                                <div className="text-sm text-blue-700 font-medium">Original Columns</div>
-                                <div className="text-xl font-bold">{transformedResults.original_shape?.[1] || 0}</div>
-                              </div>
-                              <div className="bg-blue-50 p-3 rounded-md">
-                                <div className="text-sm text-blue-700 font-medium">Processed Columns</div>
-                                <div className="text-xl font-bold">{transformedResults.processed_shape?.[1] || 0}</div>
-                              </div>
-                            </div>
-                            
-                            {/* Columns Dropped */}
-                            {transformedResults.columns_dropped && transformedResults.columns_dropped.length > 0 && (
-                              <div className="mb-4">
-                                <h5 className="text-base font-semibold mb-2">Columns Dropped</h5>
-                                <div className="flex flex-wrap gap-2">
-                                  {transformedResults.columns_dropped.map((column, idx) => (
-                                    <Badge key={idx} variant="outline" className="bg-red-50 text-red-700">
-                                      {column}
-                                    </Badge>
-                                  ))}
+                            <div key={index} className="border rounded-lg p-6">
+                              <h4 className="font-medium text-lg mb-4">{file.name}</h4>
+                              
+                              {/* Processing Summary Stats */}
+                              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                                <div className="bg-blue-50 p-3 rounded-md">
+                                  <div className="text-sm text-blue-700 font-medium">Original Rows</div>
+                                  <div className="text-xl font-bold">{transformedResults.original_shape?.[0] || 0}</div>
+                                </div>
+                                <div className="bg-blue-50 p-3 rounded-md">
+                                  <div className="text-sm text-blue-700 font-medium">Processed Rows</div>
+                                  <div className="text-xl font-bold">{transformedResults.processed_shape?.[0] || 0}</div>
+                                </div>
+                                <div className="bg-blue-50 p-3 rounded-md">
+                                  <div className="text-sm text-blue-700 font-medium">Original Columns</div>
+                                  <div className="text-xl font-bold">{transformedResults.original_shape?.[1] || 0}</div>
+                                </div>
+                                <div className="bg-blue-50 p-3 rounded-md">
+                                  <div className="text-sm text-blue-700 font-medium">Processed Columns</div>
+                                  <div className="text-xl font-bold">{transformedResults.processed_shape?.[1] || 0}</div>
                                 </div>
                               </div>
-                            )}
-                            
-                            {/* Date Columns Detected */}
-                            {transformedResults.date_columns_detected && transformedResults.date_columns_detected.length > 0 && (
-                              <div className="mb-4">
-                                <h5 className="text-base font-semibold mb-2">Date Columns Detected</h5>
-                                <div className="flex flex-wrap gap-2">
-                                  {transformedResults.date_columns_detected.map((column, idx) => (
-                                    <Badge key={idx} variant="outline" className="bg-blue-50 text-blue-700">
-                                      {column}
-                                    </Badge>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-                            
-                            {/* Columns with Missing Values Cleaned */}
-                            {transformedResults.columns_cleaned && transformedResults.columns_cleaned.length > 0 && (
-                              <div className="mb-4">
-                                <h5 className="text-base font-semibold mb-2">Columns with Missing Values Handled</h5>
-                                <div className="flex flex-wrap gap-2">
-                                  {transformedResults.columns_cleaned.map((column, idx) => (
-                                    <Badge key={idx} variant="outline" className="bg-green-50 text-green-700">
-                                      {column}
-                                    </Badge>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-                            
-                            {/* Missing Value Details */}
-                            {transformedResults.missing_value_stats && Object.keys(transformedResults.missing_value_stats).length > 0 && (
-                              <div className="mb-4">
-                                <h5 className="text-base font-semibold mb-2">Missing Value Details</h5>
-                                <div className="bg-gray-50 p-3 rounded-md max-h-40 overflow-y-auto">
-                                  <table className="w-full text-sm">
-                                    <thead>
-                                      <tr className="border-b">
-                                        <th className="text-left py-1 px-2">Column</th>
-                                        <th className="text-right py-1 px-2">Missing Count</th>
-                                        <th className="text-right py-1 px-2">Missing %</th>
-                                        <th className="text-right py-1 px-2">Imputation Method</th>
-                                      </tr>
-                                    </thead>
-                                    <tbody>
-                                      {Object.entries(transformedResults.missing_value_stats).map(([column, stats], idx) => (
-                                        <tr key={idx} className="border-b">
-                                          <td className="py-1 px-2">{column}</td>
-                                          <td className="text-right py-1 px-2">{stats.missing_count}</td>
-                                          <td className="text-right py-1 px-2">{stats.missing_percentage}%</td>
-                                          <td className="text-right py-1 px-2">
-                                            <Badge variant="outline" className="bg-blue-50 text-blue-700">
-                                              {stats.imputation_method || "None"}
-                                            </Badge>
-                                          </td>
-                                        </tr>
-                                      ))}
-                                    </tbody>
-                                  </table>
-                                </div>
-                              </div>
-                            )}
-                            
-                            {/* Engineered Features */}
-                            {transformedResults.engineered_features && transformedResults.engineered_features.length > 0 && (
-                              <div className="mb-4">
-                                <h5 className="text-base font-semibold mb-2">Engineered Features</h5>
-                                <div className="flex flex-wrap gap-2">
-                                  {transformedResults.engineered_features.map((feature, idx) => (
-                                    <Badge key={idx} variant="outline" className="bg-purple-50 text-purple-700">
-                                      {feature}
-                                    </Badge>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-                            
-                            {/* Use AutoPreprocessingReport as fallback if nothing else to show */}
-                            {(!transformedResults.columns_dropped || transformedResults.columns_dropped.length === 0) &&
-                            (!transformedResults.date_columns_detected || transformedResults.date_columns_detected.length === 0) &&
-                            (!transformedResults.columns_cleaned || transformedResults.columns_cleaned.length === 0) &&
-                            (!transformedResults.missing_value_stats || Object.keys(transformedResults.missing_value_stats).length === 0) && (
+                              
+                              {/* Use AutoPreprocessingReport for detailed display */}
                               <AutoPreprocessingReport
                                 processingResults={transformedResults}
                                 fileName={file.name}
                                 isLoading={false}
                               />
-                            )}
-                          </div>
-                        );
-                      }
-                      return null;
-                    })}
+                            </div>
+                          );
+                        }
+                        return null;
+                      })}
+                    </div>
                   </div>
-                </div>
-              )}
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-base">Feature Engineering</CardTitle>
-                    <CardDescription>Create new features for ML</CardDescription>
-                  </CardHeader>
-                  <CardContent className="text-sm pb-2">
-                    Transform your data and create new features to improve machine learning model performance
-                  </CardContent>
-                  <CardFooter>
-                    <Button variant="outline" onClick={() => handleFinish('feature-engineering')} className="w-full gap-2">
-                      <ChevronRight className="h-4 w-4" />
-                      <span>Go to Feature Engineering</span>
-                    </Button>
-                  </CardFooter>
-                </Card>
+                )}
                 
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-base">Dashboard</CardTitle>
-                    <CardDescription>Return to dashboard</CardDescription>
-                  </CardHeader>
-                  <CardContent className="text-sm pb-2">
-                    Go back to the dashboard to view all your uploaded files and explore other options
-                  </CardContent>
-                  <CardFooter>
-                    <Button onClick={() => handleFinish('dashboard')} className="w-full gap-2">
-                      <ChevronRight className="h-4 w-4" />
-                      <span>Return to Dashboard</span>
-                    </Button>
-                  </CardFooter>
-                </Card>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-base">Feature Engineering</CardTitle>
+                      <CardDescription>Create new features for ML</CardDescription>
+                    </CardHeader>
+                    <CardContent className="text-sm pb-2">
+                      Transform your data and create new features to improve machine learning model performance
+                    </CardContent>
+                    <CardFooter>
+                      <Button variant="outline" onClick={() => handleFinish('feature-engineering')} className="w-full gap-2">
+                        <ChevronRight className="h-4 w-4" />
+                        <span>Go to Feature Engineering</span>
+                      </Button>
+                    </CardFooter>
+                  </Card>
+                  
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-base">Dashboard</CardTitle>
+                      <CardDescription>Return to dashboard</CardDescription>
+                    </CardHeader>
+                    <CardContent className="text-sm pb-2">
+                      Go back to the dashboard to view all your uploaded files and explore other options
+                    </CardContent>
+                    <CardFooter>
+                      <Button onClick={() => handleFinish('dashboard')} className="w-full gap-2">
+                        <ChevronRight className="h-4 w-4" />
+                        <span>Return to Dashboard</span>
+                      </Button>
+                    </CardFooter>
+                  </Card>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
         </div>
       </div>

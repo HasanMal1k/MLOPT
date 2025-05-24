@@ -1,0 +1,110 @@
+{
+  "data_types": {
+    "Row ID": {
+      "original": "int64",
+      "converted_to": "int"
+    },
+    "Order ID": {
+      "original": "object",
+      "converted_to": "string"
+    },
+    "Order Date": {
+      "original": "object",
+      "converted_to": "string"
+    },
+    "Ship Date": {
+      "original": "object",
+      "converted_to": "string"
+    },
+    "Ship Mode": {
+      "original": "object",
+      "converted_to": "string"
+    },
+    "Customer ID": {
+      "original": "object",
+      "converted_to": "string"
+    },
+    "Customer Name": {
+      "original": "object",
+      "converted_to": "string"
+    },
+    "Segment": {
+      "original": "object",
+      "converted_to": "string"
+    },
+    "Country": {
+      "original": "object",
+      "converted_to": "string"
+    },
+    "City": {
+      "original": "object",
+      "converted_to": "string"
+    },
+    "State": {
+      "original": "object",
+      "converted_to": "string"
+    },
+    "Postal Code": {
+      "original": "int64",
+      "converted_to": "int"
+    },
+    "Region": {
+      "original": "object",
+      "converted_to": "string"
+    },
+    "Product ID": {
+      "original": "object",
+      "converted_to": "string"
+    },
+    "Category": {
+      "original": "object",
+      "converted_to": "string"
+    },
+    "Sub-Category": {
+      "original": "object",
+      "converted_to": "string"
+    },
+    "Product Name": {
+      "original": "object",
+      "converted_to": "string"
+    },
+    "Sales": {
+      "original": "float64",
+      "converted_to": "float"
+    },
+    "Quantity": {
+      "original": "int64",
+      "converted_to": "int"
+    },
+    "Discount": {
+      "original": "float64",
+      "converted_to": "int"
+    }
+  },
+  "columns_dropped": [
+    "Profit"
+  ],
+  "transformations_applied": [
+    "Dropped column Profit",
+    "Converted Row ID to int",
+    "Converted Order ID to string",
+    "Converted Order Date to string",
+    "Converted Ship Date to string",
+    "Converted Ship Mode to string",
+    "Converted Customer ID to string",
+    "Converted Customer Name to string",
+    "Converted Segment to string",
+    "Converted Country to string",
+    "Converted City to string",
+    "Converted State to string",
+    "Converted Postal Code to int",
+    "Converted Region to string",
+    "Converted Product ID to string",
+    "Converted Category to string",
+    "Converted Sub-Category to string",
+    "Converted Product Name to string",
+    "Converted Sales to float",
+    "Converted Quantity to int",
+    "Converted Discount to int"
+  ]
+}
