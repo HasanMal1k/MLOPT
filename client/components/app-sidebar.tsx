@@ -36,40 +36,11 @@ import { useToast } from "@/hooks/use-toast"
 
 const uploadAndPreprocessing = [
   {
-    title: 'Data Upload',
+    title: 'Data Assets',
     url: '/dashboard/data-upload',
     icon: Upload
   },
-  {
-    title: 'My Files',
-    url: '/dashboard/my-files',
-    icon: FileText
-  },
-  {
-    title: 'Custom Cleaning',
-    url: '/dashboard/preprocessing',
-    icon: Settings2
-  },
-  {
-    title: 'Time Series Cleaning',
-    url: '/dashboard/time-series',
-    icon: Clock
-  },
-  {
-    title: 'Feature Transformations',
-    url: '/dashboard/transformations',
-    icon: RefreshCw
-  },
-  {
-    title: 'Feature Engineering',
-    url: '/dashboard/feature-engineering',
-    icon: GitBranch
-  },
-  {
-    title: 'EDA Reports',
-    url: '/dashboard/eda-reports',
-    icon: BarChart
-  }
+  
 ]
 
 export function AppSidebar() {
