@@ -12,7 +12,13 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarHeader,
 } from "@/components/ui/sidebar"
+import { 
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible"
 import Link from 'next/link'
 
 import { 
@@ -29,24 +35,85 @@ import {
   HelpCircle,
   LayoutDashboard,
   BarChart,
-  Clock
+  Clock,
+  ChevronDown,
+  ChevronRight,
+  Sparkles,
+  Brain,
+  Zap
 } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
 import { useToast } from "@/hooks/use-toast"
+import { cn } from "@/lib/utils"
 
-const uploadAndPreprocessing = [
+const navigation = [
   {
-    title: 'Data Assets',
-    url: '/dashboard/data-upload',
-    icon: Upload
+    title: 'Overview',
+    items: [
+      {
+        title: 'Dashboard',
+        url: '/dashboard',
+        icon: LayoutDashboard
+      }
+    ]
   },
-  
+  {
+    title: 'Data Management',
+    items: [
+      {
+        title: 'My Files',
+        url: '/dashboard/my-files',
+        icon: Database
+      },
+      {
+        title: 'Upload & Import',
+        url: '/dashboard/data-upload',
+        icon: Upload,
+        badge: 'New'
+      }
+    ]
+  },
+  {
+    title: 'Blueprints',
+    items: [
+      {
+        title: 'Transformations',
+        url: '/dashboard/preprocessing',
+        icon: Sparkles
+      }
+    ]
+  }
+]
+
+
+const accountItems = [
+  {
+    title: 'Profile',
+    url: '/dashboard/profile',
+    icon: User
+  },
+  {
+    title: 'Account Settings',
+    url: '/dashboard/account',
+    icon: Settings
+  },
+  {
+    title: 'Billing',
+    url: '/dashboard/billing',
+    icon: RefreshCw
+  },
+  {
+    title: 'Help & Support',
+    url: '/dashboard/help',
+    icon: HelpCircle
+  }
 ]
 
 export function AppSidebar() {
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
+  const [isAccountOpen, setIsAccountOpen] = useState(false)
   const { toast } = useToast()
   const supabase = createClient()
 
@@ -130,107 +197,127 @@ export function AppSidebar() {
   }
 
   return (
-    <Sidebar>
-      <SidebarContent>
-        <SidebarGroup>
-          {/*  */}
-          <SidebarMenu>
-            <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <a href={'/dashboard'}>
-                    <LayoutDashboard />
-                    <span>{'Dashboard'}</span>
-                  </a>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-          </SidebarMenu>
-          {/*  */}
-          <SidebarGroupLabel>Data Management</SidebarGroupLabel>
-          <SidebarMenu>
-            {uploadAndPreprocessing.map((item) => (
-              <SidebarMenuItem key={item.title}>
-                <SidebarMenuButton asChild>
-                  <a href={item.url}>
-                    <item.icon />
-                    <span>{item.title}</span>
-                  </a>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            ))}
-          </SidebarMenu>
-        </SidebarGroup>
+    <Sidebar className="border-r border-border/40">
+      {/* Header with Logo */}
+      <SidebarHeader className="border-b border-border/40 p-4">
+        <div className="flex items-center gap-3">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 to-purple-600 text-white">
+            <Brain className="h-5 w-5" />
+          </div>
+          <div className="flex flex-col">
+            <span className="text-lg font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              MLOpt
+            </span>
+            <span className="text-xs text-muted-foreground">
+              ML Optimization Platform
+            </span>
+          </div>
+        </div>
+      </SidebarHeader>
+
+      <SidebarContent className="p-2">
+        {navigation.map((section) => (
+          <SidebarGroup key={section.title}>
+            <SidebarGroupLabel className="px-2 text-xs font-medium text-muted-foreground">
+              {section.title}
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {section.items.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild className="h-9">
+                      <Link href={item.url} className="flex items-center gap-3">
+                        <item.icon className="h-4 w-4" />
+                        <span className="flex-1">{item.title}</span>
+                        {item.badge && (
+                          <span className={cn(
+                            "rounded-full px-2 py-0.5 text-xs font-medium",
+                            item.badge === 'New' && "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+                            item.badge === 'Beta' && "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400"
+                          )}>
+                            {item.badge}
+                          </span>
+                        )}
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ))}
       </SidebarContent>
       
-      <SidebarFooter>
-        <div className="px-2 py-4">
-          <Separator className="my-2" />
-          
-          {/* User profile section - Manual implementation without Avatar component */}
-          <div className="flex flex-col gap-2 mt-2">
-            <div className="flex items-center gap-2 px-2 py-1">
-              {avatarUrl ? (
-                // If we have an avatar URL, show the image
-                <div className="h-8 w-8 rounded-full overflow-hidden">
-                  <img 
-                    src={avatarUrl} 
-                    alt={getDisplayName()}
-                    className="h-full w-full object-cover" 
-                  />
+      <SidebarFooter className="p-2 border-t border-border/40">
+        
+        
+        <Separator className="my-2" />
+        
+        {/* Collapsible Account Section */}
+        <Collapsible open={isAccountOpen} onOpenChange={setIsAccountOpen}>
+          <CollapsibleTrigger asChild>
+            <SidebarMenuButton className="h-12 p-2 data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
+              <div className="flex items-center gap-3 flex-1">
+                {avatarUrl ? (
+                  <div className="h-8 w-8 rounded-full overflow-hidden border-2 border-border/40">
+                    <img 
+                      src={avatarUrl} 
+                      alt={getDisplayName()}
+                      className="h-full w-full object-cover" 
+                    />
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center h-8 w-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 text-white text-sm font-medium border-2 border-border/40">
+                    {getUserInitials()}
+                  </div>
+                )}
+                
+                <div className="flex flex-col text-left flex-1 min-w-0">
+                  <span className="text-sm font-medium truncate">{getDisplayName()}</span>
+                  <span className="text-xs text-muted-foreground truncate">
+                    {user?.email}
+                  </span>
                 </div>
-              ) : (
-                // Otherwise show initials in a colored circle
-                <div className="flex items-center justify-center h-8 w-8 rounded-full bg-primary text-primary-foreground text-sm font-medium">
-                  {getUserInitials()}
-                </div>
-              )}
-              
-              <div className="flex flex-col text-xs">
-                <span className="font-medium">{getDisplayName()}</span>
-                <span className="text-muted-foreground truncate max-w-[120px]">
-                  {user?.email}
-                </span>
               </div>
-            </div>
-            
+              
+              <ChevronDown className={cn(
+                "h-4 w-4 transition-transform duration-200",
+                isAccountOpen && "rotate-180"
+              )} />
+            </SidebarMenuButton>
+          </CollapsibleTrigger>
+          
+          <CollapsibleContent className="space-y-1">
             <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <a href="/dashboard/account">
-                    <User className="h-4 w-4" />
-                    <span>Account</span>
-                  </a>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
+              {accountItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild size="sm" className="h-8 pl-6">
+                    <Link href={item.url} className="flex items-center gap-3">
+                      <item.icon className="h-3 w-3" />
+                      <span className="text-xs">{item.title}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
               
               <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <a href="/dashboard/settings">
-                    <Settings className="h-4 w-4" />
-                    <span>Settings</span>
-                  </a>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <a href="/dashboard/help">
-                    <HelpCircle className="h-4 w-4" />
-                    <span>Help & Support</span>
-                  </a>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              
-              <SidebarMenuItem>
-                <SidebarMenuButton onClick={handleSignOut}>
-                  <LogOut className="h-4 w-4" />
-                  <span>Sign Out</span>
+                <SidebarMenuButton 
+                  onClick={handleSignOut} 
+                  size="sm" 
+                  className="h-8 pl-6 text-destructive hover:text-destructive hover:bg-destructive/10"
+                >
+                  <LogOut className="h-3 w-3" />
+                  <span className="text-xs">Sign Out</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
-          </div>
-          
-          <div className="mt-4 text-xs text-center text-muted-foreground">
-            © 2025 MLOpt
+          </CollapsibleContent>
+        </Collapsible>
+        
+        {/* Footer */}
+        <div className="mt-2 pt-2 border-t border-border/20">
+          <div className="text-xs text-center text-muted-foreground">
+            © 2025 <span className="font-medium">MLOpt</span>
           </div>
         </div>
       </SidebarFooter> 
