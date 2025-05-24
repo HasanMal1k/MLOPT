@@ -1,4 +1,4 @@
-
+// components/upload/UploadWizard.tsx - Updated with Time Series Flow
 'use client'
 
 import { useState, useCallback } from "react"
@@ -11,18 +11,11 @@ import EdaReportViewer from "@/components/EdaReportViewer"
 import FileSelection from "./FileSelection"
 import FileReview from "./FileReview"
 import AutoPreprocessing from "./AutoPreprocessing"
+import DataTypeDetection from "./DataTypeDetection"
+import TimeSeriesProcessing from "./TimeSeriesProcessing"
 import CustomCleaning from "./CustomCleaning"
 import FinalUpload from "./FinalUpload"
 import UploadComplete from "./UploadComplete"
-
-interface ProcessingInfo {
-  filename: string;
-  status: {
-    status: string;
-    progress: number;
-    message: string;
-  };
-}
 
 interface UploadResult {
   name: string;
@@ -47,6 +40,13 @@ export default function UploadWizard({ isDragActive }: UploadWizardProps) {
   // Auto preprocessing state
   const [preprocessedFiles, setPreprocessedFiles] = useState<File[]>([])
   const [preprocessingResults, setPreprocessingResults] = useState<Record<string, any>>({})
+  
+  // Data type detection state
+  const [detectedDataTypes, setDetectedDataTypes] = useState<Record<string, 'normal' | 'time_series'>>({})
+  
+  // Time series processing state
+  const [timeSeriesProcessedFiles, setTimeSeriesProcessedFiles] = useState<File[]>([])
+  const [timeSeriesResults, setTimeSeriesResults] = useState<Record<string, any>>({})
   
   // Custom cleaning state
   const [customCleanedFiles, setCustomCleanedFiles] = useState<File[]>([])
@@ -113,216 +113,6 @@ export default function UploadWizard({ isDragActive }: UploadWizardProps) {
       engineered_features: serverResponse.engineered_features || [],
       transformation_details: serverResponse.transformation_details || {}
     }
-  }
-
-  const uploadData = async () => {
-    if (files.length === 0) {
-      setError("Please select at least one file to upload")
-      return
-    }
-
-    setIsUploading(true)
-    setError(null)
-    setUploadProgress(0)
-    
-    try {
-      // Step 1: Upload to Python for preprocessing
-      const pythonFormData = new FormData()
-      files.forEach(file => {
-        pythonFormData.append('files', file)
-      })
-      
-      setUploadProgress(10)
-      
-      // Send to Python backend
-      const pythonResponse = await fetch('http://localhost:8000/upload/', {
-        method: 'POST',
-        body: pythonFormData,
-      })
-
-      if (!pythonResponse.ok) {
-        const errorData = await pythonResponse.json()
-        throw new Error(errorData.detail || 'Preprocessing failed')
-      }
-
-      const preprocessingResult = await pythonResponse.json()
-      setUploadProgress(50)
-      
-      // Initialize status tracking for preprocessing
-      const processingInfo = (preprocessingResult.processing_info || []) as ProcessingInfo[]
-      const initialStatus: Record<string, any> = {}
-      processingInfo.forEach((info: ProcessingInfo) => {
-        initialStatus[info.filename] = {
-          status: info.status.status,
-          progress: info.status.progress,
-          message: info.status.message
-        }
-      })
-
-      setProcessingStatus(initialStatus)
-      
-      // Step 2: Poll processing status
-      const fileNames = processingInfo.map((info: ProcessingInfo) => info.filename)
-      if (fileNames.length > 0) {
-        await trackProcessingStatus(fileNames)
-      }
-
-      setUploadProgress(60)
-      if (fileNames.length > 0 && Object.values(processingStatus).every(status => status.progress === 100)) {
-        setUploadProgress(70)
-        
-        try {
-          const preprocessingData = {}
-          for (const fileName of fileNames) {
-            const statusInfo = processingStatus[fileName]
-            if (statusInfo && statusInfo.results) {
-              console.log(`Preprocessing results for ${fileName}:`, statusInfo.results)
-              preprocessingData[fileName] = statusInfo.results
-            }
-          }
-          
-          setFilePreprocessingResults(preprocessingData)
-          setUploadProgress(80)
-        } catch (err) {
-          console.error('Error processing transformations:', err)
-        }
-      }
-      
-      // Step 3: Upload preprocessed files to database
-      setUploadProgress(70)
-      const uploadResults: UploadResult[] = []
-      
-      for (const file of files) {
-        const formData = new FormData()
-        formData.append('file', file)
-        formData.append('preprocessed', 'true')
-
-        if (filePreprocessingResults[file.name]) {
-          formData.append('preprocessing_results', JSON.stringify(filePreprocessingResults[file.name]))
-        }
-        
-        try {
-          const response = await fetch('/api/upload', {
-            method: 'POST',
-            body: formData,
-          })
-
-          const result = await response.json()
-          
-          if (!response.ok) {
-            uploadResults.push({
-              name: file.name,
-              success: false
-            })
-            console.error(`Upload failed for ${file.name}:`, result.error || result.details)
-          } else {
-            uploadResults.push({
-              name: file.name,
-              success: true
-            })
-          }
-        } catch (err) {
-          uploadResults.push({
-            name: file.name,
-            success: false
-          })
-          console.error(`Exception during upload for ${file.name}:`, err)
-        }
-      }
-      
-      const successCount = uploadResults.filter(r => r.success).length
-      
-      setUploadSummary({
-        totalFiles: files.length,
-        successCount: successCount,
-        filesProcessed: uploadResults
-      })
-      
-      setUploadProgress(100)
-      setUploadComplete(true)
-      
-      if (successCount === files.length) {
-        toast({
-          title: "Success",
-          description: `All ${files.length} files have been uploaded and preprocessed successfully`,
-        })
-      } else {
-        toast({
-          variant: "destructive",
-          title: "Partial success",
-          description: `Uploaded ${successCount} of ${files.length} files successfully`,
-        })
-      }
-      
-      setCurrentStep(4)
-      
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Upload failed'
-      setError(errorMessage)
-      console.error('Upload error:', err)
-    } finally {
-      setIsUploading(false)
-    }
-  }
-
-  const trackProcessingStatus = async (fileNames: string[]) => {
-    let allCompleted = false
-    let attempts = 0
-    const maxAttempts = 30
-    
-    while (!allCompleted && attempts < maxAttempts) {
-      attempts++
-      let completedCount = 0
-      
-      for (const fileName of fileNames) {
-        try {
-          const response = await fetch(`http://localhost:8000/processing-status/${fileName}`)
-          if (response.ok) {
-            const status = await response.json()
-            
-            if (status.results) {
-              console.log(`[DEBUG] Full results structure for ${fileName}:`, 
-                JSON.stringify(status.results, null, 2))
-            }
-            
-            setProcessingStatus(prev => ({
-              ...prev,
-              [fileName]: {
-                status: status.status,
-                progress: status.progress,
-                message: status.message,
-                results: status.results
-              }
-            }))
-            
-            if (status.progress === 100 || status.progress === -1) {
-              completedCount++
-            }
-          }
-        } catch (error) {
-          console.error(`Error checking status for ${fileName}:`, error)
-        }
-      }
-      
-      if (completedCount === fileNames.length) {
-        allCompleted = true
-        
-        const preprocessingData = {}
-        for (const fileName of fileNames) {
-          const statusInfo = processingStatus[fileName]
-          if (statusInfo && statusInfo.results) {
-            console.log(`Final preprocessing results for ${fileName}:`, statusInfo.results)
-            preprocessingData[fileName] = statusInfo.results
-          }
-        }
-        
-        setFilePreprocessingResults(preprocessingData)
-      } else {
-        await new Promise(resolve => setTimeout(resolve, 10000))
-      }
-    }
-    
-    return allCompleted
   }
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
@@ -400,7 +190,29 @@ export default function UploadWizard({ isDragActive }: UploadWizardProps) {
   const handleAutoPreprocessingComplete = (processedFiles: File[], results: Record<string, any>) => {
     setPreprocessedFiles(processedFiles)
     setPreprocessingResults(results)
-    setCurrentStep(3) // Go to custom cleaning
+    setCurrentStep(3) // Go to data type detection
+  }
+  
+  // NEW: Handle data type detection complete
+  const handleDataTypeDetectionNormal = (normalFiles: File[], results: Record<string, any>) => {
+    // Store the normal files for custom cleaning
+    setPreprocessedFiles(normalFiles)
+    setPreprocessingResults(results)
+    setCurrentStep(4) // Go to custom cleaning
+  }
+  
+  const handleDataTypeDetectionTimeSeries = (timeSeriesFiles: File[], results: Record<string, any>) => {
+    // Store the time series files for time series processing
+    setPreprocessedFiles(timeSeriesFiles)
+    setPreprocessingResults(results)
+    setCurrentStep(5) // Go to time series processing
+  }
+  
+  // NEW: Handle time series processing complete
+  const handleTimeSeriesProcessingComplete = (processedFiles: File[], results: Record<string, any>) => {
+    setTimeSeriesProcessedFiles(processedFiles)
+    setTimeSeriesResults(results)
+    setCurrentStep(6) // Go directly to final upload (skip custom cleaning for time series)
   }
   
   const handleCustomCleaningComplete = (cleanedResults: any[]) => {
@@ -425,21 +237,21 @@ export default function UploadWizard({ isDragActive }: UploadWizardProps) {
         }
         
         setCustomCleanedFiles(cleanedFiles)
-        setCurrentStep(4) // Go to final upload
+        setCurrentStep(6) // Go to final upload
       }
       
       downloadCustomCleanedFiles()
     } else {
       // No custom cleaning, use preprocessed files
       setCustomCleanedFiles(preprocessedFiles)
-      setCurrentStep(4)
+      setCurrentStep(6)
     }
   }
   
   const handleFinalUploadComplete = (summary: any) => {
     setUploadSummary(summary)
     setUploadComplete(true)
-    setCurrentStep(5) // Go to complete
+    setCurrentStep(7) // Go to complete
     
     if (summary.successCount === summary.totalFiles) {
       toast({
@@ -464,6 +276,27 @@ export default function UploadWizard({ isDragActive }: UploadWizardProps) {
       : '/dashboard/feature-engineering'
   }
 
+  // Determine which files to use for final upload and what results to include
+  const getFinalUploadData = () => {
+    // If we have time series processed files, use those
+    if (timeSeriesProcessedFiles.length > 0) {
+      return {
+        originalFiles: files,
+        processedFiles: timeSeriesProcessedFiles,
+        preprocessingResults: { ...preprocessingResults, ...timeSeriesResults },
+        customCleaningResults: []
+      }
+    }
+    
+    // Otherwise use custom cleaned files or preprocessed files
+    return {
+      originalFiles: files,
+      processedFiles: customCleanedFiles.length > 0 ? customCleanedFiles : preprocessedFiles,
+      preprocessingResults,
+      customCleaningResults
+    }
+  }
+
   return (
     <div className="max-w-5xl mx-auto">
       <Stepper currentStep={currentStep}>
@@ -480,8 +313,16 @@ export default function UploadWizard({ isDragActive }: UploadWizardProps) {
           <StepDescription>Automatic data cleaning</StepDescription>
         </Step>
         <Step>
+          <StepTitle>Data Type Detection</StepTitle>
+          <StepDescription>Identify normal vs time series</StepDescription>
+        </Step>
+        <Step>
           <StepTitle>Custom Cleaning</StepTitle>
           <StepDescription>Customize data cleaning</StepDescription>
+        </Step>
+        <Step>
+          <StepTitle>Time Series Processing</StepTitle>
+          <StepDescription>Time series specific processing</StepDescription>
         </Step>
         <Step>
           <StepTitle>Upload to Database</StepTitle>
@@ -531,29 +372,52 @@ export default function UploadWizard({ isDragActive }: UploadWizardProps) {
         )}
         
         {currentStep === 3 && (
+          <DataTypeDetection
+            files={preprocessedFiles.length > 0 ? preprocessedFiles : files}
+            preprocessingResults={preprocessingResults}
+            onBack={() => setCurrentStep(2)}
+            onContinueNormal={handleDataTypeDetectionNormal}
+            onContinueTimeSeries={handleDataTypeDetectionTimeSeries}
+          />
+        )}
+        
+        {currentStep === 4 && (
           <CustomCleaning
             files={preprocessedFiles.length > 0 ? preprocessedFiles : files}
-            onBack={() => setCurrentStep(2)}
+            onBack={() => setCurrentStep(3)}
             onContinue={handleCustomCleaningComplete}
             onPreviewFile={handlePreviewFile}
           />
         )}
         
-        {currentStep === 4 && (
-          <FinalUpload
-            originalFiles={files}
-            processedFiles={customCleanedFiles.length > 0 ? customCleanedFiles : preprocessedFiles}
+        {currentStep === 5 && (
+          <TimeSeriesProcessing
+            files={preprocessedFiles.length > 0 ? preprocessedFiles : files}
             preprocessingResults={preprocessingResults}
-            customCleaningResults={customCleaningResults}
             onBack={() => setCurrentStep(3)}
+            onComplete={handleTimeSeriesProcessingComplete}
+          />
+        )}
+        
+        {currentStep === 6 && (
+          <FinalUpload
+            {...getFinalUploadData()}
+            onBack={() => {
+              // Go back to appropriate step based on what processing was done
+              if (timeSeriesProcessedFiles.length > 0) {
+                setCurrentStep(5) // Back to time series processing
+              } else {
+                setCurrentStep(4) // Back to custom cleaning
+              }
+            }}
             onComplete={handleFinalUploadComplete}
           />
         )}
         
-        {currentStep === 5 && (
+        {currentStep === 7 && (
           <UploadComplete
             uploadSummary={uploadSummary}
-            filePreprocessingResults={preprocessingResults}
+            filePreprocessingResults={{ ...preprocessingResults, ...timeSeriesResults }}
             customCleaningResults={customCleaningResults}
             onFinish={handleFinish}
             transformPreprocessingResults={transformPreprocessingResults}
