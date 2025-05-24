@@ -58,15 +58,28 @@ export default function AutoPreprocessing({
       })
 
       if (!pythonResponse.ok) {
-        const errorData = await pythonResponse.json()
-        throw new Error(errorData.detail || 'Preprocessing failed')
+        const errorText = await pythonResponse.text()
+        console.error('Python backend error:', errorText)
+        throw new Error(`Backend returned ${pythonResponse.status}: ${pythonResponse.statusText}`)
       }
 
       const preprocessingResult = await pythonResponse.json()
       setProcessingProgress(30)
       
+      console.log('Initial preprocessing result:', preprocessingResult)
+      
       // Initialize status tracking for preprocessing
       const processingInfo = (preprocessingResult.processing_info || []) as ProcessingInfo[]
+      
+      if (processingInfo.length === 0) {
+        console.log('No processing info returned, using original files')
+        setProcessedFiles(files)
+        setProcessingResults({})
+        setProcessingProgress(100)
+        setIsComplete(true)
+        return
+      }
+
       const initialStatus: Record<string, any> = {}
       processingInfo.forEach((info: ProcessingInfo) => {
         initialStatus[info.filename] = {
@@ -78,37 +91,26 @@ export default function AutoPreprocessing({
 
       setProcessingStatus(initialStatus)
       
-      // Step 2: Poll processing status
+      // Step 2: Poll processing status with improved error handling
       const fileNames = processingInfo.map((info: ProcessingInfo) => info.filename)
-      if (fileNames.length > 0) {
-        await trackProcessingStatus(fileNames)
-      }
-
+      console.log('Tracking status for files:', fileNames)
+      
+      const finalResults = await trackProcessingStatus(fileNames)
       setProcessingProgress(70)
       
       // Step 3: Handle preprocessed files
       const finalFiles: File[] = []
       const results: Record<string, any> = {}
       
-      // If we have processing info but no files to download, use original files
-      if (fileNames.length === 0) {
-        finalFiles.push(...files)
-        setProcessedFiles(finalFiles)
-        setProcessingResults({})
-        setProcessingProgress(100)
-        setIsComplete(true)
-        return
-      }
-      
-      for (let i = 0; i < fileNames.length; i++) {
-        const fileName = fileNames[i]
+      for (let i = 0; i < files.length; i++) {
         const originalFile = files[i]
+        const fileName = fileNames[i] || `${i}_${originalFile.name}`
         
         try {
-          // Get the processing results
-          const statusInfo = processingStatus[fileName]
-          if (statusInfo && statusInfo.results) {
-            results[originalFile.name] = statusInfo.results
+          // Get the processing results from final status
+          if (finalResults[fileName] && finalResults[fileName].results) {
+            results[originalFile.name] = finalResults[fileName].results
+            console.log(`Results for ${originalFile.name}:`, finalResults[fileName].results)
           }
           
           // Try to get the processed file
@@ -120,9 +122,11 @@ export default function AutoPreprocessing({
               const blob = await fileResponse.blob()
               processedFile = new File([blob], originalFile.name, { type: 'text/csv' })
               console.log(`Successfully downloaded processed file: ${fileName}`)
+            } else {
+              console.log(`Processed file not available for ${fileName} (${fileResponse.status}): using original file`)
             }
           } catch (fileErr) {
-            console.log(`Processed file not available for ${fileName}, using original file`)
+            console.log(`Error downloading processed file for ${fileName}:`, fileErr)
           }
           
           // Use processed file if available, otherwise use original
@@ -155,63 +159,92 @@ export default function AutoPreprocessing({
     }
   }
 
-  const trackProcessingStatus = async (fileNames: string[]) => {
+  const trackProcessingStatus = async (fileNames: string[]): Promise<Record<string, any>> => {
     let allCompleted = false
     let attempts = 0
-    const maxAttempts = 30
+    const maxAttempts = 24 // Reduced max attempts to prevent infinite loops
+    const pollInterval = 5000 // 5 seconds
+    let finalResults: Record<string, any> = {}
+    
+    console.log(`Starting status tracking for ${fileNames.length} files`)
     
     while (!allCompleted && attempts < maxAttempts) {
       attempts++
       let completedCount = 0
+      const currentStatuses: Record<string, any> = {}
       
+      console.log(`Status check attempt ${attempts}/${maxAttempts}`)
+      
+      // Check status for each file
       for (const fileName of fileNames) {
         try {
           const response = await fetch(`http://localhost:8000/processing-status/${fileName}`)
+          
           if (response.ok) {
             const status = await response.json()
+            console.log(`Status for ${fileName}:`, status)
             
-            if (status.results) {
-              console.log(`[DEBUG] Preprocessing results for ${fileName}:`, 
-                JSON.stringify(status.results, null, 2))
+            currentStatuses[fileName] = {
+              status: status.status || 'processing',
+              progress: status.progress || 0,
+              message: status.message || 'Processing...',
+              results: status.results || null
             }
             
-            setProcessingStatus(prev => ({
-              ...prev,
-              [fileName]: {
-                status: status.status,
-                progress: status.progress,
-                message: status.message,
-                results: status.results
-              }
-            }))
-            
-            if (status.progress === 100 || status.progress === -1) {
+            // Count as completed if progress is 100 or status is completed
+            if (status.progress === 100 || status.status === 'completed' || status.progress === -1) {
               completedCount++
+              if (status.results) {
+                finalResults[fileName] = { results: status.results }
+              }
             }
           } else {
-            console.error(`Error checking status for ${fileName}: ${response.status} ${response.statusText}`)
-            // If we can't get status, assume it's complete to avoid infinite loop
+            console.warn(`Failed to get status for ${fileName}: ${response.status} ${response.statusText}`)
+            // For non-200 responses, assume completed to avoid infinite loop
+            currentStatuses[fileName] = {
+              status: 'unknown',
+              progress: 100,
+              message: 'Status check failed - assuming completed',
+              results: null
+            }
             completedCount++
           }
         } catch (error) {
           console.error(`Network error checking status for ${fileName}:`, error)
           // On network error, assume complete to avoid infinite loop
+          currentStatuses[fileName] = {
+            status: 'error',
+            progress: 100,
+            message: 'Network error during status check',
+            results: null
+          }
           completedCount++
         }
       }
       
-      if (completedCount === fileNames.length) {
+      // Update the processing status state
+      setProcessingStatus(currentStatuses)
+      
+      // Check if all files are completed
+      if (completedCount >= fileNames.length) {
         allCompleted = true
-      } else {
-        await new Promise(resolve => setTimeout(resolve, 5000)) // Poll every 5 seconds
+        console.log('All files completed processing')
+        break
+      }
+      
+      // If not all completed, wait before next poll
+      if (!allCompleted && attempts < maxAttempts) {
+        console.log(`Waiting ${pollInterval}ms before next status check...`)
+        await new Promise(resolve => setTimeout(resolve, pollInterval))
       }
     }
     
     if (!allCompleted) {
-      console.warn('Processing status tracking timed out, proceeding anyway')
+      console.warn(`Processing status tracking timed out after ${attempts} attempts`)
+      // Return whatever results we have
     }
     
-    return true // Always return true to continue the flow
+    return finalResults
   }
 
   const handleContinue = () => {

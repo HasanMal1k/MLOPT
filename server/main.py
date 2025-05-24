@@ -9,7 +9,7 @@ import time
 import json
 import uuid
 import tempfile
-from typing import List
+from typing import Dict, List, Tuple, Any, Optional, Union  # Add all these typing imports
 
 # Import custom modules
 from data_preprocessing import process_data_file, update_status, generate_eda_report
@@ -70,70 +70,108 @@ async def root():
 @app.post("/upload/")
 async def upload_files(background_tasks: BackgroundTasks, files: list[UploadFile] = File(...)):
     """
-    Upload and preprocess multiple files
-    
-    This endpoint accepts CSV and XLSX files, saves them,
-    and triggers background preprocessing tasks for each file.
+    Upload and preprocess multiple files with improved file tracking
     """
-    saved_files = []
-    processing_info = []
-    
-    for file in files:
-        # Check file type
-        file_extension = file.filename.lower().split('.')[-1]
-        is_valid_extension = file_extension in ['csv', 'xlsx', 'xls']
+    try:
+        saved_files = []
+        processing_info = []
         
-        if not is_valid_extension:
-            raise HTTPException(
-                status_code=400, 
-                detail=f"File type not supported for {file.filename}. Only CSV, XLS, or XLSX allowed."
+        for file in files:
+            # Check file type
+            if not file.filename:
+                continue
+                
+            file_extension = file.filename.lower().split('.')[-1]
+            is_valid_extension = file_extension in ['csv', 'xlsx', 'xls']
+            
+            if not is_valid_extension:
+                logger.warning(f"Invalid file type for {file.filename}: {file_extension}")
+                continue
+            
+            # Generate a unique filename to prevent collisions
+            unique_id = str(uuid.uuid4())[:8]
+            safe_filename = f"{unique_id}_{file.filename}"
+            
+            try:
+                # Save the file to the local folder
+                file_path = UPLOAD_FOLDER / safe_filename
+                with file_path.open("wb") as f:
+                    content = await file.read()
+                    f.write(content)
+                
+                saved_files.append({
+                    "original_filename": file.filename,
+                    "saved_filename": safe_filename
+                })
+                
+                # The processed file will be saved as "processed_{safe_filename}"
+                processed_filename = f"processed_{safe_filename}"
+                
+                # Initialize progress tracking with better error handling
+                try:
+                    # Create initial status with file mapping information
+                    initial_status_data = {
+                        "original_filename": file.filename,
+                        "safe_filename": safe_filename,
+                        "processed_filename": processed_filename,
+                        "file_mapping": {
+                            "input": safe_filename,
+                            "output": processed_filename
+                        }
+                    }
+                    
+                    init_status = update_status(safe_filename, STATUS_FOLDER, 0, "Queued for processing", initial_status_data)
+                    processing_info.append({
+                        "filename": safe_filename,
+                        "original_filename": file.filename,
+                        "processed_filename": processed_filename,
+                        "status": init_status
+                    })
+                    
+                    # Add the background task for processing
+                    background_tasks.add_task(
+                        process_data_file,
+                        file_path,
+                        PROCESSED_FOLDER,
+                        STATUS_FOLDER
+                    )
+                    
+                except Exception as status_error:
+                    logger.error(f"Error setting up processing for {file.filename}: {status_error}")
+                    # Continue with other files even if one fails
+                    continue
+                    
+            except Exception as file_error:
+                logger.error(f"Error saving file {file.filename}: {file_error}")
+                continue
+        
+        if not saved_files:
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "error": "No valid files were uploaded",
+                    "message": "Please upload CSV or Excel files"
+                }
             )
         
-        # Generate a unique filename to prevent collisions
-        unique_id = str(uuid.uuid4())[:8]
-        safe_filename = f"{unique_id}_{file.filename}"
-        
-        # Save the file to the local folder
-        file_path = UPLOAD_FOLDER / safe_filename
-        with file_path.open("wb") as f:
-            content = await file.read()
-            f.write(content)
-        
-        saved_files.append({
-            "original_filename": file.filename,
-            "saved_filename": safe_filename
-        })
-        
-        # Process the file in the background
-        output_filename = f"processed_{safe_filename}"
-        output_path = PROCESSED_FOLDER / output_filename
-        
-        # Initialize progress tracking
-        init_status = update_status(safe_filename, STATUS_FOLDER, 0, "Queued for processing")
-        processing_info.append({
-            "filename": safe_filename,
-            "original_filename": file.filename,
-            "processed_filename": output_filename,
-            "status": init_status
-        })
-        
-        # Add the background task for processing
-        background_tasks.add_task(
-            process_data_file,
-            file_path,
-            PROCESSED_FOLDER,
-            STATUS_FOLDER,
-            lambda progress, message: update_status(safe_filename, STATUS_FOLDER, progress, message)
+        return JSONResponse(
+            content={
+                "message": f"{len(saved_files)} file(s) uploaded successfully.",
+                "files": saved_files,
+                "processing": "File preprocessing started in the background. Track progress using the /processing-status/{filename} endpoint.",
+                "processing_info": processing_info
+            }
         )
-    
-    return JSONResponse(
-        content={
-            "message": f"{len(saved_files)} file(s) uploaded successfully.",
-            "files": saved_files,
-            "processing": "File preprocessing started in the background. Track progress using the /processing-status/{filename} endpoint.",
-            "processing_info": processing_info
-        }
-    )
+        
+    except Exception as e:
+        logger.error(f"Error in upload endpoint: {e}")
+        return JSONResponse(
+            status_code=500,
+            content={
+                "error": "Upload failed",
+                "message": str(e)
+            }
+        )
 
 @app.get("/processed-files/")
 async def get_processed_files():
@@ -152,27 +190,126 @@ async def download_file(filename: str):
 
 @app.get("/processing-status/{filename}")
 async def get_processing_status(filename: str):
-    """Get the processing status and progress of a file"""
-    status_path = STATUS_FOLDER / f"{filename}_status.json"
-    
-    if status_path.exists():
-        with open(status_path, 'r') as f:
-            status = json.load(f)
-            
-        # If processing is complete, add preprocessing details
-        if status.get("progress") == 100:
+    """Get the processing status and progress of a file with file mapping info"""
+    try:
+        status_path = STATUS_FOLDER / f"{filename}_status.json"
+        
+        if not status_path.exists():
+            logger.warning(f"Status file not found for {filename}")
+            return {
+                "status": "not_found", 
+                "progress": 0,
+                "message": f"No processing status found for {filename}",
+                "results": None,
+                "file_mapping": None
+            }
+        
+        try:
+            with open(status_path, 'r') as f:
+                content = f.read().strip()
+                
+                if not content:
+                    logger.warning(f"Empty status file for {filename}")
+                    return {
+                        "status": "processing", 
+                        "progress": 0,
+                        "message": "Status file is empty - processing may have just started",
+                        "results": None,
+                        "file_mapping": None
+                    }
+                
+                status = json.loads(content)
+                
+        except json.JSONDecodeError as e:
+            logger.error(f"JSON decode error for {filename}: {e}")
+            return {
+                "status": "error", 
+                "progress": -1,
+                "message": f"Error reading status file: JSON decode error",
+                "results": None,
+                "file_mapping": None
+            }
+        except Exception as e:
+            logger.error(f"Error reading status file for {filename}: {e}")
+            return {
+                "status": "error", 
+                "progress": -1,
+                "message": f"Error reading status file: {str(e)}",
+                "results": None,
+                "file_mapping": None
+            }
+        
+        # Ensure status has required fields
+        status.setdefault("status", "processing")
+        status.setdefault("progress", 0)
+        status.setdefault("message", "Processing...")
+        status.setdefault("results", None)
+        status.setdefault("file_mapping", None)
+        
+        # If processing is complete, try to add preprocessing details
+        if status.get("progress") == 100 and status.get("results") is None:
             pipeline_path = PROCESSED_FOLDER / f"processed_{filename}_pipeline.joblib"
             if pipeline_path.exists():
                 try:
                     import joblib
                     preprocessing_data = joblib.load(pipeline_path)
-                    status["preprocessing_details"] = preprocessing_data["preprocessing_info"]
+                    if "preprocessing_info" in preprocessing_data:
+                        status["results"] = preprocessing_data["preprocessing_info"]
+                        logger.info(f"Added preprocessing results for {filename}")
                 except Exception as e:
-                    logger.error(f"Error loading pipeline data: {e}")
+                    logger.error(f"Error loading pipeline data for {filename}: {e}")
         
         return status
-    else:
-        return {"status": "not_found", "message": f"No processing status found for {filename}"}
+        
+    except Exception as e:
+        logger.error(f"Unexpected error in get_processing_status for {filename}: {e}")
+        return {
+            "status": "error", 
+            "progress": -1,
+            "message": f"Unexpected server error: {str(e)}",
+            "results": None,
+            "file_mapping": None
+        }
+        
+        
+def update_status(filename: str, status_folder: Path, 
+                 progress: int, message: str, 
+                 results: Optional[Dict] = None) -> Dict:
+    """
+    Update the processing status of a file with better error handling.
+    """
+    try:
+        status = {
+            "status": "processing" if progress < 100 and progress >= 0 else ("completed" if progress == 100 else "error"),
+            "progress": progress,
+            "message": message,
+            "timestamp": time.time()
+        }
+        
+        if results is not None:
+            status["results"] = results
+        
+        status_path = status_folder / f"{filename}_status.json"
+        
+        # Ensure the directory exists
+        status_folder.mkdir(parents=True, exist_ok=True)
+        
+        # Write status with proper error handling
+        with open(status_path, 'w') as f:
+            json.dump(status, f, indent=2, default=str)  # default=str to handle non-serializable objects
+        
+        logger.info(f"Updated status for {filename}: {progress}% - {message}")
+        return status
+        
+    except Exception as e:
+        logger.error(f"Error updating status for {filename}: {e}")
+        # Return a basic status even if file write fails
+        return {
+            "status": "error",
+            "progress": -1,
+            "message": f"Error updating status: {str(e)}",
+            "timestamp": time.time()
+        }
     
 @app.post("/generate_report/", response_class=HTMLResponse)
 async def generate_report(file: UploadFile = File(...)):

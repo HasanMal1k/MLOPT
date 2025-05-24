@@ -274,335 +274,469 @@ def preprocess_file(file_path: Path, output_path: Path,
     filename = file_path.name
     logger.info(f"Starting preprocessing of {filename}")
     
-    # Setup preprocessing info structure
-    preprocessing_info = {
-        "columns_dropped": [],
-        "date_columns_detected": [],
-        "columns_cleaned": [],
-        "missing_value_stats": {},
-        "dropped_by_unique_value": [],
-        "engineered_features": []
-    }
-    
-    # 1. Read the file
-    update_status(filename, status_folder, 5, "Reading file")
-    if progress_callback:
-        progress_callback(5, "Reading file")
-    
-    df, read_success, read_message = safe_read_file(file_path, MISSING_VALUES)
-    
-    if not read_success:
-        error_msg = f"Failed to read file: {read_message}"
-        logger.error(error_msg)
-        update_status(filename, status_folder, -1, error_msg)
-        return {"success": False, "error": error_msg}
-    
-    # Save original shape for reporting
-    original_shape = df.shape
-    logger.info(f"Original shape: {original_shape}")
-    
-    if original_shape[0] == 0 or original_shape[1] == 0:
-        error_msg = f"File is empty or has no columns: {original_shape}"
-        logger.error(error_msg)
-        update_status(filename, status_folder, -1, error_msg)
-        return {"success": False, "error": error_msg}
-    
-    # 2. Handle whitespace and make a copy for safety
-    update_status(filename, status_folder, 10, "Initial cleaning")
-    if progress_callback:
-        progress_callback(10, "Initial cleaning")
-    
     try:
-        # Remove whitespace in string cells
-        df = df.replace(r'^\s*$', np.nan, regex=True)
+        # Setup preprocessing info structure
+        preprocessing_info = {
+            "columns_dropped": [],
+            "date_columns_detected": [],
+            "columns_cleaned": [],
+            "missing_value_stats": {},
+            "dropped_by_unique_value": [],
+            "engineered_features": [],
+            "transformation_details": {}
+        }
         
-        # Drop rows with all missing values
-        initial_row_count = len(df)
-        df.dropna(how='all', inplace=True)
-        dropped_rows = initial_row_count - len(df)
+        # 1. Read the file
+        update_status(filename, status_folder, 5, "Reading file")
+        if progress_callback:
+            progress_callback(5, "Reading file")
         
-        if dropped_rows > 0:
-            logger.info(f"Dropped {dropped_rows} rows that were completely empty")
-    except Exception as e:
-        logger.warning(f"Error in initial cleaning: {e}")
-        # Continue despite errors in this step
-    
-    # 3. Gather statistics about missing values
-    update_status(filename, status_folder, 15, "Analyzing missing values")
-    if progress_callback:
-        progress_callback(15, "Analyzing missing values")
-    
-    try:
-        for col in df.columns:
-            missing_count = df[col].isna().sum()
-            if missing_count > 0:
-                missing_percentage = round((missing_count / len(df)) * 100, 2)
-                preprocessing_info["missing_value_stats"][col] = {
-                    "missing_count": int(missing_count),
-                    "missing_percentage": missing_percentage,
-                    "imputation_method": "None"  # Will be updated later
-                }
-        logger.info(f"Found {len(preprocessing_info['missing_value_stats'])} columns with missing values")
-    except Exception as e:
-        logger.warning(f"Error analyzing missing values: {e}")
-    
-    # 4. Drop problematic columns
-    update_status(filename, status_folder, 20, "Removing problematic columns")
-    if progress_callback:
-        progress_callback(20, "Removing problematic columns")
-    
-    try:
-        # Drop duplicate column names (retaining first)
-        if len(df.columns) != len(df.columns.unique()):
-            df = df.loc[:, ~df.columns.duplicated()]
-            logger.info("Removed duplicate column names")
+        df, read_success, read_message = safe_read_file(file_path, MISSING_VALUES)
         
-        # Drop columns with extremely high missing values
-        high_missing_cols = [col for col in df.columns 
-                            if df[col].isna().sum() > 0.95 * len(df)]
-        
-        if high_missing_cols:
-            df = df.drop(columns=high_missing_cols)
-            preprocessing_info["columns_dropped"].extend(high_missing_cols)
-            logger.info(f"Dropped {len(high_missing_cols)} columns with >95% missing values")
-    except Exception as e:
-        logger.warning(f"Error removing problematic columns: {e}")
-    
-    # 5. Detect and convert date columns
-    update_status(filename, status_folder, 30, "Processing date columns")
-    if progress_callback:
-        progress_callback(30, "Processing date columns")
-    
-    try:
-        date_columns = detect_date_columns(df)
-        
-        # Convert detected date columns
-        for col in date_columns:
-            if col in df.columns:  # Safety check
-                with warnings.catch_warnings():
-                    warnings.simplefilter("ignore")
-                    df[col] = pd.to_datetime(df[col], errors='coerce')
-        
-        preprocessing_info["date_columns_detected"] = date_columns
-        logger.info(f"Detected and converted {len(date_columns)} date columns")
-    except Exception as e:
-        logger.warning(f"Error processing date columns: {e}")
-    
-    # 6. Prepare for imputation
-    update_status(filename, status_folder, 40, "Preparing for imputation")
-    if progress_callback:
-        progress_callback(40, "Preparing for imputation")
-    
-    try:
-        # Identify column types for imputation
-        nominal_columns = [col for col in df.columns 
-                          if col not in date_columns and 
-                          df[col].dtype in ['object', 'category', 'string', 'bool']]
-        
-        non_nominal_columns = [col for col in df.columns 
-                              if col not in nominal_columns and 
-                              col not in date_columns]
-        
-        logger.info(f"Column types: {len(nominal_columns)} categorical, " 
-                   f"{len(non_nominal_columns)} numeric, {len(date_columns)} date")
-    except Exception as e:
-        logger.warning(f"Error preparing for imputation: {e}")
-        # Define in case of error
-        nominal_columns = []
-        non_nominal_columns = []
-    
-    # 7. Handle missing values with advanced techniques
-    update_status(filename, status_folder, 50, "Handling missing values")
-    if progress_callback:
-        progress_callback(50, "Handling missing values")
-    
-    try:
-        # Create a copy of the dataframe for safety during imputation
-        df_copy = df.copy()
-        
-        # For categorical columns
-        if nominal_columns:
-            # Use mode imputation for categorical columns
-            mode_imputer = ModeImputer()
-            mode_imputer.fit(df_copy[nominal_columns])
-            
-            for col in nominal_columns:
-                if col in preprocessing_info["missing_value_stats"]:
-                    if df_copy[col].isna().sum() > 0:
-                        try:
-                            # Get the mode for this column
-                            mode_val = df_copy[col].mode().iloc[0] if not df_copy[col].mode().empty else "Unknown"
-                            df_copy[col] = df_copy[col].fillna(mode_val)
-                            preprocessing_info["columns_cleaned"].append(col)
-                            preprocessing_info["missing_value_stats"][col]["imputation_method"] = "mode"
-                        except Exception as e:
-                            logger.warning(f"Error imputing column {col}: {e}")
-        
-        # For numeric columns
-        if non_nominal_columns:
-            try:
-                # Try using KNN imputation for numeric columns
-                missing_in_numeric = any(df_copy[col].isna().sum() > 0 for col in non_nominal_columns)
-                
-                if missing_in_numeric and len(df_copy) > 10 and len(non_nominal_columns) > 0:
-                    # Determine optimal k for KNN (smaller of 5 or half the dataset)
-                    k = min(5, max(2, len(df_copy) // 2))
-                    
-                    # Fill any lingering NaNs with column means first to avoid KNN errors
-                    for col in non_nominal_columns:
-                        if df_copy[col].isna().sum() > 0:
-                            df_copy[col] = df_copy[col].fillna(df_copy[col].mean())
-                    
-                    # Apply KNN imputation
-                    imputer = KNNImputer(n_neighbors=k)
-                    non_nominal_values = df_copy[non_nominal_columns].values
-                    imputed_values = imputer.fit_transform(non_nominal_values)
-                    
-                    # Update the dataframe with imputed values
-                    for i, col in enumerate(non_nominal_columns):
-                        if col in preprocessing_info["missing_value_stats"]:
-                            df_copy[col] = imputed_values[:, i]
-                            preprocessing_info["columns_cleaned"].append(col)
-                            preprocessing_info["missing_value_stats"][col]["imputation_method"] = "knn"
-                
-                else:
-                    # Fall back to simpler imputation if KNN doesn't make sense
-                    for col in non_nominal_columns:
-                        if col in preprocessing_info["missing_value_stats"] and df_copy[col].isna().sum() > 0:
-                            # Use median for imputation
-                            median_val = df_copy[col].median()
-                            df_copy[col] = df_copy[col].fillna(median_val)
-                            preprocessing_info["columns_cleaned"].append(col)
-                            preprocessing_info["missing_value_stats"][col]["imputation_method"] = "median"
-            
-            except Exception as e:
-                logger.warning(f"Error in KNN imputation: {e}, falling back to median")
-                
-                # Fall back to median imputation for numeric columns
-                for col in non_nominal_columns:
-                    if col in preprocessing_info["missing_value_stats"] and df_copy[col].isna().sum() > 0:
-                        median_val = df_copy[col].median()
-                        df_copy[col] = df_copy[col].fillna(median_val)
-                        preprocessing_info["columns_cleaned"].append(col)
-                        preprocessing_info["missing_value_stats"][col]["imputation_method"] = "median"
-        
-        # Update the main dataframe after imputation
-        df = df_copy
-        
-        logger.info(f"Cleaned {len(preprocessing_info['columns_cleaned'])} columns with missing values")
-    except Exception as e:
-        logger.error(f"Error handling missing values: {e}")
-        # Continue despite errors, using the original dataframe
-    
-    # 8. Remove columns with single value (no variance)
-    update_status(filename, status_folder, 70, "Final cleaning")
-    if progress_callback:
-        progress_callback(70, "Final cleaning")
-    
-    try:
-        single_value_cols = [col for col in df.columns if df[col].nunique() <= 1]
-        if single_value_cols:
-            df = df.drop(columns=single_value_cols)
-            preprocessing_info["dropped_by_unique_value"] = single_value_cols
-            logger.info(f"Dropped {len(single_value_cols)} columns with only a single value")
-    except Exception as e:
-        logger.warning(f"Error removing single-value columns: {e}")
-    
-    # 9. Verify data quality and ensure no missing values remain
-    update_status(filename, status_folder, 80, "Final quality check")
-    if progress_callback:
-        progress_callback(80, "Final quality check")
-    
-    try:
-        # Check for any remaining missing values
-        remaining_missing = df.isna().sum().sum()
-        
-        if remaining_missing > 0:
-            logger.warning(f"There are still {remaining_missing} missing values after processing")
-            
-            # Last resort fill with meaningful constants
-            for col in df.columns:
-                if df[col].isna().sum() > 0:
-                    if pd.api.types.is_numeric_dtype(df[col]):
-                        df[col] = df[col].fillna(0)
-                    else:
-                        df[col] = df[col].fillna("Unknown")
-                    
-                    if col not in preprocessing_info["columns_cleaned"]:
-                        preprocessing_info["columns_cleaned"].append(col)
-        
-        # Ensure we still have data
-        if len(df) == 0 or len(df.columns) == 0:
-            error_msg = f"No data remains after preprocessing. Original: {original_shape}, Current: {df.shape}"
+        if not read_success or df is None or df.empty:
+            error_msg = f"Failed to read file: {read_message}"
             logger.error(error_msg)
             update_status(filename, status_folder, -1, error_msg)
             return {"success": False, "error": error_msg}
-    except Exception as e:
-        logger.warning(f"Error in final quality check: {e}")
-    
-    # 10. Save the processed file
-    update_status(filename, status_folder, 90, "Saving processed file")
-    if progress_callback:
-        progress_callback(90, "Saving processed file")
-    
-    try:
-        # Create a directory if it doesn't exist
-        output_path.parent.mkdir(parents=True, exist_ok=True)
         
-        # Save to the correct format
-        if output_path.suffix.lower() == '.csv':
-            df.to_csv(output_path, index=False)
-        elif output_path.suffix.lower() in ['.xlsx', '.xls']:
-            df.to_excel(output_path, index=False)
-        else:
-            # Default to CSV if extension is not recognized
-            output_csv = output_path.with_suffix('.csv')
-            df.to_csv(output_csv, index=False)
-            logger.info(f"Unrecognized extension, saved as CSV: {output_csv}")
+        # Save original shape for reporting
+        original_shape = df.shape
+        logger.info(f"Original shape: {original_shape}")
         
-        logger.info(f"Successfully saved processed file to {output_path}")
-    except Exception as e:
-        error_msg = f"Error saving processed file: {str(e)}"
-        logger.error(f"{error_msg}\n{traceback.format_exc()}")
-        update_status(filename, status_folder, -1, error_msg)
-        return {"success": False, "error": error_msg}
-    
-    # 11. Complete processing and return report
-    final_shape = df.shape
-    processed_percentage = round((len(preprocessing_info["columns_cleaned"]) / original_shape[1]) * 100, 1)
-    
-    logger.info(f"Preprocessing complete. Original shape: {original_shape}, Final shape: {final_shape}")
-    logger.info(f"Processed {len(preprocessing_info['columns_cleaned'])} columns ({processed_percentage}%)")
-    
-    # Save preprocessing pipeline for reproducibility
-    try:
-        pipeline_path = output_path.with_name(f"{output_path.stem}_pipeline.joblib")
-        preprocessing_pipeline = {
-            "missing_values": MISSING_VALUES,
-            "date_patterns": DATE_PATTERNS,
+        if original_shape[0] == 0 or original_shape[1] == 0:
+            error_msg = f"File is empty or has no columns: {original_shape}"
+            logger.error(error_msg)
+            update_status(filename, status_folder, -1, error_msg)
+            return {"success": False, "error": error_msg}
+        
+        # 2. Handle whitespace and make a copy for safety
+        update_status(filename, status_folder, 10, "Initial cleaning")
+        if progress_callback:
+            progress_callback(10, "Initial cleaning")
+        
+        try:
+            # Remove whitespace in string cells
+            df = df.replace(r'^\s*$', np.nan, regex=True)
+            
+            # Drop rows with all missing values
+            initial_row_count = len(df)
+            df.dropna(how='all', inplace=True)
+            dropped_rows = initial_row_count - len(df)
+            
+            if dropped_rows > 0:
+                logger.info(f"Dropped {dropped_rows} rows that were completely empty")
+        except Exception as e:
+            logger.warning(f"Error in initial cleaning: {e}")
+            # Continue despite errors in this step
+        
+        # 3. Gather statistics about missing values
+        update_status(filename, status_folder, 15, "Analyzing missing values")
+        if progress_callback:
+            progress_callback(15, "Analyzing missing values")
+        
+        try:
+            for col in df.columns:
+                missing_count = df[col].isna().sum()
+                if missing_count > 0:
+                    missing_percentage = round((missing_count / len(df)) * 100, 2)
+                    preprocessing_info["missing_value_stats"][col] = {
+                        "missing_count": int(missing_count),
+                        "missing_percentage": missing_percentage,
+                        "imputation_method": "None"  # Will be updated later
+                    }
+            logger.info(f"Found {len(preprocessing_info['missing_value_stats'])} columns with missing values")
+        except Exception as e:
+            logger.warning(f"Error analyzing missing values: {e}")
+        
+        # 4. Drop problematic columns
+        update_status(filename, status_folder, 20, "Removing problematic columns")
+        if progress_callback:
+            progress_callback(20, "Removing problematic columns")
+        
+        try:
+            # Drop duplicate column names (retaining first)
+            if len(df.columns) != len(df.columns.unique()):
+                df = df.loc[:, ~df.columns.duplicated()]
+                logger.info("Removed duplicate column names")
+            
+            # Drop columns with extremely high missing values (>95%)
+            high_missing_cols = [col for col in df.columns 
+                                if df[col].isna().sum() > 0.95 * len(df)]
+            
+            if high_missing_cols:
+                df = df.drop(columns=high_missing_cols)
+                preprocessing_info["columns_dropped"].extend(high_missing_cols)
+                logger.info(f"Dropped {len(high_missing_cols)} columns with >95% missing values")
+        except Exception as e:
+            logger.warning(f"Error removing problematic columns: {e}")
+        
+        # 5. Detect and convert date columns
+        update_status(filename, status_folder, 30, "Processing date columns")
+        if progress_callback:
+            progress_callback(30, "Processing date columns")
+        
+        try:
+            date_columns = detect_date_columns(df)
+            
+            # Convert detected date columns
+            for col in date_columns:
+                if col in df.columns:  # Safety check
+                    with warnings.catch_warnings():
+                        warnings.simplefilter("ignore")
+                        df[col] = pd.to_datetime(df[col], errors='coerce')
+            
+            preprocessing_info["date_columns_detected"] = date_columns
+            logger.info(f"Detected and converted {len(date_columns)} date columns")
+            
+            # Basic feature engineering for date columns
+            if date_columns:
+                datetime_features = []
+                for col in date_columns:
+                    if col in df.columns and df[col].dtype == 'datetime64[ns]':
+                        try:
+                            # Extract basic date components
+                            df[f'{col}_year'] = df[col].dt.year
+                            df[f'{col}_month'] = df[col].dt.month
+                            df[f'{col}_day'] = df[col].dt.day
+                            df[f'{col}_dayofweek'] = df[col].dt.dayofweek
+                            df[f'{col}_quarter'] = df[col].dt.quarter
+                            
+                            new_features = [f'{col}_year', f'{col}_month', f'{col}_day', 
+                                          f'{col}_dayofweek', f'{col}_quarter']
+                            preprocessing_info["engineered_features"].extend(new_features)
+                            
+                            datetime_features.append({
+                                "source_column": col,
+                                "derived_features": new_features
+                            })
+                            
+                            logger.info(f"Created {len(new_features)} date features from {col}")
+                        except Exception as e:
+                            logger.warning(f"Error creating date features for {col}: {e}")
+                
+                if datetime_features:
+                    preprocessing_info["transformation_details"]["datetime_features"] = datetime_features
+            
+        except Exception as e:
+            logger.warning(f"Error processing date columns: {e}")
+        
+        # 6. Prepare for imputation
+        update_status(filename, status_folder, 40, "Preparing for imputation")
+        if progress_callback:
+            progress_callback(40, "Preparing for imputation")
+        
+        try:
+            # Identify column types for imputation
+            nominal_columns = [col for col in df.columns 
+                              if col not in date_columns and 
+                              df[col].dtype in ['object', 'category', 'string', 'bool']]
+            
+            non_nominal_columns = [col for col in df.columns 
+                                  if col not in nominal_columns and 
+                                  col not in date_columns and
+                                  not col.endswith(('_year', '_month', '_day', '_dayofweek', '_quarter'))]
+            
+            logger.info(f"Column types: {len(nominal_columns)} categorical, " 
+                       f"{len(non_nominal_columns)} numeric, {len(date_columns)} date")
+        except Exception as e:
+            logger.warning(f"Error preparing for imputation: {e}")
+            # Define in case of error
+            nominal_columns = []
+            non_nominal_columns = []
+        
+        # 7. Handle missing values with advanced techniques
+        update_status(filename, status_folder, 50, "Handling missing values")
+        if progress_callback:
+            progress_callback(50, "Handling missing values")
+        
+        try:
+            # Create a copy of the dataframe for safety during imputation
+            df_copy = df.copy()
+            
+            # For categorical columns
+            if nominal_columns:
+                for col in nominal_columns:
+                    if col in preprocessing_info["missing_value_stats"]:
+                        if df_copy[col].isna().sum() > 0:
+                            try:
+                                # Get the mode for this column
+                                mode_val = df_copy[col].mode().iloc[0] if not df_copy[col].mode().empty else "Unknown"
+                                df_copy[col] = df_copy[col].fillna(mode_val)
+                                preprocessing_info["columns_cleaned"].append(col)
+                                preprocessing_info["missing_value_stats"][col]["imputation_method"] = "mode"
+                            except Exception as e:
+                                logger.warning(f"Error imputing column {col}: {e}")
+            
+            # For numeric columns
+            if non_nominal_columns:
+                try:
+                    # Try using KNN imputation for numeric columns
+                    missing_in_numeric = any(df_copy[col].isna().sum() > 0 for col in non_nominal_columns)
+                    
+                    if missing_in_numeric and len(df_copy) > 10 and len(non_nominal_columns) > 0:
+                        # Determine optimal k for KNN (smaller of 5 or half the dataset)
+                        k = min(5, max(2, len(df_copy) // 2))
+                        
+                        # Prepare data for KNN imputation
+                        numeric_data = df_copy[non_nominal_columns].copy()
+                        
+                        # Convert to numeric where possible
+                        for col in non_nominal_columns:
+                            try:
+                                numeric_data[col] = pd.to_numeric(numeric_data[col], errors='coerce')
+                            except:
+                                pass
+                        
+                        # Apply KNN imputation
+                        from sklearn.impute import KNNImputer
+                        imputer = KNNImputer(n_neighbors=k)
+                        imputed_values = imputer.fit_transform(numeric_data)
+                        
+                        # Update the dataframe with imputed values
+                        for i, col in enumerate(non_nominal_columns):
+                            if col in preprocessing_info["missing_value_stats"]:
+                                df_copy[col] = imputed_values[:, i]
+                                preprocessing_info["columns_cleaned"].append(col)
+                                preprocessing_info["missing_value_stats"][col]["imputation_method"] = "KNN"
+                    
+                    else:
+                        # Fall back to simpler imputation if KNN doesn't make sense
+                        for col in non_nominal_columns:
+                            if col in preprocessing_info["missing_value_stats"] and df_copy[col].isna().sum() > 0:
+                                # Use median for imputation
+                                median_val = df_copy[col].median()
+                                df_copy[col] = df_copy[col].fillna(median_val)
+                                preprocessing_info["columns_cleaned"].append(col)
+                                preprocessing_info["missing_value_stats"][col]["imputation_method"] = "median"
+                
+                except Exception as e:
+                    logger.warning(f"Error in KNN imputation: {e}, falling back to median")
+                    
+                    # Fall back to median imputation for numeric columns
+                    for col in non_nominal_columns:
+                        if col in preprocessing_info["missing_value_stats"] and df_copy[col].isna().sum() > 0:
+                            try:
+                                median_val = df_copy[col].median()
+                                df_copy[col] = df_copy[col].fillna(median_val)
+                                preprocessing_info["columns_cleaned"].append(col)
+                                preprocessing_info["missing_value_stats"][col]["imputation_method"] = "median"
+                            except Exception as e:
+                                logger.warning(f"Error with median imputation for {col}: {e}")
+            
+            # Update the main dataframe after imputation
+            df = df_copy
+            
+            logger.info(f"Cleaned {len(preprocessing_info['columns_cleaned'])} columns with missing values")
+        except Exception as e:
+            logger.error(f"Error handling missing values: {e}")
+            # Continue despite errors, using the original dataframe
+        
+        # 8. Remove columns with single value (no variance)
+        update_status(filename, status_folder, 70, "Final cleaning")
+        if progress_callback:
+            progress_callback(70, "Final cleaning")
+        
+        try:
+            single_value_cols = [col for col in df.columns if df[col].nunique() <= 1]
+            if single_value_cols:
+                df = df.drop(columns=single_value_cols)
+                preprocessing_info["dropped_by_unique_value"] = single_value_cols
+                logger.info(f"Dropped {len(single_value_cols)} columns with only a single value")
+        except Exception as e:
+            logger.warning(f"Error removing single-value columns: {e}")
+        
+        # 9. Basic feature engineering for numeric columns
+        update_status(filename, status_folder, 75, "Feature engineering")
+        if progress_callback:
+            progress_callback(75, "Feature engineering")
+        
+        try:
+            numeric_transformations = []
+            categorical_encodings = []
+            
+            # Get current numeric columns (excluding engineered date features)
+            current_numeric_cols = [col for col in df.select_dtypes(include=['number']).columns
+                                  if not col.endswith(('_year', '_month', '_day', '_dayofweek', '_quarter'))]
+            
+            # Apply basic transformations to highly skewed numeric columns
+            for col in current_numeric_cols:
+                if df[col].nunique() > 2:  # Skip binary columns
+                    try:
+                        skewness = df[col].skew()
+                        derived_features = []
+                        
+                        # Log transformation for highly positively skewed data
+                        if skewness > 2 and (df[col] > 0).all():
+                            df[f'{col}_log'] = np.log1p(df[col])
+                            derived_features.append(f'{col}_log')
+                            preprocessing_info["engineered_features"].append(f'{col}_log')
+                        
+                        # Square root transformation for moderately skewed data
+                        if skewness > 1 and (df[col] >= 0).all():
+                            df[f'{col}_sqrt'] = np.sqrt(df[col])
+                            derived_features.append(f'{col}_sqrt')
+                            preprocessing_info["engineered_features"].append(f'{col}_sqrt')
+                        
+                        if derived_features:
+                            numeric_transformations.append({
+                                "source_column": col,
+                                "derived_features": derived_features,
+                                "skew": float(skewness)
+                            })
+                    
+                    except Exception as e:
+                        logger.warning(f"Error in feature engineering for {col}: {e}")
+            
+            # One-hot encoding for low-cardinality categorical columns
+            categorical_cols = [col for col in df.select_dtypes(include=['object', 'category']).columns]
+            for col in categorical_cols:
+                if 2 <= df[col].nunique() <= 10:  # Only encode columns with reasonable cardinality
+                    try:
+                        dummies = pd.get_dummies(df[col], prefix=col, drop_first=True)
+                        df = pd.concat([df, dummies], axis=1)
+                        
+                        derived_features = dummies.columns.tolist()
+                        preprocessing_info["engineered_features"].extend(derived_features)
+                        
+                        categorical_encodings.append({
+                            "source_column": col,
+                            "encoding_type": "one_hot",
+                            "derived_features": derived_features,
+                            "cardinality": int(df[col].nunique())
+                        })
+                    except Exception as e:
+                        logger.warning(f"Error in one-hot encoding for {col}: {e}")
+            
+            # Store transformation details
+            if numeric_transformations:
+                preprocessing_info["transformation_details"]["numeric_transformations"] = numeric_transformations
+            if categorical_encodings:
+                preprocessing_info["transformation_details"]["categorical_encodings"] = categorical_encodings
+            
+            logger.info(f"Created {len(preprocessing_info['engineered_features'])} engineered features")
+            
+        except Exception as e:
+            logger.warning(f"Error in feature engineering: {e}")
+        
+        # 10. Verify data quality and ensure no missing values remain
+        update_status(filename, status_folder, 80, "Final quality check")
+        if progress_callback:
+            progress_callback(80, "Final quality check")
+        
+        try:
+            # Check for any remaining missing values
+            remaining_missing = df.isna().sum().sum()
+            
+            if remaining_missing > 0:
+                logger.warning(f"There are still {remaining_missing} missing values after processing")
+                
+                # Last resort fill with meaningful constants
+                for col in df.columns:
+                    if df[col].isna().sum() > 0:
+                        if pd.api.types.is_numeric_dtype(df[col]):
+                            df[col] = df[col].fillna(0)
+                        else:
+                            df[col] = df[col].fillna("Unknown")
+                        
+                        if col not in preprocessing_info["columns_cleaned"]:
+                            preprocessing_info["columns_cleaned"].append(col)
+            
+            # Ensure we still have data
+            if len(df) == 0 or len(df.columns) == 0:
+                error_msg = f"No data remains after preprocessing. Original: {original_shape}, Current: {df.shape}"
+                logger.error(error_msg)
+                update_status(filename, status_folder, -1, error_msg)
+                return {"success": False, "error": error_msg}
+        except Exception as e:
+            logger.warning(f"Error in final quality check: {e}")
+        
+        # 11. Save the processed file
+        update_status(filename, status_folder, 90, "Saving processed file")
+        if progress_callback:
+            progress_callback(90, "Saving processed file")
+        
+        try:
+            # Create a directory if it doesn't exist
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            
+            # Save to the correct format
+            if output_path.suffix.lower() == '.csv':
+                df.to_csv(output_path, index=False)
+            elif output_path.suffix.lower() in ['.xlsx', '.xls']:
+                df.to_excel(output_path, index=False)
+            else:
+                # Default to CSV if extension is not recognized
+                output_csv = output_path.with_suffix('.csv')
+                df.to_csv(output_csv, index=False)
+                logger.info(f"Unrecognized extension, saved as CSV: {output_csv}")
+            
+            logger.info(f"Successfully saved processed file to {output_path}")
+        except Exception as e:
+            error_msg = f"Error saving processed file: {str(e)}"
+            logger.error(f"{error_msg}\n{traceback.format_exc()}")
+            update_status(filename, status_folder, -1, error_msg)
+            return {"success": False, "error": error_msg}
+        
+        # 12. Complete processing and return report
+        final_shape = df.shape
+        processed_percentage = round((len(preprocessing_info["columns_cleaned"]) / original_shape[1]) * 100, 1) if original_shape[1] > 0 else 0
+        
+        logger.info(f"Preprocessing complete. Original shape: {original_shape}, Final shape: {final_shape}")
+        logger.info(f"Processed {len(preprocessing_info['columns_cleaned'])} columns ({processed_percentage}%)")
+        
+        # Save preprocessing pipeline for reproducibility
+        try:
+            import joblib
+            pipeline_path = output_path.with_name(f"{output_path.stem}_pipeline.joblib")
+            preprocessing_pipeline = {
+                "missing_values": MISSING_VALUES,
+                "date_patterns": DATE_PATTERNS,
+                "preprocessing_info": preprocessing_info,
+                "original_shape": list(original_shape),
+                "final_shape": list(final_shape)
+            }
+            joblib.dump(preprocessing_pipeline, pipeline_path)
+        except Exception as e:
+            logger.warning(f"Could not save preprocessing pipeline: {e}")
+        
+        # Final report
+        report = {
+            "success": True,
+            "original_shape": list(original_shape),
+            "processed_shape": list(final_shape),
             "preprocessing_info": preprocessing_info,
-            "original_shape": original_shape,
-            "final_shape": final_shape
+            "message": f"Successfully processed {filename}. Cleaned {len(preprocessing_info['columns_cleaned'])} columns."
         }
-        joblib.dump(preprocessing_pipeline, pipeline_path)
+        
+        update_status(filename, status_folder, 100, "Processing complete", report)
+        if progress_callback:
+            progress_callback(100, "Processing complete")
+        
+        return report
+        
     except Exception as e:
-        logger.warning(f"Could not save preprocessing pipeline: {e}")
-    
-    # Final report
-    report = {
-        "success": True,
-        "original_shape": original_shape,
-        "processed_shape": final_shape,
-        "preprocessing_info": preprocessing_info,
-        "message": f"Successfully processed {filename}. Cleaned {len(preprocessing_info['columns_cleaned'])} columns."
-    }
-    
-    update_status(filename, status_folder, 100, "Processing complete", report)
-    if progress_callback:
-        progress_callback(100, "Processing complete")
-    
-    return report
-
+        error_msg = f"Unexpected error during preprocessing: {str(e)}"
+        logger.error(f"{error_msg}\n{traceback.format_exc()}")
+        
+        # Update status to indicate error
+        update_status(filename, status_folder, -1, error_msg)
+        
+        return {
+            "success": False, 
+            "error": error_msg,
+            "original_shape": [0, 0],
+            "processed_shape": [0, 0],
+            "preprocessing_info": {
+                "columns_dropped": [],
+                "date_columns_detected": [],
+                "columns_cleaned": [],
+                "missing_value_stats": {},
+                "dropped_by_unique_value": [],
+                "engineered_features": [],
+                "transformation_details": {}
+            }
+        }
+        
 def generate_eda_report(df: pd.DataFrame) -> str:
     """
     Generate an EDA report for a dataframe
