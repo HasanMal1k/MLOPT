@@ -62,7 +62,7 @@ const navigation = [
     items: [
       {
         title: 'My Files',
-        url: '/dashboard/my-files',
+        url: '/dashboard/datasets',
         icon: Database
       },
       {
