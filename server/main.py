@@ -1,7 +1,7 @@
 from fastapi import FastAPI, File, UploadFile, HTTPException, BackgroundTasks, Form
-from fastapi.responses import JSONResponse
-from fastapi.responses import HTMLResponse
+from fastapi.responses import JSONResponse, HTMLResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 import logging
 import os
@@ -12,15 +12,20 @@ import tempfile
 import math
 import pandas as pd
 import numpy as np
-from typing import Dict, List, Tuple, Any, Optional, Union  # Add all these typing imports
-from fastapi import FastAPI, File, UploadFile, HTTPException, BackgroundTasks, Form
-from fastapi.responses import  FileResponse
-from fastapi.staticfiles import StaticFiles
-# Import custom modules
-from data_preprocessing import process_data_file, update_status, generate_eda_report
+import chardet
+from typing import Dict, List, Tuple, Any, Optional, Union
+
+# Import your modules
+from data_preprocessing import process_data_file, update_status, generate_eda_report, MISSING_VALUES
 from custom_preprocessing import router as custom_preprocessing_router
 from transformations import router as transformations_router
-from time_series_preprocessing import router as time_series_router  # Import the new time series router
+from time_series_preprocessing import router as time_series_router
+from universal_file_handler import (
+    normalize_any_file, 
+    validate_file_before_processing,
+    read_any_file_universal
+)
+from robust_csv_reader import read_csv_with_robust_handling, read_problematic_csv
 
 # Configure logging
 logging.basicConfig(
@@ -62,6 +67,49 @@ def clean_for_json(obj):
         return None
     else:
         return obj
+
+def detect_encoding_from_bytes(file_content: bytes) -> str:
+    """
+    Detect encoding from file content bytes
+    """
+    try:
+        result = chardet.detect(file_content)
+        encoding = result['encoding']
+        confidence = result['confidence']
+        
+        logger.info(f"EDA: Detected encoding: {encoding} (confidence: {confidence:.2f})")
+        
+        # If confidence is low, default to utf-8
+        if confidence < 0.7:
+            logger.warning(f"Low confidence ({confidence:.2f}), defaulting to utf-8")
+            return 'utf-8'
+        
+        return encoding
+        
+    except Exception as e:
+        logger.warning(f"Encoding detection failed: {e}, using utf-8")
+        return 'utf-8'
+
+# Import the robust CSV reader at the top of your file
+from robust_csv_reader import read_csv_with_robust_handling, read_problematic_csv
+
+def read_csv_with_encoding_detection(file_content: bytes) -> pd.DataFrame:
+    """
+    Read CSV with robust error handling for malformed files
+    """
+    try:
+        # First try the robust handler
+        return read_csv_with_robust_handling(file_content)
+    except Exception as e:
+        logger.warning(f"Robust handler failed: {e}, trying problematic CSV handler")
+        
+        # If that fails, try the special problematic CSV handler
+        try:
+            return read_problematic_csv(file_content)
+        except Exception as e2:
+            logger.error(f"All CSV reading methods failed: {e2}")
+            raise ValueError(f"Cannot read CSV file: {e2}")
+
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -109,7 +157,7 @@ async def root():
 @app.post("/upload/")
 async def upload_files(background_tasks: BackgroundTasks, files: list[UploadFile] = File(...)):
     """
-    Upload and preprocess multiple files with improved file tracking
+    Universal upload endpoint that handles CSV (with encoding detection) and Excel files
     """
     try:
         saved_files = []
@@ -132,56 +180,91 @@ async def upload_files(background_tasks: BackgroundTasks, files: list[UploadFile
             safe_filename = f"{unique_id}_{file.filename}"
             
             try:
-                # Save the file to the local folder
-                file_path = UPLOAD_FOLDER / safe_filename
-                with file_path.open("wb") as f:
-                    content = await file.read()
-                    f.write(content)
+                # Read file content
+                file_content = await file.read()
+                
+                # Validate the file can be read before processing
+                is_valid, validation_message, file_info = validate_file_before_processing(
+                    file_content, file.filename, MISSING_VALUES
+                )
+                
+                if not is_valid:
+                    logger.error(f"File validation failed for {file.filename}: {validation_message}")
+                    processing_info.append({
+                        "filename": safe_filename,
+                        "original_filename": file.filename,
+                        "status": "validation_error",
+                        "error": f"File validation failed: {validation_message}"
+                    })
+                    continue
+                
+                logger.info(f"File validation passed for {file.filename}: {validation_message}")
+                logger.info(f"File info: {file_info}")
+                
+                # Normalize the file (convert CSV to UTF-8, save Excel as-is)
+                normalized_path, conversion_message = normalize_any_file(
+                    file_content, safe_filename, UPLOAD_FOLDER
+                )
+                
+                logger.info(f"File normalization: {conversion_message}")
                 
                 saved_files.append({
                     "original_filename": file.filename,
-                    "saved_filename": safe_filename
+                    "saved_filename": normalized_path.name,
+                    "file_type": file_extension,
+                    "conversion_message": conversion_message,
+                    "file_info": file_info
                 })
                 
                 # The processed file will be saved as "processed_{safe_filename}"
                 processed_filename = f"processed_{safe_filename}"
                 
-                # Initialize progress tracking with better error handling
+                # Initialize progress tracking
                 try:
-                    # Create initial status with file mapping information
                     initial_status_data = {
                         "original_filename": file.filename,
-                        "safe_filename": safe_filename,
+                        "safe_filename": normalized_path.name,
                         "processed_filename": processed_filename,
+                        "file_type": file_extension,
+                        "conversion_message": conversion_message,
+                        "file_info": file_info,
                         "file_mapping": {
-                            "input": safe_filename,
+                            "input": normalized_path.name,
                             "output": processed_filename
                         }
                     }
                     
-                    init_status = update_status(safe_filename, STATUS_FOLDER, 0, "Queued for processing", initial_status_data)
+                    init_status = update_status(normalized_path.name, STATUS_FOLDER, 0, "Queued for processing", initial_status_data)
                     processing_info.append({
-                        "filename": safe_filename,
+                        "filename": normalized_path.name,
                         "original_filename": file.filename,
                         "processed_filename": processed_filename,
+                        "file_type": file_extension,
+                        "conversion_message": conversion_message,
+                        "file_info": file_info,
                         "status": init_status
                     })
                     
-                    # Add the background task for processing
+                    # Add the background task for processing using normalized file
                     background_tasks.add_task(
                         process_data_file,
-                        file_path,
+                        normalized_path,  # Use the normalized file path
                         PROCESSED_FOLDER,
                         STATUS_FOLDER
                     )
                     
                 except Exception as status_error:
                     logger.error(f"Error setting up processing for {file.filename}: {status_error}")
-                    # Continue with other files even if one fails
                     continue
                     
             except Exception as file_error:
-                logger.error(f"Error saving file {file.filename}: {file_error}")
+                logger.error(f"Error processing file {file.filename}: {file_error}")
+                processing_info.append({
+                    "filename": safe_filename,
+                    "original_filename": file.filename,
+                    "status": "processing_error",
+                    "error": str(file_error)
+                })
                 continue
         
         if not saved_files:
@@ -189,21 +272,24 @@ async def upload_files(background_tasks: BackgroundTasks, files: list[UploadFile
                 status_code=400,
                 content={
                     "error": "No valid files were uploaded",
-                    "message": "Please upload CSV or Excel files"
+                    "message": "Please upload CSV or Excel files. Check that files are not corrupted.",
+                    "failed_files": [info for info in processing_info if "error" in info]
                 }
             )
         
         response_data = {
-            "message": f"{len(saved_files)} file(s) uploaded successfully.",
+            "message": f"{len(saved_files)} file(s) uploaded and processed successfully.",
             "files": saved_files,
-            "processing": "File preprocessing started in the background. Track progress using the /processing-status/{filename} endpoint.",
-            "processing_info": processing_info
+            "processing": "Files have been automatically normalized (CSV files converted to UTF-8) and preprocessing started in the background.",
+            "processing_info": processing_info,
+            "summary": {
+                "total_uploaded": len(saved_files),
+                "csv_files": len([f for f in saved_files if f["file_type"] == "csv"]),
+                "excel_files": len([f for f in saved_files if f["file_type"] in ["xlsx", "xls"]])
+            }
         }
         
-        # Clean the response to avoid JSON serialization issues
-        clean_response = clean_for_json(response_data)
-        
-        return JSONResponse(content=clean_response)
+        return JSONResponse(content=clean_for_json(response_data))
         
     except Exception as e:
         logger.error(f"Error in upload endpoint: {e}")
@@ -214,7 +300,47 @@ async def upload_files(background_tasks: BackgroundTasks, files: list[UploadFile
                 "message": str(e)
             }
         )
-
+        
+# Optional: Add an endpoint to test file reading without uploading
+@app.post("/test-file-reading/")
+async def test_file_reading(file: UploadFile = File(...)):
+    """
+    Test endpoint to validate file reading without processing
+    """
+    try:
+        file_content = await file.read()
+        
+        # Test reading the file
+        is_valid, message, file_info = validate_file_before_processing(
+            file_content, file.filename, MISSING_VALUES
+        )
+        
+        if is_valid:
+            # Also get a sample of the data
+            df, success, read_message = read_any_file_universal(file_content, file.filename, MISSING_VALUES)
+            
+            if success and len(df) > 0:
+                sample_data = df.head(5).to_dict('records')
+                file_info['sample_data'] = sample_data
+                file_info['columns_info'] = {
+                    col: str(df[col].dtype) for col in df.columns
+                }
+        
+        return JSONResponse(content={
+            "filename": file.filename,
+            "is_valid": is_valid,
+            "message": message,
+            "file_info": clean_for_json(file_info)
+        })
+        
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={
+                "error": f"Error testing file: {str(e)}"
+            }
+        )
+        
 @app.get("/processed-files/{filename}")
 async def serve_processed_file(filename: str):
     """
@@ -464,16 +590,14 @@ except Exception as e:
 @app.post("/generate_report/", response_class=HTMLResponse)
 async def generate_report(file: UploadFile = File(...)):
     """
-    Generate an Exploratory Data Analysis (EDA) report for a file
-    
-    This endpoint accepts a CSV or XLSX file and returns an HTML report
-    with data profiling information.
+    Generate an Exploratory Data Analysis (EDA) report for a file - now with encoding detection
     """
     # Check file extension
     file_extension = file.filename.lower().split('.')[-1]
     if file_extension not in ['csv', 'xlsx', 'xls']:
         raise HTTPException(status_code=400, detail="Only CSV or Excel files are accepted")
 
+    temp_path = None
     try:
         # Read the file content
         contents = await file.read()
@@ -481,53 +605,98 @@ async def generate_report(file: UploadFile = File(...)):
         # Log file details for debugging
         logger.info(f"Received file: {file.filename}, size: {len(contents)} bytes")
         
-        # Create a temporary file
-        with tempfile.NamedTemporaryFile(delete=False, suffix=f".{file_extension}") as tmp:
-            tmp.write(contents)
-            temp_path = tmp.name
-        
-        try:
-            # Read the file with pandas based on file extension
-            import pandas as pd
-            if file_extension == 'csv':
-                df = pd.read_csv(temp_path)
-            else:  # Excel file
-                df = pd.read_excel(temp_path)
-            
-            # Limit the rows to prevent very large reports
-            if len(df) > 10000:
-                df = df.sample(10000, random_state=42)
+        # Handle different file types
+        if file_extension == 'csv':
+            # Use encoding detection for CSV files
+            try:
+                df = read_csv_with_encoding_detection(contents)
+                logger.info(f"Successfully read CSV: {len(df)} rows, {len(df.columns)} columns")
                 
-            # Generate the report
-            html_report = generate_eda_report(df)
+            except Exception as e:
+                logger.error(f"Failed to read CSV with encoding detection: {e}")
+                raise Exception(f"Could not read CSV file: {e}")
+        
+        else:
+            # Handle Excel files (create temporary file as before)
+            with tempfile.NamedTemporaryFile(delete=False, suffix=f".{file_extension}") as tmp:
+                tmp.write(contents)
+                temp_path = tmp.name
             
-        except Exception as e:
-            # If there's an error in processing, return a simple error report
-            logger.error(f"Error processing file for EDA report: {e}")
-            html_report = f"""
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <title>Error Processing File</title>
-                <style>
-                    body {{ font-family: Arial, sans-serif; padding: 20px; }}
-                    .error {{ color: red; background-color: #ffeeee; padding: 10px; border-radius: 5px; }}
-                </style>
-            </head>
-            <body>
-                <h1>File Processing Error</h1>
-                <p>There was an error processing the file: {file.filename}</p>
-                <div class="error">
-                    <h3>Error Details:</h3>
-                    <pre>{str(e)}</pre>
-                </div>
-            </body>
-            </html>
-            """
+            try:
+                df = pd.read_excel(temp_path)
+                logger.info(f"Successfully read Excel: {len(df)} rows, {len(df.columns)} columns")
+            except Exception as e:
+                logger.error(f"Failed to read Excel file: {e}")
+                raise Exception(f"Could not read Excel file: {e}")
+        
+        # Limit the rows to prevent very large reports
+        original_rows = len(df)
+        if len(df) > 10000:
+            df = df.sample(10000, random_state=42)
+            logger.info(f"Sampled {len(df)} rows from {original_rows} for EDA report")
+            
+        # Generate the report
+        html_report = generate_eda_report(df)
+        
+        # Add info about sampling and encoding if applicable
+        if original_rows > 10000:
+            sampling_note = f"<p><strong>Note:</strong> This report is based on a random sample of 10,000 rows from the original {original_rows:,} rows.</p>"
+            # Insert the note after the opening body tag
+            html_report = html_report.replace('<body>', f'<body>{sampling_note}')
+        
+    except Exception as e:
+        # If there's an error in processing, return a detailed error report
+        logger.error(f"Error processing file for EDA report: {e}")
+        html_report = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Error Processing File</title>
+            <style>
+                body {{ font-family: Arial, sans-serif; padding: 20px; }}
+                .error {{ color: red; background-color: #ffeeee; padding: 15px; border-radius: 5px; margin: 10px 0; }}
+                .info {{ color: blue; background-color: #eeeeff; padding: 15px; border-radius: 5px; margin: 10px 0; }}
+                .suggestion {{ color: green; background-color: #eeffee; padding: 15px; border-radius: 5px; margin: 10px 0; }}
+            </style>
+        </head>
+        <body>
+            <h1>File Processing Error</h1>
+            <p>There was an error processing the file: <strong>{file.filename}</strong></p>
+            
+            <div class="error">
+                <h3>Error Details:</h3>
+                <pre>{str(e)}</pre>
+            </div>
+            
+            <div class="info">
+                <h3>File Information:</h3>
+                <ul>
+                    <li>Filename: {file.filename}</li>
+                    <li>File size: {len(contents):,} bytes</li>
+                    <li>File type: {file_extension.upper()}</li>
+                </ul>
+            </div>
+            
+            <div class="suggestion">
+                <h3>Suggestions:</h3>
+                <ul>
+                    <li>If this is a CSV file, it may have encoding issues. Try saving it as UTF-8 from Excel or your text editor.</li>
+                    <li>Check that the file is not corrupted.</li>
+                    <li>For Excel files, try saving as a newer .xlsx format.</li>
+                    <li>Make sure the file contains valid tabular data.</li>
+                </ul>
+            </div>
+        </body>
+        </html>
+        """
+    
     finally:
-        # Clean up the temporary file
-        if os.path.exists(temp_path):
-            os.unlink(temp_path)
+        # Clean up the temporary file if it was created
+        if temp_path and os.path.exists(temp_path):
+            try:
+                os.unlink(temp_path)
+            except:
+                pass
 
     # Return the HTML with proper headers
     return HTMLResponse(

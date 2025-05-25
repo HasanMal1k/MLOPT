@@ -10,6 +10,7 @@ import re
 import os
 import json
 from typing import Dict, List, Tuple, Any, Optional, Union
+import chardet
 
 # Sklearn imports
 from sklearn.preprocessing import OrdinalEncoder
@@ -17,6 +18,8 @@ from sklearn.pipeline import Pipeline
 from sklearn.impute import KNNImputer, SimpleImputer
 from sklearn.compose import ColumnTransformer
 from sklearn.base import BaseEstimator, TransformerMixin
+from universal_file_handler import universal_safe_read_file
+
 import joblib
 
 # Configure logging
@@ -204,16 +207,33 @@ def detect_date_columns(df: pd.DataFrame) -> List[str]:
     
     return date_columns
 
+def detect_csv_encoding(file_path: Path) -> str:
+    """
+    Simple encoding detection for CSV files
+    """
+    try:
+        with open(file_path, 'rb') as f:
+            raw_data = f.read(10000)  # Read first 10KB
+        
+        result = chardet.detect(raw_data)
+        encoding = result['encoding']
+        confidence = result['confidence']
+        
+        logger.info(f"Detected encoding: {encoding} (confidence: {confidence:.2f})")
+        
+        # If confidence is low, default to utf-8
+        if confidence < 0.7:
+            return 'utf-8'
+        
+        return encoding
+        
+    except Exception as e:
+        logger.warning(f"Encoding detection failed: {e}, using utf-8")
+        return 'utf-8'
+
 def safe_read_file(file_path: Path, missing_values: List[str] = None) -> Tuple[pd.DataFrame, bool, str]:
     """
-    Safely read a data file with multiple fallback options.
-    
-    Args:
-        file_path: Path to the file
-        missing_values: List of strings to interpret as missing values
-        
-    Returns:
-        Tuple of (dataframe, success, error_message)
+    Enhanced version of your existing safe_read_file with encoding detection
     """
     error_msg = ""
     
@@ -241,15 +261,43 @@ def safe_read_file(file_path: Path, missing_values: List[str] = None) -> Tuple[p
         error_msg += f"Pandas standard read failed: {e}. "
         logger.warning(f"Pandas standard read failed for {file_path}: {e}")
     
-    # Last resort - try more permissive options
+    # NEW: Try with encoding detection for CSV files
+    if file_path.suffix.lower() == '.csv':
+        try:
+            detected_encoding = detect_csv_encoding(file_path)
+            logger.info(f"Trying pandas with detected encoding: {detected_encoding}")
+            
+            df = pd.read_csv(file_path, 
+                           na_values=missing_values or MISSING_VALUES,
+                           keep_default_na=True, 
+                           on_bad_lines='warn',
+                           encoding=detected_encoding)
+            return df, True, f"Read with detected encoding: {detected_encoding}"
+            
+        except Exception as e:
+            error_msg += f"Encoding detection attempt failed: {e}. "
+            logger.warning(f"Encoding detection read failed for {file_path}: {e}")
+    
+    # Last resort - try more permissive options (your existing fallback)
     try:
         logger.info(f"Trying permissive read for {file_path}")
         if file_path.suffix.lower() == '.csv':
-            df = pd.read_csv(file_path, na_values=missing_values or MISSING_VALUES,
-                            keep_default_na=True, on_bad_lines='skip', 
-                            encoding='latin1', low_memory=False)
-            logger.info(f"Permissive read succeeded with {len(df)} rows")
-            return df, True, "Used permissive reading (some rows may have been skipped)"
+            # Try multiple encodings as fallback
+            encodings_to_try = ['latin1', 'cp1252', 'utf-8', 'ascii']
+            
+            for encoding in encodings_to_try:
+                try:
+                    df = pd.read_csv(file_path, 
+                                   na_values=missing_values or MISSING_VALUES,
+                                   keep_default_na=True, 
+                                   on_bad_lines='skip', 
+                                   encoding=encoding, 
+                                   low_memory=False)
+                    logger.info(f"Permissive read succeeded with {encoding}: {len(df)} rows")
+                    return df, True, f"Used permissive reading with {encoding} (some rows may have been skipped)"
+                except:
+                    continue
+                    
     except Exception as e:
         error_msg += f"All reading methods failed: {e}"
         logger.error(f"All methods failed to read {file_path}: {e}")
