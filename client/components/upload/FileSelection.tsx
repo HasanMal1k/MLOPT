@@ -1,4 +1,4 @@
-// components/upload/FileSelection.tsx - Corrected with proper imports
+// components/upload/FileSelection.tsx - Fixed version
 'use client'
 
 import { useState } from "react"
@@ -44,14 +44,10 @@ export default function FileSelection({
   const [localKaggleCount, setLocalKaggleCount] = useState(0)
 
   const handleKaggleFileImported = (file: File) => {
-    // Add file to the main files array
-    onFilesChange([...files, file])
-    
-    // Track Kaggle imports locally
+    // DON'T add file to the main files array here - let the parent handle it
+    // Just track Kaggle imports locally and call parent handler
     setLocalKaggleCount(prev => prev + 1)
-    
-    // Call parent handler
-    onKaggleFileImported(file)
+    onKaggleFileImported(file) // This will handle adding to the main files array
     
     // Switch to local files tab to show the imported file
     onTabChange("upload")
@@ -195,8 +191,11 @@ export default function FileSelection({
                   </div>
                   
                   <div className="border rounded-lg divide-y">
-                    {files.map((file, index) => (
-                      <div key={index} className="p-4 flex items-center justify-between hover:bg-gray-50/50">
+                    {files.map((file, index) => {
+                      // Create unique key to prevent React conflicts
+                      const uniqueKey = `${file.name}_${file.size}_${file.lastModified}_${index}`;
+                      return (
+                      <div key={uniqueKey} className="p-4 flex items-center justify-between hover:bg-gray-50/50">
                         <div className="flex items-center gap-3">
                           <div className="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center">
                             {getFileIcon(file)}
@@ -233,7 +232,8 @@ export default function FileSelection({
                           </Button>
                         </div>
                       </div>
-                    ))}
+                      );
+                    })}
                   </div>
                   
                   {/* File Summary */}

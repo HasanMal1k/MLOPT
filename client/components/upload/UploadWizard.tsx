@@ -1,4 +1,4 @@
-// components/upload/UploadWizard.tsx - Corrected Version
+// components/upload/UploadWizard.tsx - Fixed Version
 'use client'
 
 import { useState, useCallback } from "react"
@@ -16,6 +16,7 @@ import TimeSeriesProcessing from "./TimeSeriesProcessing"
 import CustomCleaning from "./CustomCleaning"
 import FinalUpload from "./FinalUpload"
 import UploadComplete from "./UploadComplete"
+import extractMetadata from "@/utils/extractMetaData"
 
 interface UploadResult {
   name: string;
@@ -37,8 +38,7 @@ export default function UploadWizard({ isDragActive }: UploadWizardProps) {
   const [activeFileIndex, setActiveFileIndex] = useState(0)
   const [reviewedFiles, setReviewedFiles] = useState<Set<string>>(new Set())
   
-  // ADD: Kaggle import tracking
-  const [kaggleImportedFiles, setKaggleImportedFiles] = useState<File[]>([])
+  // Kaggle import tracking
   const [kaggleImportCount, setKaggleImportCount] = useState(0)
   
   // Auto preprocessing state
@@ -68,23 +68,87 @@ export default function UploadWizard({ isDragActive }: UploadWizardProps) {
     filesProcessed: []
   })
 
-  // ADD: Kaggle file import handler
+  // Cache for file metadata to avoid recomputing
+  const [fileMetadataCache, setFileMetadataCache] = useState<Map<string, any>>(new Map())
+
+  // Fixed: Kaggle file import handler that prevents duplication
   const handleKaggleFileImported = (file: File) => {
-    // Add to main files array
-    setFiles(prev => [...prev, file])
+    // Check if file already exists (by name and size to avoid exact duplicates)
+    const exists = files.some(existingFile => 
+      existingFile.name === file.name && existingFile.size === file.size
+    )
     
-    // Track Kaggle imports separately for analytics
-    setKaggleImportedFiles(prev => [...prev, file])
-    setKaggleImportCount(prev => prev + 1)
+    if (!exists) {
+      setFiles(prev => [...prev, file])
+      setKaggleImportCount(prev => prev + 1)
+      
+      // Switch to local files tab to show the imported file
+      setActiveTab("upload")
+      
+      // Show success toast
+      toast({
+        title: "Kaggle import successful",
+        description: `${file.name} has been imported from Kaggle and added to your upload queue`
+      })
+    } else {
+      toast({
+        title: "File already exists",
+        description: `${file.name} is already in your upload queue`
+      })
+    }
+  }
+
+  // Create file metadata with caching to avoid recomputation
+  const createFileMetadataWithPreview = async (file: File) => {
+    const cacheKey = `${file.name}_${file.size}_${file.lastModified}`
     
-    // Switch to local files tab to show the imported file
-    setActiveTab("upload")
-    
-    // Show success toast
-    toast({
-      title: "Kaggle import successful",
-      description: `${file.name} has been imported from Kaggle and added to your upload queue`
-    })
+    if (fileMetadataCache.has(cacheKey)) {
+      return fileMetadataCache.get(cacheKey)
+    }
+
+    try {
+      // Extract actual metadata from the file
+      const metadata = await extractMetadata(file)
+      
+      const fileMetadata = {
+        id: Date.now().toString(),
+        user_id: "temporary",
+        filename: file.name,
+        original_filename: file.name,
+        file_size: file.size,
+        mime_type: file.type,
+        upload_date: new Date().toISOString(),
+        column_names: metadata.columns,
+        row_count: metadata.rowCount,
+        file_preview: metadata.preview,
+        statistics: metadata.statistics
+      }
+      
+      // Cache the result
+      setFileMetadataCache(prev => new Map(prev).set(cacheKey, fileMetadata))
+      
+      return fileMetadata
+    } catch (error) {
+      console.error('Error extracting metadata:', error)
+      
+      // Fallback to basic metadata
+      const basicMetadata = {
+        id: Date.now().toString(),
+        user_id: "temporary",
+        filename: file.name,
+        original_filename: file.name,
+        file_size: file.size,
+        mime_type: file.type,
+        upload_date: new Date().toISOString(),
+        column_names: [],
+        row_count: 0,
+        file_preview: [],
+        statistics: {}
+      }
+      
+      setFileMetadataCache(prev => new Map(prev).set(cacheKey, basicMetadata))
+      return basicMetadata
+    }
   }
 
   const transformPreprocessingResults = (serverResponse: any) => {
@@ -139,9 +203,23 @@ export default function UploadWizard({ isDragActive }: UploadWizardProps) {
   }
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
-    setFiles((prevFiles) => [...prevFiles, ...acceptedFiles])
+    // Filter out duplicates
+    const newFiles = acceptedFiles.filter(newFile => 
+      !files.some(existingFile => 
+        existingFile.name === newFile.name && existingFile.size === newFile.size
+      )
+    )
+    
+    if (newFiles.length < acceptedFiles.length) {
+      toast({
+        title: "Duplicate files ignored",
+        description: `${acceptedFiles.length - newFiles.length} file(s) were already in your queue`
+      })
+    }
+    
+    setFiles((prevFiles) => [...prevFiles, ...newFiles])
     setError(null)
-  }, [])
+  }, [files])
 
   const onDropRejected = useCallback((fileRejections: FileRejection[]) => {
     if (fileRejections.length > 0) {
@@ -165,9 +243,19 @@ export default function UploadWizard({ isDragActive }: UploadWizardProps) {
     noClick: true
   })
   
-  const handlePreviewFile = (file: File) => {
-    setSelectedFileForPreview(file)
-    setIsPreviewOpen(true)
+  const handlePreviewFile = async (file: File) => {
+    try {
+      const metadata = await createFileMetadataWithPreview(file)
+      setSelectedFileForPreview(metadata)
+      setIsPreviewOpen(true)
+    } catch (error) {
+      console.error('Error creating preview:', error)
+      toast({
+        variant: "destructive",
+        title: "Preview Error",
+        description: "Could not generate preview for this file"
+      })
+    }
   }
   
   const handleViewEDA = (fileIndex: number) => {
@@ -216,22 +304,20 @@ export default function UploadWizard({ isDragActive }: UploadWizardProps) {
     setCurrentStep(3) // Go to data type detection
   }
   
-  // NEW: Handle data type detection complete
+  // Handle data type detection complete
   const handleDataTypeDetectionNormal = (normalFiles: File[], results: Record<string, any>) => {
-    // Store the normal files for custom cleaning
     setPreprocessedFiles(normalFiles)
     setPreprocessingResults(results)
     setCurrentStep(4) // Go to custom cleaning
   }
   
   const handleDataTypeDetectionTimeSeries = (timeSeriesFiles: File[], results: Record<string, any>) => {
-    // Store the time series files for time series processing
     setPreprocessedFiles(timeSeriesFiles)
     setPreprocessingResults(results)
     setCurrentStep(5) // Go to time series processing
   }
   
-  // NEW: Handle time series processing complete
+  // Handle time series processing complete
   const handleTimeSeriesProcessingComplete = (processedFiles: File[], results: Record<string, any>) => {
     setTimeSeriesProcessedFiles(processedFiles)
     setTimeSeriesResults(results)
@@ -453,19 +539,7 @@ export default function UploadWizard({ isDragActive }: UploadWizardProps) {
       {/* File Preview Dialog */}
       {selectedFileForPreview && (
         <FilePreview 
-          fileMetadata={{
-            id: Date.now().toString(),
-            user_id: "temporary",
-            filename: selectedFileForPreview.name,
-            original_filename: selectedFileForPreview.name,
-            file_size: selectedFileForPreview.size,
-            mime_type: selectedFileForPreview.type,
-            upload_date: new Date().toISOString(),
-            column_names: [],
-            row_count: 0,
-            file_preview: [],
-            statistics: {}
-          }}
+          fileMetadata={selectedFileForPreview}
           isOpen={isPreviewOpen} 
           onClose={() => setIsPreviewOpen(false)} 
         />

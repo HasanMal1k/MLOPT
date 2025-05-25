@@ -33,6 +33,7 @@
     "date-fns": "^4.1.0",
     "dotenv": "^16.4.7",
     "drizzle-orm": "^0.41.0",
+    "jszip": "^3.10.1",
     "lucide-react": "^0.474.0",
     "next": "15.1.6",
     "next-themes": "^0.4.6",
@@ -48,6 +49,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@types/jszip": "^3.4.1",
     "@types/node": "^20",
     "@types/papaparse": "^5.3.15",
     "@types/react": "^19",

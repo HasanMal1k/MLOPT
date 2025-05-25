@@ -81,3 +81,49 @@
   }
 }
 
+/* Add this to your client/app/globals.css file */
+
+/* Custom scrollbar styles for pure black and white theme */
+.scrollbar-visible {
+  scrollbar-width: auto;
+  scrollbar-color: #ffffff #000000;
+}
+
+.scrollbar-visible::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+.scrollbar-visible::-webkit-scrollbar-track {
+  background: #000000;
+  border-radius: 6px;
+}
+
+.scrollbar-visible::-webkit-scrollbar-thumb {
+  background: #ffffff;
+  border-radius: 6px;
+  border: 2px solid #000000;
+}
+
+.scrollbar-visible::-webkit-scrollbar-thumb:hover {
+  background: #e5e5e5;
+}
+
+.scrollbar-visible::-webkit-scrollbar-corner {
+  background: #000000;
+}
+
+/* Ensure text selection works in tables with black and white theme */
+table td, table th {
+  user-select: text !important;
+  -webkit-user-select: text !important;
+  -moz-user-select: text !important;
+  -ms-user-select: text !important;
+}
+
+/* Pure black and white theme for all dialog content */
+.dialog-content {
+  background-color: #000000 !important;
+  border-color: #ffffff !important;
+  color: #ffffff !important;
+}

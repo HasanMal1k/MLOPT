@@ -1,4 +1,3 @@
-// components/KaggleUpload.tsx - Simple version that works with your existing system
 'use client'
 
 import { useState } from "react";
@@ -12,11 +11,28 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, Download, ExternalLink, Loader2 } from "lucide-react";
+import { AlertCircle, Download, ExternalLink, Loader2, CheckCircle2 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 
 interface KaggleUploadProps {
   onFileImported: (file: File) => void;
+}
+
+// Helper function to convert base64 to File object
+function base64ToFile(base64: string, filename: string, contentType: string): File {
+  // Remove data URL prefix if present
+  const base64Data = base64.includes(',') ? base64.split(',')[1] : base64;
+  
+  // Convert base64 to binary
+  const binaryString = atob(base64Data);
+  const bytes = new Uint8Array(binaryString.length);
+  
+  for (let i = 0; i < binaryString.length; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
+  }
+  
+  // Create File object
+  return new File([bytes], filename, { type: contentType });
 }
 
 export default function KaggleUpload({ onFileImported }: KaggleUploadProps) {
@@ -24,6 +40,7 @@ export default function KaggleUpload({ onFileImported }: KaggleUploadProps) {
   const [isImporting, setIsImporting] = useState(false);
   const [importProgress, setImportProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
   const parseKaggleUrl = (url: string) => {
     const datasetPattern = /^https:\/\/www\.kaggle\.com\/datasets\/([\w-]+)\/([\w-]+)$/i;
@@ -61,9 +78,11 @@ export default function KaggleUpload({ onFileImported }: KaggleUploadProps) {
 
     setIsImporting(true);
     setError(null);
+    setSuccess(null);
     setImportProgress(10);
 
     try {
+      console.log('Starting Kaggle import for:', parsedUrl);
       setImportProgress(20);
       
       const response = await fetch('/api/kaggle-import', {
@@ -86,36 +105,56 @@ export default function KaggleUpload({ onFileImported }: KaggleUploadProps) {
       }
 
       const data = await response.json();
+      console.log('Kaggle import response:', data);
       setImportProgress(70);
       
-      // Download the file from our storage
-      const fileResponse = await fetch(data.url);
-      if (!fileResponse.ok) {
-        throw new Error('Failed to download the imported file');
+      // Convert the base64 content back to a File object
+      if (data.content && data.filename) {
+        try {
+          const file = base64ToFile(data.content, data.filename, data.contentType || 'text/csv');
+          console.log('Created File object:', {
+            name: file.name,
+            size: file.size,
+            type: file.type
+          });
+          
+          setImportProgress(90);
+          
+          // Call the parent callback with the File object
+          onFileImported(file);
+          
+          setImportProgress(100);
+          setSuccess(`Successfully imported "${data.filename}" (${(data.size / 1024 / 1024).toFixed(2)} MB)`);
+          
+          // Reset form after success
+          setTimeout(() => {
+            setKaggleUrl("");
+            setImportProgress(0);
+            setSuccess(null);
+          }, 3000);
+          
+        } catch (fileError) {
+          console.error('Error creating File object:', fileError);
+          throw new Error('Failed to process the downloaded file content');
+        }
+      } else {
+        throw new Error('Invalid response from server - missing file content');
       }
-      
-      setImportProgress(90);
-      
-      const blob = await fileResponse.blob();
-      const file = new File([blob], data.filename, { 
-        type: data.contentType 
-      });
-      
-      setImportProgress(100);
-      
-      // Call the parent callback
-      onFileImported(file);
-      
-      // Reset form
-      setKaggleUrl("");
-      setImportProgress(0);
       
     } catch (err) {
       console.error('Error importing from Kaggle:', err);
       setError(err instanceof Error ? err.message : 'Failed to import dataset from Kaggle');
+      setImportProgress(0);
     } finally {
       setIsImporting(false);
     }
+  };
+
+  const handleReset = () => {
+    setKaggleUrl("");
+    setError(null);
+    setSuccess(null);
+    setImportProgress(0);
   };
 
   return (
@@ -148,8 +187,16 @@ export default function KaggleUpload({ onFileImported }: KaggleUploadProps) {
           {error && (
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Error</AlertTitle>
+              <AlertTitle>Import Error</AlertTitle>
               <AlertDescription className="whitespace-pre-line">{error}</AlertDescription>
+            </Alert>
+          )}
+
+          {success && (
+            <Alert className="border-green-200 bg-green-50">
+              <CheckCircle2 className="h-4 w-4 text-green-600" />
+              <AlertTitle className="text-green-800">Import Successful</AlertTitle>
+              <AlertDescription className="text-green-700">{success}</AlertDescription>
             </Alert>
           )}
 
@@ -157,9 +204,17 @@ export default function KaggleUpload({ onFileImported }: KaggleUploadProps) {
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <Loader2 className="h-4 w-4 animate-spin" />
-                <span className="text-sm">Importing from Kaggle...</span>
+                <span className="text-sm">
+                  {importProgress < 30 ? 'Contacting Kaggle API...' :
+                   importProgress < 60 ? 'Downloading dataset...' :
+                   importProgress < 90 ? 'Processing file...' :
+                   'Finalizing import...'}
+                </span>
               </div>
               <Progress value={importProgress} className="h-2" />
+              <p className="text-xs text-muted-foreground">
+                This may take a moment depending on the dataset size
+              </p>
             </div>
           )}
 
@@ -170,10 +225,30 @@ export default function KaggleUpload({ onFileImported }: KaggleUploadProps) {
                 Browse Datasets
               </a>
             </Button>
-            <Button onClick={handleImport} disabled={!kaggleUrl || isImporting}>
-              {isImporting ? "Importing..." : "Import"}
-            </Button>
+            <div className="flex gap-2">
+              {(success || error) && (
+                <Button variant="outline" onClick={handleReset} size="sm">
+                  Reset
+                </Button>
+              )}
+              <Button 
+                onClick={handleImport} 
+                disabled={!kaggleUrl || isImporting}
+              >
+                {isImporting ? (
+                  <>
+                    <Loader2 className="animate-spin mr-2 h-4 w-4" />
+                    Importing...
+                  </>
+                ) : (
+                  'Import Dataset'
+                )}
+              </Button>
+            </div>
           </div>
+          
+          {/* Debug information */}
+         
         </div>
       </CardContent>
     </Card>

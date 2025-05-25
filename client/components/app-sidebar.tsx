@@ -209,7 +209,7 @@ export function AppSidebar() {
               MLOpt
             </span>
             <span className="text-xs text-muted-foreground">
-              ML Optimization Platform
+              Automate MLOps Workflow
             </span>
           </div>
         </div>
