@@ -26,6 +26,7 @@ from universal_file_handler import (
     read_any_file_universal
 )
 from robust_csv_reader import read_csv_with_robust_handling, read_problematic_csv
+from data_visualization import router as visualization_router
 
 # Configure logging
 logging.basicConfig(
@@ -122,6 +123,8 @@ app = FastAPI(
 app.include_router(custom_preprocessing_router)
 app.include_router(transformations_router)
 app.include_router(time_series_router)  # Register the time series router
+app.include_router(visualization_router)
+
 
 # Configure CORS
 origins = [

@@ -78,7 +78,7 @@ const navigation = [
     items: [
       {
         title: 'Transformations',
-        url: '/dashboard/preprocessing',
+        url: '/dashboard/transformations',
         icon: Sparkles
       }
     ]
