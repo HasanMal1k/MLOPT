@@ -575,7 +575,7 @@ export default function CustomCleaning({
           onClick={applyAllTransformations} 
           disabled={isApplyingTransformations}
           variant="default"
-          className="bg-green-600 hover:bg-green-700"
+          className="bg-gray-50 "
         >
           {isApplyingTransformations ? (
             <>
