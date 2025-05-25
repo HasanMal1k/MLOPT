@@ -1,17 +1,18 @@
-// Modified KaggleUpload.tsx file
+// components/KaggleUpload.tsx - Simple version that works with your existing system
+'use client'
+
 import { useState } from "react";
 import { 
   Card, 
   CardContent, 
   CardDescription, 
-  CardFooter, 
   CardHeader, 
   CardTitle 
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, Download, ExternalLink } from "lucide-react";
+import { AlertCircle, Download, ExternalLink, Loader2 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 
 interface KaggleUploadProps {
@@ -24,15 +25,10 @@ export default function KaggleUpload({ onFileImported }: KaggleUploadProps) {
   const [importProgress, setImportProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
-  // Updated validation and parsing for both dataset and competition URLs
   const parseKaggleUrl = (url: string) => {
-    // Dataset URL pattern (e.g., https://www.kaggle.com/datasets/username/datasetname)
     const datasetPattern = /^https:\/\/www\.kaggle\.com\/datasets\/([\w-]+)\/([\w-]+)$/i;
-    
-    // Competition URL pattern (e.g., https://www.kaggle.com/competitions/titanic)
     const competitionPattern = /^https:\/\/www\.kaggle\.com\/competitions\/([\w-]+)$/i;
     
-    // Check for dataset URL
     const datasetMatch = url.match(datasetPattern);
     if (datasetMatch) {
       return {
@@ -43,7 +39,6 @@ export default function KaggleUpload({ onFileImported }: KaggleUploadProps) {
       };
     }
     
-    // Check for competition URL
     const competitionMatch = url.match(competitionPattern);
     if (competitionMatch) {
       return {
@@ -53,7 +48,6 @@ export default function KaggleUpload({ onFileImported }: KaggleUploadProps) {
       };
     }
     
-    // Not a valid URL
     return null;
   };
 
@@ -61,7 +55,7 @@ export default function KaggleUpload({ onFileImported }: KaggleUploadProps) {
     const parsedUrl = parseKaggleUrl(kaggleUrl);
     
     if (!parsedUrl) {
-      setError("Please enter a valid Kaggle URL. Examples:\n- https://www.kaggle.com/datasets/username/datasetname\n- https://www.kaggle.com/competitions/competitionname");
+      setError("Please enter a valid Kaggle URL. Examples:\n• https://www.kaggle.com/datasets/username/datasetname\n• https://www.kaggle.com/competitions/competitionname");
       return;
     }
 
@@ -72,7 +66,6 @@ export default function KaggleUpload({ onFileImported }: KaggleUploadProps) {
     try {
       setImportProgress(20);
       
-      // Send the request to our Next.js API endpoint with improved data
       const response = await fetch('/api/kaggle-import', {
         method: 'POST',
         headers: {
@@ -81,7 +74,6 @@ export default function KaggleUpload({ onFileImported }: KaggleUploadProps) {
         body: JSON.stringify({
           type: parsedUrl.type,
           path: parsedUrl.path,
-          // Add name information to help with better naming on server
           name: parsedUrl.name
         }),
       });
@@ -93,11 +85,10 @@ export default function KaggleUpload({ onFileImported }: KaggleUploadProps) {
         throw new Error(errorData.message || `Failed to import from Kaggle: ${response.statusText}`);
       }
 
-      // Get the response data
       const data = await response.json();
       setImportProgress(70);
       
-      // Fetch the file from the provided URL
+      // Download the file from our storage
       const fileResponse = await fetch(data.url);
       if (!fileResponse.ok) {
         throw new Error('Failed to download the imported file');
@@ -105,7 +96,6 @@ export default function KaggleUpload({ onFileImported }: KaggleUploadProps) {
       
       setImportProgress(90);
       
-      // Create a File object from the response
       const blob = await fileResponse.blob();
       const file = new File([blob], data.filename, { 
         type: data.contentType 
@@ -113,11 +103,12 @@ export default function KaggleUpload({ onFileImported }: KaggleUploadProps) {
       
       setImportProgress(100);
       
-      // Let the parent component know we have a new file
+      // Call the parent callback
       onFileImported(file);
       
       // Reset form
       setKaggleUrl("");
+      setImportProgress(0);
       
     } catch (err) {
       console.error('Error importing from Kaggle:', err);
@@ -164,23 +155,27 @@ export default function KaggleUpload({ onFileImported }: KaggleUploadProps) {
 
           {isImporting && (
             <div className="space-y-2">
-              <p className="text-sm">Importing from Kaggle...</p>
+              <div className="flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span className="text-sm">Importing from Kaggle...</span>
+              </div>
               <Progress value={importProgress} className="h-2" />
             </div>
           )}
+
+          <div className="flex justify-between">
+            <Button variant="outline" size="sm" asChild>
+              <a href="https://www.kaggle.com/datasets" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1">
+                <ExternalLink className="h-4 w-4" />
+                Browse Datasets
+              </a>
+            </Button>
+            <Button onClick={handleImport} disabled={!kaggleUrl || isImporting}>
+              {isImporting ? "Importing..." : "Import"}
+            </Button>
+          </div>
         </div>
       </CardContent>
-      <CardFooter className="flex justify-between">
-        <Button variant="outline" size="sm" asChild>
-          <a href="https://www.kaggle.com/datasets" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1">
-            <ExternalLink className="h-4 w-4" />
-            Browse Kaggle Datasets
-          </a>
-        </Button>
-        <Button onClick={handleImport} disabled={!kaggleUrl || isImporting}>
-          {isImporting ? "Importing..." : "Import"}
-        </Button>
-      </CardFooter>
     </Card>
   );
 }

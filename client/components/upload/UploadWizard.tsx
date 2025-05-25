@@ -1,4 +1,4 @@
-// components/upload/UploadWizard.tsx - Updated with Time Series Flow
+// components/upload/UploadWizard.tsx - Corrected Version
 'use client'
 
 import { useState, useCallback } from "react"
@@ -37,6 +37,10 @@ export default function UploadWizard({ isDragActive }: UploadWizardProps) {
   const [activeFileIndex, setActiveFileIndex] = useState(0)
   const [reviewedFiles, setReviewedFiles] = useState<Set<string>>(new Set())
   
+  // ADD: Kaggle import tracking
+  const [kaggleImportedFiles, setKaggleImportedFiles] = useState<File[]>([])
+  const [kaggleImportCount, setKaggleImportCount] = useState(0)
+  
   // Auto preprocessing state
   const [preprocessedFiles, setPreprocessedFiles] = useState<File[]>([])
   const [preprocessingResults, setPreprocessingResults] = useState<Record<string, any>>({})
@@ -63,6 +67,25 @@ export default function UploadWizard({ isDragActive }: UploadWizardProps) {
     successCount: 0,
     filesProcessed: []
   })
+
+  // ADD: Kaggle file import handler
+  const handleKaggleFileImported = (file: File) => {
+    // Add to main files array
+    setFiles(prev => [...prev, file])
+    
+    // Track Kaggle imports separately for analytics
+    setKaggleImportedFiles(prev => [...prev, file])
+    setKaggleImportCount(prev => prev + 1)
+    
+    // Switch to local files tab to show the imported file
+    setActiveTab("upload")
+    
+    // Show success toast
+    toast({
+      title: "Kaggle import successful",
+      description: `${file.name} has been imported from Kaggle and added to your upload queue`
+    })
+  }
 
   const transformPreprocessingResults = (serverResponse: any) => {
     if (!serverResponse) return null
@@ -348,6 +371,8 @@ export default function UploadWizard({ isDragActive }: UploadWizardProps) {
             open={open}
             activeTab={activeTab}
             onTabChange={setActiveTab}
+            onKaggleFileImported={handleKaggleFileImported}
+            kaggleImportCount={kaggleImportCount}
           />
         )}
         

@@ -1,7 +1,6 @@
-// Modified kaggle-import/route.ts
+// client/app/api/kaggle-import/route.ts - Basic version for your existing system
 import { NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
-import { Readable } from 'stream';
 
 // Utility to convert ReadableStream to Buffer
 async function streamToBuffer(stream: ReadableStream<Uint8Array>): Promise<Buffer> {
@@ -24,7 +23,10 @@ export async function POST(request: Request) {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     
     if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized', message: 'You must be logged in to import Kaggle datasets' }, { status: 401 });
+      return NextResponse.json({ 
+        error: 'Unauthorized', 
+        message: 'You must be logged in to import Kaggle datasets' 
+      }, { status: 401 });
     }
     
     // Parse the request body
@@ -85,7 +87,7 @@ export async function POST(request: Request) {
     // Get the file content
     const fileContent = await streamToBuffer(downloadResponse.body!);
     
-    // Get filename from Content-Disposition header or use a more meaningful default based on provided name
+    // Get filename from Content-Disposition header or use a meaningful default
     const contentDisposition = downloadResponse.headers.get('Content-Disposition');
     let filename = '';
     
@@ -96,14 +98,13 @@ export async function POST(request: Request) {
       }
     }
     
-    // If filename couldn't be extracted from headers or is empty, create a better name
+    // If filename couldn't be extracted, create a better name
     if (!filename) {
       if (type === 'dataset' && name) {
         filename = `${name}.csv`;
       } else if (type === 'competition' && name) {
         filename = `${name}.csv`;
       } else {
-        // Fallback to a generic name with a timestamp
         filename = `kaggle-${type}-${Date.now()}.csv`;
       }
     }
@@ -115,7 +116,6 @@ export async function POST(request: Request) {
     }
     
     // Upload the file to Supabase Storage
-    // Use the original filename from Kaggle instead of adding prefixes
     const filePath = `${user.id}/kaggle-${Date.now()}-${filename}`;
     
     const { data: uploadData, error: uploadError } = await supabase.storage
@@ -141,7 +141,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       success: true,
       message: 'Dataset imported successfully',
-      filename,  // This is the original filename from Kaggle now
+      filename,
       url: publicUrl,
       size: fileContent.length,
       contentType

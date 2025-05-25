@@ -1,0 +1,26 @@
+{
+  "status": "processing",
+  "progress": 0,
+  "message": "Queued for processing",
+  "timestamp": 1748173114.5061216,
+  "results": {
+    "original_filename": "ai-developer-productivity-dataset.csv",
+    "safe_filename": "normalized_c45fb66a_ai-developer-productivity-dataset.csv",
+    "processed_filename": "processed_c45fb66a_ai-developer-productivity-dataset.csv",
+    "file_type": "csv",
+    "conversion_message": "CSV converted from latin1 to UTF-8",
+    "file_info": {
+      "rows": 53,
+      "columns": 1,
+      "column_names": [
+        "PK\u0003\u0004-"
+      ],
+      "file_size_bytes": 5992,
+      "file_type": "csv"
+    },
+    "file_mapping": {
+      "input": "normalized_c45fb66a_ai-developer-productivity-dataset.csv",
+      "output": "processed_c45fb66a_ai-developer-productivity-dataset.csv"
+    }
+  }
+}
