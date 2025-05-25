@@ -11,6 +11,7 @@ import re
 from typing import List, Optional, Dict, Any, Union
 import logging
 import warnings
+import math
 
 # Configure logging
 logging.basicConfig(
@@ -70,30 +71,45 @@ DATE_COLUMN_PATTERNS = [
     r'(?i).*occurred.*',     # Contains "occurred"
 ]
 
+def clean_for_json(obj):
+    """
+    Recursively clean an object to make it JSON serializable by replacing NaN/inf values
+    """
+    if isinstance(obj, dict):
+        return {k: clean_for_json(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [clean_for_json(item) for item in obj]
+    elif isinstance(obj, tuple):
+        return tuple(clean_for_json(item) for item in obj)
+    elif isinstance(obj, (np.ndarray, pd.Series)):
+        return clean_for_json(obj.tolist())
+    elif isinstance(obj, pd.DataFrame):
+        return clean_for_json(obj.to_dict('records'))
+    elif isinstance(obj, (np.integer, np.int8, np.int16, np.int32, np.int64)):
+        return int(obj)
+    elif isinstance(obj, (np.floating, np.float16, np.float32, np.float64)):
+        if pd.isna(obj) or math.isnan(float(obj)):
+            return None
+        elif math.isinf(float(obj)):
+            return None  # or return a string like "infinity"
+        else:
+            return float(obj)
+    elif isinstance(obj, np.bool_):
+        return bool(obj)
+    elif isinstance(obj, (float, int)):
+        if pd.isna(obj) or (isinstance(obj, float) and (math.isnan(obj) or math.isinf(obj))):
+            return None
+        return obj
+    elif pd.isna(obj):
+        return None
+    else:
+        return obj
+
 def convert_to_json_serializable(obj):
     """
     Convert numpy/pandas data types to JSON serializable Python types
     """
-    if hasattr(obj, 'dtype'):
-        # Handle pandas Series or numpy arrays
-        if hasattr(obj, 'tolist'):
-            return obj.tolist()
-        else:
-            return obj.item()  # For single values
-    elif isinstance(obj, (np.int64, np.int32, np.int16, np.int8)):
-        return int(obj)
-    elif isinstance(obj, (np.float64, np.float32, np.float16)):
-        return float(obj)
-    elif isinstance(obj, np.bool_):
-        return bool(obj)
-    elif isinstance(obj, dict):
-        return {k: convert_to_json_serializable(v) for k, v in obj.items()}
-    elif isinstance(obj, list):
-        return [convert_to_json_serializable(item) for item in obj]
-    elif hasattr(obj, '__dict__'):
-        return convert_to_json_serializable(obj.__dict__)
-    else:
-        return obj
+    return clean_for_json(obj)
 
 def detect_dates(value: str) -> bool:
     """
@@ -420,9 +436,9 @@ async def analyze_time_series(file: UploadFile = File(...)):
                     mean_val = df[column].mean()
                     
                     column_stats[column] = {
-                        "min": float(min_val) if not pd.isna(min_val) else None,
-                        "max": float(max_val) if not pd.isna(max_val) else None,
-                        "mean": float(mean_val) if not pd.isna(mean_val) else None,
+                        "min": clean_for_json(min_val),
+                        "max": clean_for_json(max_val),
+                        "mean": clean_for_json(mean_val),
                         "missing": int(df[column].isna().sum()),
                         "missing_pct": float(df[column].isna().mean() * 100)
                     }
@@ -477,9 +493,9 @@ async def analyze_time_series(file: UploadFile = File(...)):
             "row_count": int(len(df)),
             "column_count": int(len(df.columns)),
             "column_types": {str(k): str(v) for k, v in column_types.items()},
-            "column_stats": convert_to_json_serializable(column_stats),
+            "column_stats": clean_for_json(column_stats),
             "date_columns": [str(col) for col in date_columns],
-            "recommendations": convert_to_json_serializable(recommendations)
+            "recommendations": clean_for_json(recommendations)
         }
         
         return JSONResponse(content=response_data)
@@ -646,13 +662,36 @@ async def process_time_series(
         if failed_float_conversions:
             processing_steps.append(f"Warning: Could not convert these columns to numeric: {', '.join(failed_float_conversions)}")
         
-        # 8. Final check for any remaining missing values
+        # 8. Final check for any remaining missing values and clean them
         remaining_missing = df_freq.isna().sum().sum()
         if remaining_missing > 0:
             columns_with_missing = [col for col in df_freq.columns if df_freq[col].isna().sum() > 0]
             processing_steps.append(f"Warning: {remaining_missing} missing values remain in columns: {', '.join(columns_with_missing)}")
+            
+            # Clean remaining missing values
+            for col in columns_with_missing:
+                if pd.api.types.is_numeric_dtype(df_freq[col]):
+                    # Fill numeric columns with 0 or median
+                    fill_value = df_freq[col].median()
+                    if pd.isna(fill_value):
+                        fill_value = 0
+                    df_freq[col] = df_freq[col].fillna(fill_value)
+                else:
+                    # Fill non-numeric columns with empty string
+                    df_freq[col] = df_freq[col].fillna('')
         
-        # 9. Save the processed file
+        # 9. Clean any remaining inf values
+        df_freq = df_freq.replace([np.inf, -np.inf], np.nan)
+        if df_freq.isna().sum().sum() > 0:
+            # Fill any new NaN values created from inf replacement
+            for col in df_freq.columns:
+                if df_freq[col].isna().sum() > 0:
+                    if pd.api.types.is_numeric_dtype(df_freq[col]):
+                        df_freq[col] = df_freq[col].fillna(0)
+                    else:
+                        df_freq[col] = df_freq[col].fillna('')
+        
+        # 10. Save the processed file
         unique_id = str(uuid.uuid4())[:8]
         output_filename = f"ts_processed_{unique_id}_{file.filename}"
         output_path = result_folder / output_filename
@@ -681,7 +720,7 @@ async def process_time_series(
             "filename": str(file.filename),
             "processed_filename": str(output_filename),
             "processing_steps": [str(step) for step in processing_steps],
-            "statistics": convert_to_json_serializable(stats)
+            "statistics": clean_for_json(stats)
         }
         
         return JSONResponse(content=response_data)
@@ -719,22 +758,39 @@ def smart_fillna_timeseries(series: pd.Series, method='auto', rolling_window=3, 
         filled = filled.fillna(method='ffill', limit=fill_limit)
         filled = filled.fillna(method='bfill', limit=fill_limit)
         
+        # Step 4: If still NaN, use 0 or median
+        if filled.isna().sum() > 0:
+            fill_value = series.median() if not series.isna().all() else 0
+            if pd.isna(fill_value):
+                fill_value = 0
+            filled = filled.fillna(fill_value)
+        
     elif method == 'interpolate':
         filled = filled.interpolate(method='linear', limit_direction='both')
+        if filled.isna().sum() > 0:
+            filled = filled.fillna(0)
         
     elif method == 'mean':
         mean_val = series.mean()
+        if pd.isna(mean_val):
+            mean_val = 0
         filled = filled.fillna(mean_val)
         
     elif method == 'median':
         median_val = series.median()
+        if pd.isna(median_val):
+            median_val = 0
         filled = filled.fillna(median_val)
         
     elif method == 'ffill':
         filled = filled.fillna(method='ffill')
+        if filled.isna().sum() > 0:
+            filled = filled.fillna(0)
         
     elif method == 'bfill':
         filled = filled.fillna(method='bfill')
+        if filled.isna().sum() > 0:
+            filled = filled.fillna(0)
     
     return filled
 
@@ -841,20 +897,30 @@ async def custom_impute_time_series(
             
             elif method == "interpolate":
                 df[column] = df[column].interpolate(method='linear', limit_direction='both')
+                if df[column].isna().sum() > 0:
+                    df[column] = df[column].fillna(0)
             
             elif method == "mean":
                 mean_val = df[column].mean()
+                if pd.isna(mean_val):
+                    mean_val = 0
                 df[column] = df[column].fillna(mean_val)
             
             elif method == "median":
                 median_val = df[column].median()
+                if pd.isna(median_val):
+                    median_val = 0
                 df[column] = df[column].fillna(median_val)
             
             elif method == "ffill":
                 df[column] = df[column].fillna(method='ffill')
+                if df[column].isna().sum() > 0:
+                    df[column] = df[column].fillna(0)
             
             elif method == "bfill":
                 df[column] = df[column].fillna(method='bfill')
+                if df[column].isna().sum() > 0:
+                    df[column] = df[column].fillna(0)
             
             elif method == "rolling":
                 window_size = 3  # Default
@@ -863,6 +929,8 @@ async def custom_impute_time_series(
                 
                 rolling = df[column].rolling(window=window_size, min_periods=1).mean()
                 df[column] = df[column].fillna(rolling)
+                if df[column].isna().sum() > 0:
+                    df[column] = df[column].fillna(0)
             
             # Track results
             missing_after = df[column].isna().sum()
@@ -882,14 +950,16 @@ async def custom_impute_time_series(
         df = df.reset_index()
         df.to_csv(output_path, index=False)
         
-        return JSONResponse(content={
+        response_data = {
             "success": True,
             "message": "Time series imputation complete",
             "filename": str(file.filename),
             "processed_filename": str(output_filename),
-            "imputation_results": convert_to_json_serializable(imputation_results),
+            "imputation_results": clean_for_json(imputation_results),
             "total_values_imputed": int(sum(result["filled_values"] for result in imputation_results.values()))
-        })
+        }
+        
+        return JSONResponse(content=response_data)
         
     except Exception as e:
         logger.error(f"Error in custom imputation: {str(e)}")

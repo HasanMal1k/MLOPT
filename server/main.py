@@ -9,6 +9,9 @@ import time
 import json
 import uuid
 import tempfile
+import math
+import pandas as pd
+import numpy as np
 from typing import Dict, List, Tuple, Any, Optional, Union  # Add all these typing imports
 from fastapi import FastAPI, File, UploadFile, HTTPException, BackgroundTasks, Form
 from fastapi.responses import  FileResponse
@@ -26,6 +29,40 @@ logging.basicConfig(
 )
 logger = logging.getLogger('mlopt_server')
 
+def clean_for_json(obj):
+    """
+    Recursively clean an object to make it JSON serializable by replacing NaN/inf values
+    """
+    if isinstance(obj, dict):
+        return {k: clean_for_json(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [clean_for_json(item) for item in obj]
+    elif isinstance(obj, tuple):
+        return tuple(clean_for_json(item) for item in obj)
+    elif isinstance(obj, (np.ndarray, pd.Series)):
+        return clean_for_json(obj.tolist())
+    elif isinstance(obj, pd.DataFrame):
+        return clean_for_json(obj.to_dict('records'))
+    elif isinstance(obj, (np.integer, np.int8, np.int16, np.int32, np.int64)):
+        return int(obj)
+    elif isinstance(obj, (np.floating, np.float16, np.float32, np.float64)):
+        if pd.isna(obj) or math.isnan(float(obj)):
+            return None
+        elif math.isinf(float(obj)):
+            return None  # or return a string like "infinity"
+        else:
+            return float(obj)
+    elif isinstance(obj, np.bool_):
+        return bool(obj)
+    elif isinstance(obj, (float, int)):
+        if pd.isna(obj) or (isinstance(obj, float) and (math.isnan(obj) or math.isinf(obj))):
+            return None
+        return obj
+    elif pd.isna(obj):
+        return None
+    else:
+        return obj
+
 # Initialize FastAPI app
 app = FastAPI(
     title="MLOpt Data Preprocessing API",
@@ -37,7 +74,6 @@ app = FastAPI(
 app.include_router(custom_preprocessing_router)
 app.include_router(transformations_router)
 app.include_router(time_series_router)  # Register the time series router
-# @router.post("/time-series")
 
 # Configure CORS
 origins = [
@@ -157,14 +193,17 @@ async def upload_files(background_tasks: BackgroundTasks, files: list[UploadFile
                 }
             )
         
-        return JSONResponse(
-            content={
-                "message": f"{len(saved_files)} file(s) uploaded successfully.",
-                "files": saved_files,
-                "processing": "File preprocessing started in the background. Track progress using the /processing-status/{filename} endpoint.",
-                "processing_info": processing_info
-            }
-        )
+        response_data = {
+            "message": f"{len(saved_files)} file(s) uploaded successfully.",
+            "files": saved_files,
+            "processing": "File preprocessing started in the background. Track progress using the /processing-status/{filename} endpoint.",
+            "processing_info": processing_info
+        }
+        
+        # Clean the response to avoid JSON serialization issues
+        clean_response = clean_for_json(response_data)
+        
+        return JSONResponse(content=clean_response)
         
     except Exception as e:
         logger.error(f"Error in upload endpoint: {e}")
@@ -247,13 +286,13 @@ async def get_processing_status(filename: str):
         
         if not status_path.exists():
             logger.warning(f"Status file not found for {filename}")
-            return {
+            return clean_for_json({
                 "status": "not_found", 
                 "progress": 0,
                 "message": f"No processing status found for {filename}",
                 "results": None,
                 "file_mapping": None
-            }
+            })
         
         try:
             with open(status_path, 'r') as f:
@@ -261,34 +300,34 @@ async def get_processing_status(filename: str):
                 
                 if not content:
                     logger.warning(f"Empty status file for {filename}")
-                    return {
+                    return clean_for_json({
                         "status": "processing", 
                         "progress": 0,
                         "message": "Status file is empty - processing may have just started",
                         "results": None,
                         "file_mapping": None
-                    }
+                    })
                 
                 status = json.loads(content)
                 
         except json.JSONDecodeError as e:
             logger.error(f"JSON decode error for {filename}: {e}")
-            return {
+            return clean_for_json({
                 "status": "error", 
                 "progress": -1,
                 "message": f"Error reading status file: JSON decode error",
                 "results": None,
                 "file_mapping": None
-            }
+            })
         except Exception as e:
             logger.error(f"Error reading status file for {filename}: {e}")
-            return {
+            return clean_for_json({
                 "status": "error", 
                 "progress": -1,
                 "message": f"Error reading status file: {str(e)}",
                 "results": None,
                 "file_mapping": None
-            }
+            })
         
         # Ensure status has required fields
         status.setdefault("status", "processing")
@@ -310,17 +349,18 @@ async def get_processing_status(filename: str):
                 except Exception as e:
                     logger.error(f"Error loading pipeline data for {filename}: {e}")
         
-        return status
+        # Clean the status before returning
+        return JSONResponse(content=clean_for_json(status))
         
     except Exception as e:
         logger.error(f"Unexpected error in get_processing_status for {filename}: {e}")
-        return {
+        return JSONResponse(content=clean_for_json({
             "status": "error", 
             "progress": -1,
             "message": f"Unexpected server error: {str(e)}",
             "results": None,
             "file_mapping": None
-        }
+        }))
         
         
 def update_status(filename: str, status_folder: Path, 
@@ -338,7 +378,8 @@ def update_status(filename: str, status_folder: Path,
         }
         
         if results is not None:
-            status["results"] = results
+            # Clean results before adding to status
+            status["results"] = clean_for_json(results)
         
         # Add file mapping information
         if progress == 100:  # When processing is complete
@@ -359,23 +400,25 @@ def update_status(filename: str, status_folder: Path,
         # Ensure the directory exists
         status_folder.mkdir(parents=True, exist_ok=True)
         
+        # Clean the entire status object before writing
+        clean_status = clean_for_json(status)
+        
         # Write status with proper error handling
         with open(status_path, 'w') as f:
-            json.dump(status, f, indent=2, default=str)  # default=str to handle non-serializable objects
+            json.dump(clean_status, f, indent=2)
         
         logger.info(f"Updated status for {filename}: {progress}% - {message}")
-        return status
+        return clean_status
         
     except Exception as e:
         logger.error(f"Error updating status for {filename}: {e}")
         # Return a basic status even if file write fails
-        return {
+        return clean_for_json({
             "status": "error",
             "progress": -1,
             "message": f"Error updating status: {str(e)}",
             "timestamp": time.time()
-        }
-        
+        })
         
 @app.get("/list-processed-files/")
 async def list_processed_files():
@@ -393,15 +436,21 @@ async def list_processed_files():
                         "exists": True
                     })
         
-        return {
+        response_data = {
             "processed_files": files,
             "count": len(files),
             "folder_path": str(PROCESSED_FOLDER)
         }
         
+        return JSONResponse(content=clean_for_json(response_data))
+        
     except Exception as e:
         logger.error(f"Error listing processed files: {e}")
-        return {"error": str(e), "processed_files": [], "count": 0}
+        return JSONResponse(content=clean_for_json({
+            "error": str(e), 
+            "processed_files": [], 
+            "count": 0
+        }))
 
 # Optional: Mount static files (add this after creating the app but before the endpoints)
 # This creates a static file server for the processed_files directory
@@ -547,11 +596,13 @@ async def batch_process(
             "status_url": f"/processing-status/{safe_filename}"
         })
     
-    return {
+    response_data = {
         "batch_id": batch_id,
         "message": f"Batch processing started for {len(results)} files",
         "results": results
     }
+    
+    return JSONResponse(content=clean_for_json(response_data))
 
 @app.get("/files/processed/{filename}")
 async def get_processed_file_alt(filename: str):
@@ -654,14 +705,14 @@ async def health_check_files():
             except Exception as e:
                 health_info["permissions"][folder_name] = f"write_error: {str(e)}"
         
-        return health_info
+        return JSONResponse(content=clean_for_json(health_info))
         
     except Exception as e:
-        return {
+        return JSONResponse(content=clean_for_json({
             "status": "unhealthy",
             "error": str(e),
             "timestamp": time.time()
-        }
+        }))
 
 
 if __name__ == "__main__":

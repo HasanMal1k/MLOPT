@@ -7,6 +7,7 @@ import json
 import uuid
 import os
 from typing import List, Optional
+import math
 
 # Create router for custom preprocessing
 router = APIRouter(prefix="/custom-preprocessing")
@@ -15,11 +16,46 @@ router = APIRouter(prefix="/custom-preprocessing")
 result_folder = Path("preprocessing_results")
 result_folder.mkdir(exist_ok=True)
 
+def clean_for_json(obj):
+    """
+    Recursively clean an object to make it JSON serializable by replacing NaN/inf values
+    """
+    if isinstance(obj, dict):
+        return {k: clean_for_json(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [clean_for_json(item) for item in obj]
+    elif isinstance(obj, tuple):
+        return tuple(clean_for_json(item) for item in obj)
+    elif isinstance(obj, (np.ndarray, pd.Series)):
+        return clean_for_json(obj.tolist())
+    elif isinstance(obj, pd.DataFrame):
+        return clean_for_json(obj.to_dict('records'))
+    elif isinstance(obj, (np.integer, np.int8, np.int16, np.int32, np.int64)):
+        return int(obj)
+    elif isinstance(obj, (np.floating, np.float16, np.float32, np.float64)):
+        if pd.isna(obj) or math.isnan(float(obj)):
+            return None
+        elif math.isinf(float(obj)):
+            return None  # or return a string like "infinity"
+        else:
+            return float(obj)
+    elif isinstance(obj, np.bool_):
+        return bool(obj)
+    elif isinstance(obj, (float, int)):
+        if pd.isna(obj) or (isinstance(obj, float) and (math.isnan(obj) or math.isinf(obj))):
+            return None
+        return obj
+    elif pd.isna(obj):
+        return None
+    else:
+        return obj
+
 @router.post("/analyze-file/")
 async def analyze_file(file: UploadFile = File(...)):
     """
     Analyze a file to get column information for custom preprocessing
     """
+    temp_file_path = None
     try:
         # Save the file temporarily
         file_content = await file.read()
@@ -46,20 +82,28 @@ async def analyze_file(file: UploadFile = File(...)):
             elif "datetime" in current_type:
                 suggested_type = "datetime"
             
-            # Get sample values
+            # Get sample values - clean them for JSON
             sample_values = df[column].dropna().head(5).tolist()
+            # Clean sample values to remove NaN/inf
+            clean_sample_values = []
+            for val in sample_values:
+                if pd.isna(val) or (isinstance(val, float) and (math.isnan(val) or math.isinf(val))):
+                    clean_sample_values.append(None)
+                else:
+                    clean_sample_values.append(str(val))
             
             columns_info.append({
                 "name": column,
                 "current_type": current_type,
                 "suggested_type": suggested_type,
-                "sample_values": [str(x) for x in sample_values]
+                "sample_values": clean_sample_values
             })
         
         # Clean up temporary file
-        os.remove(temp_file_path)
+        if temp_file_path and os.path.exists(temp_file_path):
+            os.remove(temp_file_path)
         
-        return {
+        response_data = {
             "success": True,
             "filename": file.filename,
             "row_count": len(df),
@@ -67,9 +111,14 @@ async def analyze_file(file: UploadFile = File(...)):
             "columns_info": columns_info
         }
         
+        # Clean the entire response for JSON serialization
+        clean_response = clean_for_json(response_data)
+        
+        return JSONResponse(content=clean_response)
+        
     except Exception as e:
         # Clean up if needed
-        if os.path.exists(temp_file_path):
+        if temp_file_path and os.path.exists(temp_file_path):
             os.remove(temp_file_path)
         
         raise HTTPException(
@@ -85,6 +134,7 @@ async def apply_transformations(
     """
     Apply custom transformations to a file based on user selections
     """
+    temp_file_path = None
     try:
         # Parse transformations
         transform_config = json.loads(transformations)
@@ -129,16 +179,36 @@ async def apply_transformations(
                     }
                     
                     # Convert data type
-                    if new_type == "int":
-                        df[column] = pd.to_numeric(df[column], errors='coerce', downcast='integer')
-                    elif new_type == "float":
-                        df[column] = pd.to_numeric(df[column], errors='coerce', downcast='float')
-                    elif new_type == "datetime":
-                        df[column] = pd.to_datetime(df[column], errors='coerce')
-                    else:  # string
-                        df[column] = df[column].astype(str)
-                    
-                    transformation_report["transformations_applied"].append(f"Converted {column} to {new_type}")
+                    try:
+                        if new_type == "int":
+                            df[column] = pd.to_numeric(df[column], errors='coerce', downcast='integer')
+                        elif new_type == "float":
+                            df[column] = pd.to_numeric(df[column], errors='coerce', downcast='float')
+                        elif new_type == "datetime":
+                            df[column] = pd.to_datetime(df[column], errors='coerce')
+                        else:  # string
+                            df[column] = df[column].astype(str)
+                        
+                        transformation_report["transformations_applied"].append(f"Converted {column} to {new_type}")
+                    except Exception as conv_error:
+                        transformation_report["transformations_applied"].append(f"Failed to convert {column} to {new_type}: {str(conv_error)}")
+        
+        # Clean DataFrame of any remaining NaN/inf values before saving
+        # Replace inf with NaN, then handle NaN appropriately
+        df = df.replace([np.inf, -np.inf], np.nan)
+        
+        # For numeric columns, fill NaN with 0 or median
+        for col in df.select_dtypes(include=[np.number]).columns:
+            if df[col].isna().any():
+                # Use median if available, otherwise 0
+                fill_value = df[col].median() if not df[col].isna().all() else 0
+                if pd.isna(fill_value):
+                    fill_value = 0
+                df[col] = df[col].fillna(fill_value)
+        
+        # For non-numeric columns, fill NaN with empty string
+        for col in df.select_dtypes(exclude=[np.number]).columns:
+            df[col] = df[col].fillna('')
         
         # Save transformed file
         output_filename = f"transformed_{uuid.uuid4()}_{file.filename}"
@@ -149,23 +219,32 @@ async def apply_transformations(
         report_filename = f"{output_filename}.report.json"
         report_path = result_folder / report_filename
         
+        # Clean the report before saving
+        clean_report = clean_for_json(transformation_report)
+        
         with open(report_path, 'w') as f:
-            json.dump(transformation_report, f, indent=2)
+            json.dump(clean_report, f, indent=2)
         
         # Clean up temporary file
-        os.remove(temp_file_path)
+        if temp_file_path and os.path.exists(temp_file_path):
+            os.remove(temp_file_path)
         
-        return {
+        response_data = {
             "success": True,
             "message": "Transformations applied successfully",
             "transformed_file": output_filename,
             "report_file": report_filename,
-            "report": transformation_report
+            "report": clean_report
         }
+        
+        # Clean the entire response for JSON serialization
+        clean_response = clean_for_json(response_data)
+        
+        return JSONResponse(content=clean_response)
         
     except Exception as e:
         # Clean up if needed
-        if os.path.exists(temp_file_path):
+        if temp_file_path and os.path.exists(temp_file_path):
             os.remove(temp_file_path)
         
         raise HTTPException(
@@ -181,6 +260,7 @@ async def preview_transformation(
     """
     Preview how transformations would affect the data
     """
+    temp_file_path = None
     try:
         # Parse transformations
         transform_config = json.loads(transformations)
@@ -223,27 +303,44 @@ async def preview_transformation(
                         # If there's an error, just continue
                         pass
         
-        # Prepare preview data (first 5 rows)
+        # Clean both DataFrames before creating preview
+        df_clean = df.replace([np.inf, -np.inf], np.nan)
+        transformed_df_clean = transformed_df.replace([np.inf, -np.inf], np.nan)
+        
+        # Prepare preview data (first 5 rows) - clean for JSON
+        original_records = df_clean.head(5).to_dict('records')
+        transformed_records = transformed_df_clean.head(5).to_dict('records')
+        
+        # Clean the records
+        clean_original = clean_for_json(original_records)
+        clean_transformed = clean_for_json(transformed_records)
+        
         preview_data = {
-            "original": df.head(5).to_dict('records'),
-            "transformed": transformed_df.head(5).to_dict('records'),
+            "original": clean_original,
+            "transformed": clean_transformed,
             "columns": {
-                "original": df.columns.tolist(),
-                "transformed": transformed_df.columns.tolist()
+                "original": list(df.columns),
+                "transformed": list(transformed_df.columns)
             }
         }
         
         # Clean up temporary file
-        os.remove(temp_file_path)
+        if temp_file_path and os.path.exists(temp_file_path):
+            os.remove(temp_file_path)
         
-        return {
+        response_data = {
             "success": True,
             "preview": preview_data
         }
         
+        # Clean the entire response for JSON serialization
+        clean_response = clean_for_json(response_data)
+        
+        return JSONResponse(content=clean_response)
+        
     except Exception as e:
         # Clean up if needed
-        if os.path.exists(temp_file_path):
+        if temp_file_path and os.path.exists(temp_file_path):
             os.remove(temp_file_path)
         
         raise HTTPException(
