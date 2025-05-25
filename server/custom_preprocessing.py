@@ -252,98 +252,82 @@ async def apply_transformations(
             detail=f"Error applying transformations: {str(e)}"
         )
 
-@router.post("/preview-transformation/")
-async def preview_transformation(
+@router.post("/preview-transformations/")
+async def preview_transformations(
     file: UploadFile = File(...),
     transformations: str = Form(...)
 ):
-    """
-    Preview how transformations would affect the data
-    """
-    temp_file_path = None
+    """Preview transformations before applying them"""
     try:
-        # Parse transformations
+        # Parse the transformations
         transform_config = json.loads(transformations)
         
-        # Save the file temporarily
-        file_content = await file.read()
-        temp_file_path = f"temp_{uuid.uuid4()}.csv"
+        # Generate a unique filename
+        unique_id = str(uuid.uuid4())[:8]
+        original_filename = file.filename
+        safe_filename = f"{unique_id}_{original_filename}"
         
+        # Save the uploaded file temporarily
+        temp_file_path = Path(f"temp_{safe_filename}")
         with open(temp_file_path, "wb") as f:
-            f.write(file_content)
+            content = await file.read()
+            f.write(content)
         
-        # Read the file with pandas
-        df = pd.read_csv(temp_file_path)
+        # Read the file
+        if original_filename.lower().endswith('.csv'):
+            df = pd.read_csv(temp_file_path)
+        elif original_filename.lower().endswith('.xlsx'):
+            df = pd.read_excel(temp_file_path)
+        else:
+            raise HTTPException(status_code=400, detail="File format not supported")
         
-        # Create a copy for transformations
-        transformed_df = df.copy()
+        # Remove the temporary file
+        os.remove(temp_file_path)
         
-        # Drop columns if specified
-        if "columns_to_drop" in transform_config:
-            columns_to_drop = transform_config["columns_to_drop"]
-            if columns_to_drop:
-                valid_columns_to_drop = [col for col in columns_to_drop if col in transformed_df.columns]
-                if valid_columns_to_drop:
-                    transformed_df = transformed_df.drop(columns=valid_columns_to_drop)
+        # Apply transformations to get preview
+        transformed_df, applied_transforms = apply_transformations(df.copy(), transform_config)
         
-        # Apply data type transformations
-        if "data_types" in transform_config:
-            for column, new_type in transform_config["data_types"].items():
-                if column in transformed_df.columns:
-                    try:
-                        if new_type == "int":
-                            transformed_df[column] = pd.to_numeric(transformed_df[column], errors='coerce', downcast='integer')
-                        elif new_type == "float":
-                            transformed_df[column] = pd.to_numeric(transformed_df[column], errors='coerce', downcast='float')
-                        elif new_type == "datetime":
-                            transformed_df[column] = pd.to_datetime(transformed_df[column], errors='coerce')
-                        else:  # string
-                            transformed_df[column] = transformed_df[column].astype(str)
-                    except Exception as e:
-                        # If there's an error, just continue
-                        pass
+        # Get first 5 rows for preview
+        original_preview = df.head(5).to_dict('records')
+        transformed_preview = transformed_df.head(5).to_dict('records')
         
-        # Clean both DataFrames before creating preview
-        df_clean = df.replace([np.inf, -np.inf], np.nan)
-        transformed_df_clean = transformed_df.replace([np.inf, -np.inf], np.nan)
+        # Clean the data for JSON serialization
+        def clean_for_json(obj):
+            if isinstance(obj, (np.integer, np.int64)):
+                return int(obj)
+            elif isinstance(obj, (np.floating, np.float64)):
+                if pd.isna(obj):
+                    return None
+                return float(obj)
+            elif pd.isna(obj):
+                return None
+            else:
+                return obj
         
-        # Prepare preview data (first 5 rows) - clean for JSON
-        original_records = df_clean.head(5).to_dict('records')
-        transformed_records = transformed_df_clean.head(5).to_dict('records')
+        # Clean the preview data
+        original_clean = []
+        for row in original_preview:
+            clean_row = {k: clean_for_json(v) for k, v in row.items()}
+            original_clean.append(clean_row)
+            
+        transformed_clean = []
+        for row in transformed_preview:
+            clean_row = {k: clean_for_json(v) for k, v in row.items()}
+            transformed_clean.append(clean_row)
         
-        # Clean the records
-        clean_original = clean_for_json(original_records)
-        clean_transformed = clean_for_json(transformed_records)
-        
-        preview_data = {
-            "original": clean_original,
-            "transformed": clean_transformed,
+        return {
+            "success": True,
+            "original": original_clean,
+            "transformed": transformed_clean,
             "columns": {
                 "original": list(df.columns),
                 "transformed": list(transformed_df.columns)
-            }
+            },
+            "transformations_applied": applied_transforms
         }
-        
-        # Clean up temporary file
-        if temp_file_path and os.path.exists(temp_file_path):
-            os.remove(temp_file_path)
-        
-        response_data = {
-            "success": True,
-            "preview": preview_data
-        }
-        
-        # Clean the entire response for JSON serialization
-        clean_response = clean_for_json(response_data)
-        
-        return JSONResponse(content=clean_response)
-        
+    
     except Exception as e:
-        # Clean up if needed
-        if temp_file_path and os.path.exists(temp_file_path):
-            os.remove(temp_file_path)
-        
-        raise HTTPException(
+        return JSONResponse(
             status_code=500,
-            detail=f"Error previewing transformations: {str(e)}"
+            content={"success": False, "error": str(e)}
         )

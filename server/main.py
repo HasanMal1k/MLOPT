@@ -714,6 +714,43 @@ async def health_check_files():
             "timestamp": time.time()
         }))
 
+try:
+    from pathlib import Path
+    transformed_folder = Path("transformed_files")
+    transformed_folder.mkdir(exist_ok=True)
+    app.mount("/static/transformed_files", StaticFiles(directory=str(transformed_folder)), name="transformed_files")
+    logger.info(f"Mounted transformed files from {transformed_folder}")
+except Exception as e:
+    logger.warning(f"Could not mount transformed files: {e}")
+
+# Also add this endpoint to serve transformed files directly
+@app.get("/transformed-files/{filename}")
+async def serve_transformed_file(filename: str):
+    """
+    Serve transformed files directly
+    """
+    try:
+        from pathlib import Path
+        transformed_folder = Path("transformed_files")
+        file_path = transformed_folder / filename
+        
+        if not file_path.exists() or not file_path.is_file():
+            raise HTTPException(status_code=404, detail=f"Transformed file {filename} not found")
+        
+        return FileResponse(
+            path=str(file_path),
+            filename=filename,
+            media_type='text/csv',
+            headers={
+                "Content-Disposition": f"attachment; filename={filename}",
+                "Access-Control-Allow-Origin": "*"
+            }
+        )
+        
+    except Exception as e:
+        logger.error(f"Error serving transformed file {filename}: {e}")
+        raise HTTPException(status_code=500, detail=f"Error serving file: {str(e)}")
+
 
 if __name__ == "__main__":
     import uvicorn
