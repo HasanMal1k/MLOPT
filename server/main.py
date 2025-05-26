@@ -593,44 +593,52 @@ except Exception as e:
 @app.post("/generate_report/", response_class=HTMLResponse)
 async def generate_report(file: UploadFile = File(...)):
     """
-    Generate an Exploratory Data Analysis (EDA) report for a file - now with encoding detection
+    Generate an Exploratory Data Analysis (EDA) report for a file - with robust encoding handling
     """
     # Check file extension
     file_extension = file.filename.lower().split('.')[-1]
     if file_extension not in ['csv', 'xlsx', 'xls']:
         raise HTTPException(status_code=400, detail="Only CSV or Excel files are accepted")
 
-    temp_path = None
     try:
         # Read the file content
         contents = await file.read()
         
         # Log file details for debugging
-        logger.info(f"Received file: {file.filename}, size: {len(contents)} bytes")
+        logger.info(f"EDA Report - Received file: {file.filename}, size: {len(contents)} bytes")
         
-        # Handle different file types
-        if file_extension == 'csv':
-            # Use encoding detection for CSV files
-            try:
-                df = read_csv_with_encoding_detection(contents)
-                logger.info(f"Successfully read CSV: {len(df)} rows, {len(df.columns)} columns")
-                
-            except Exception as e:
-                logger.error(f"Failed to read CSV with encoding detection: {e}")
-                raise Exception(f"Could not read CSV file: {e}")
-        
-        else:
-            # Handle Excel files (create temporary file as before)
-            with tempfile.NamedTemporaryFile(delete=False, suffix=f".{file_extension}") as tmp:
-                tmp.write(contents)
-                temp_path = tmp.name
+        # Use the robust file reading system instead of the old method
+        try:
+            # Use your existing robust file reading infrastructure
+            df, success, read_message = read_any_file_universal(contents, file.filename, MISSING_VALUES)
             
-            try:
-                df = pd.read_excel(temp_path)
-                logger.info(f"Successfully read Excel: {len(df)} rows, {len(df.columns)} columns")
-            except Exception as e:
-                logger.error(f"Failed to read Excel file: {e}")
-                raise Exception(f"Could not read Excel file: {e}")
+            if not success or df.empty:
+                logger.error(f"Failed to read file with universal handler: {read_message}")
+                
+                # If universal handler fails and it's a CSV, try the robust CSV reader
+                if file_extension == 'csv':
+                    logger.info("Trying robust CSV reader for EDA...")
+                    try:
+                        df = read_csv_with_robust_handling(contents)
+                        logger.info(f"Robust CSV reader succeeded: {len(df)} rows, {len(df.columns)} columns")
+                    except Exception as csv_error:
+                        logger.error(f"Robust CSV reader also failed: {csv_error}")
+                        raise Exception(f"Could not read CSV file: {csv_error}")
+                else:
+                    raise Exception(f"Could not read file: {read_message}")
+            else:
+                logger.info(f"Successfully read file for EDA: {len(df)} rows, {len(df.columns)} columns - {read_message}")
+                
+        except Exception as read_error:
+            logger.error(f"All file reading methods failed for EDA: {read_error}")
+            raise Exception(f"Could not read file: {read_error}")
+        
+        # Validate dataframe
+        if df.empty:
+            raise Exception("File appears to be empty after reading")
+        
+        if len(df.columns) == 0:
+            raise Exception("No columns found in the file")
         
         # Limit the rows to prevent very large reports
         original_rows = len(df)
@@ -641,65 +649,126 @@ async def generate_report(file: UploadFile = File(...)):
         # Generate the report
         html_report = generate_eda_report(df)
         
-        # Add info about sampling and encoding if applicable
+        # Add info about sampling if applicable
         if original_rows > 10000:
             sampling_note = f"<p><strong>Note:</strong> This report is based on a random sample of 10,000 rows from the original {original_rows:,} rows.</p>"
             # Insert the note after the opening body tag
             html_report = html_report.replace('<body>', f'<body>{sampling_note}')
         
+        logger.info(f"EDA report generated successfully for {file.filename}")
+        
     except Exception as e:
         # If there's an error in processing, return a detailed error report
         logger.error(f"Error processing file for EDA report: {e}")
+        
+        # Create detailed error report with encoding information
+        error_details = []
+        
+        # Try to get some file information even if reading failed
+        try:
+            # Try to detect encoding
+            import chardet
+            detected = chardet.detect(contents[:5000])  # Check first 5KB
+            error_details.append(f"Detected encoding: {detected}")
+        except:
+            error_details.append("Could not detect file encoding")
+        
+        try:
+            error_details.append(f"File size: {len(contents):,} bytes")
+            error_details.append(f"File type: {file_extension.upper()}")
+            
+            # Try to read first few bytes as different encodings for diagnosis
+            encodings_to_try = ['utf-8', 'cp1252', 'latin1', 'ascii']
+            for enc in encodings_to_try:
+                try:
+                    preview = contents[:200].decode(enc)
+                    error_details.append(f"First 200 chars as {enc}: {repr(preview)}")
+                    break
+                except:
+                    continue
+                    
+        except Exception as detail_error:
+            error_details.append(f"Error getting file details: {detail_error}")
+        
         html_report = f"""
         <!DOCTYPE html>
         <html>
         <head>
-            <title>Error Processing File</title>
+            <title>EDA Report Generation Error</title>
             <style>
-                body {{ font-family: Arial, sans-serif; padding: 20px; }}
-                .error {{ color: red; background-color: #ffeeee; padding: 15px; border-radius: 5px; margin: 10px 0; }}
-                .info {{ color: blue; background-color: #eeeeff; padding: 15px; border-radius: 5px; margin: 10px 0; }}
-                .suggestion {{ color: green; background-color: #eeffee; padding: 15px; border-radius: 5px; margin: 10px 0; }}
+                body {{ font-family: Arial, sans-serif; padding: 20px; line-height: 1.6; }}
+                .error {{ color: #d32f2f; background-color: #ffebee; padding: 15px; border-radius: 5px; margin: 10px 0; border-left: 4px solid #d32f2f; }}
+                .info {{ color: #1976d2; background-color: #e3f2fd; padding: 15px; border-radius: 5px; margin: 10px 0; border-left: 4px solid #1976d2; }}
+                .suggestion {{ color: #388e3c; background-color: #e8f5e8; padding: 15px; border-radius: 5px; margin: 10px 0; border-left: 4px solid #388e3c; }}
+                .code {{ background-color: #f5f5f5; padding: 10px; border-radius: 4px; font-family: monospace; font-size: 12px; overflow-x: auto; }}
+                h1 {{ color: #333; }}
+                h3 {{ color: #666; }}
             </style>
         </head>
         <body>
-            <h1>File Processing Error</h1>
+            <h1>EDA Report Generation Failed</h1>
             <p>There was an error processing the file: <strong>{file.filename}</strong></p>
             
             <div class="error">
                 <h3>Error Details:</h3>
-                <pre>{str(e)}</pre>
+                <div class="code">{str(e)}</div>
             </div>
             
             <div class="info">
                 <h3>File Information:</h3>
                 <ul>
                     <li>Filename: {file.filename}</li>
-                    <li>File size: {len(contents):,} bytes</li>
-                    <li>File type: {file_extension.upper()}</li>
+                    {''.join(f'<li>{detail}</li>' for detail in error_details)}
                 </ul>
             </div>
             
             <div class="suggestion">
-                <h3>Suggestions:</h3>
+                <h3>Solutions to Try:</h3>
+                <ol>
+                    <li><strong>Encoding Issues (Most Common):</strong>
+                        <ul>
+                            <li>If this is a CSV file, try opening it in Excel and saving as "CSV UTF-8 (Comma delimited)"</li>
+                            <li>Or use a text editor like Notepad++ to convert encoding to UTF-8</li>
+                            <li>Make sure there are no special characters or symbols that might cause encoding issues</li>
+                        </ul>
+                    </li>
+                    <li><strong>File Format Issues:</strong>
+                        <ul>
+                            <li>Ensure the file is actually a CSV (comma-separated) or valid Excel file</li>
+                            <li>Check that the file isn't corrupted</li>
+                            <li>Try exporting the data again from your source system</li>
+                        </ul>
+                    </li>
+                    <li><strong>Data Issues:</strong>
+                        <ul>
+                            <li>Remove any completely empty rows or columns</li>
+                            <li>Check for unusual characters in column names</li>
+                            <li>Ensure the file has proper headers</li>
+                        </ul>
+                    </li>
+                    <li><strong>Alternative:</strong>
+                        <ul>
+                            <li>Try converting your file to Excel format (.xlsx) if it's currently CSV</li>
+                            <li>Or try converting Excel to CSV using Excel's "Save As" feature</li>
+                        </ul>
+                    </li>
+                </ol>
+            </div>
+            
+            <div class="info">
+                <h3>Technical Information:</h3>
+                <p>This error typically occurs when the file contains characters that can't be properly decoded. 
+                This is common with files created on different operating systems or with different language settings.</p>
+                <p>The error usually happens because:</p>
                 <ul>
-                    <li>If this is a CSV file, it may have encoding issues. Try saving it as UTF-8 from Excel or your text editor.</li>
-                    <li>Check that the file is not corrupted.</li>
-                    <li>For Excel files, try saving as a newer .xlsx format.</li>
-                    <li>Make sure the file contains valid tabular data.</li>
+                    <li>The file was created with a different character encoding (like Windows-1252 instead of UTF-8)</li>
+                    <li>The file contains special characters or symbols</li>
+                    <li>The file was corrupted during transfer or download</li>
                 </ul>
             </div>
         </body>
         </html>
         """
-    
-    finally:
-        # Clean up the temporary file if it was created
-        if temp_path and os.path.exists(temp_path):
-            try:
-                os.unlink(temp_path)
-            except:
-                pass
 
     # Return the HTML with proper headers
     return HTMLResponse(
@@ -707,10 +776,10 @@ async def generate_report(file: UploadFile = File(...)):
         status_code=200,
         headers={
             "Access-Control-Allow-Origin": "*",
-            "Content-Type": "text/html"
+            "Content-Type": "text/html; charset=utf-8"
         }
     )
-
+    
 @app.post("/batch-process/")
 async def batch_process(
     background_tasks: BackgroundTasks, 
