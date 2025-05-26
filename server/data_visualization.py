@@ -15,6 +15,10 @@ import seaborn as sns
 from typing import List, Optional, Dict, Any
 import logging
 
+# Import the robust file reading functions
+from universal_file_handler import read_any_file_universal
+from robust_csv_reader import read_csv_with_robust_handling
+
 # Configure logging
 logger = logging.getLogger("data_visualization")
 
@@ -44,30 +48,61 @@ def clean_for_json(obj):
     else:
         return obj
 
+def read_file_robustly(file_content: bytes, filename: str) -> pd.DataFrame:
+    """
+    Use the existing robust file reading infrastructure
+    """
+    try:
+        # First try the universal file handler (handles both CSV and Excel)
+        df, success, message = read_any_file_universal(file_content, filename)
+        
+        if success and not df.empty:
+            logger.info(f"Successfully read file with universal handler: {message}")
+            return df
+        else:
+            logger.warning(f"Universal handler failed: {message}")
+            
+        # If universal handler fails and it's a CSV, try the robust CSV reader
+        if filename.lower().endswith('.csv'):
+            logger.info("Trying robust CSV reader as fallback...")
+            df = read_csv_with_robust_handling(file_content)
+            if not df.empty:
+                logger.info("Robust CSV reader succeeded")
+                return df
+            else:
+                logger.warning("Robust CSV reader returned empty dataframe")
+        
+        # If all else fails, raise an error
+        raise ValueError(f"Could not read file {filename} with any method")
+        
+    except Exception as e:
+        logger.error(f"All file reading methods failed for {filename}: {e}")
+        raise Exception(f"Error reading file {filename}: {str(e)}")
+
 @router.post("/analyze-for-charts/")
 async def analyze_file_for_charts(file: UploadFile = File(...)):
     """
     Analyze a file and return column information suitable for chart creation
     """
-    temp_file_path = None
     try:
-        # Save file temporarily
+        # Read file content
         file_content = await file.read()
-        temp_file_path = f"temp_{uuid.uuid4()}.csv"
+        logger.info(f"Received file: {file.filename}, size: {len(file_content)} bytes")
         
-        with open(temp_file_path, "wb") as f:
-            f.write(file_content)
-        
-        # Read the file
+        # Use robust file reading
         try:
-            if file.filename.lower().endswith('.csv'):
-                df = pd.read_csv(temp_file_path)
-            elif file.filename.lower().endswith(('.xlsx', '.xls')):
-                df = pd.read_excel(temp_file_path)
-            else:
-                raise HTTPException(status_code=400, detail="Unsupported file format")
+            df = read_file_robustly(file_content, file.filename)
+            logger.info(f"Successfully read file: {len(df)} rows, {len(df.columns)} columns")
         except Exception as e:
+            logger.error(f"Failed to read file {file.filename}: {e}")
             raise HTTPException(status_code=400, detail=f"Error reading file: {str(e)}")
+        
+        # Validate dataframe
+        if df.empty:
+            raise HTTPException(status_code=400, detail="File appears to be empty")
+        
+        if len(df.columns) == 0:
+            raise HTTPException(status_code=400, detail="No columns found in file")
         
         # Analyze columns for chart suitability
         column_analysis = {}
@@ -76,82 +111,121 @@ async def analyze_file_for_charts(file: UploadFile = File(...)):
         datetime_columns = []
         
         for col in df.columns:
-            col_info = {
-                "name": col,
-                "dtype": str(df[col].dtype),
-                "unique_count": int(df[col].nunique()),
-                "null_count": int(df[col].isnull().sum()),
-                "sample_values": df[col].dropna().head(5).astype(str).tolist()
-            }
-            
-            # Categorize columns
-            if pd.api.types.is_numeric_dtype(df[col]):
-                col_info["category"] = "numeric"
-                numeric_columns.append(col)
-                col_info["min"] = clean_for_json(df[col].min())
-                col_info["max"] = clean_for_json(df[col].max())
-                col_info["mean"] = clean_for_json(df[col].mean())
-            elif pd.api.types.is_datetime64_any_dtype(df[col]):
-                col_info["category"] = "datetime"
-                datetime_columns.append(col)
-            else:
-                col_info["category"] = "categorical"
-                categorical_columns.append(col)
-                # For categorical, check if it's suitable for grouping
-                if df[col].nunique() <= 20:  # Reasonable number for grouping
-                    col_info["suitable_for_grouping"] = True
+            try:
+                col_info = {
+                    "name": col,
+                    "dtype": str(df[col].dtype),
+                    "unique_count": int(df[col].nunique()),
+                    "null_count": int(df[col].isnull().sum()),
+                    "sample_values": []
+                }
+                
+                # Get sample values safely
+                try:
+                    sample_vals = df[col].dropna().head(5)
+                    col_info["sample_values"] = [str(val) for val in sample_vals if not pd.isna(val)]
+                except Exception as sample_error:
+                    logger.warning(f"Error getting sample values for {col}: {sample_error}")
+                    col_info["sample_values"] = []
+                
+                # Categorize columns
+                if pd.api.types.is_numeric_dtype(df[col]):
+                    col_info["category"] = "numeric"
+                    numeric_columns.append(col)
+                    try:
+                        col_info["min"] = clean_for_json(df[col].min())
+                        col_info["max"] = clean_for_json(df[col].max())
+                        col_info["mean"] = clean_for_json(df[col].mean())
+                    except Exception as stats_error:
+                        logger.warning(f"Error calculating stats for {col}: {stats_error}")
+                        
+                elif pd.api.types.is_datetime64_any_dtype(df[col]):
+                    col_info["category"] = "datetime"
+                    datetime_columns.append(col)
                 else:
-                    col_info["suitable_for_grouping"] = False
-            
-            column_analysis[col] = col_info
+                    col_info["category"] = "categorical"
+                    categorical_columns.append(col)
+                    # For categorical, check if it's suitable for grouping
+                    try:
+                        unique_count = df[col].nunique()
+                        col_info["suitable_for_grouping"] = unique_count <= 20
+                    except:
+                        col_info["suitable_for_grouping"] = False
+                
+                column_analysis[col] = col_info
+                
+            except Exception as col_error:
+                logger.warning(f"Error analyzing column {col}: {col_error}")
+                # Add basic info even if analysis fails
+                column_analysis[col] = {
+                    "name": col,
+                    "dtype": str(df[col].dtype),
+                    "category": "unknown",
+                    "unique_count": 0,
+                    "null_count": int(df[col].isnull().sum()),
+                    "sample_values": []
+                }
+        
+        logger.info(f"Column analysis complete: {len(numeric_columns)} numeric, {len(categorical_columns)} categorical, {len(datetime_columns)} datetime")
         
         # Suggest chart types based on data
         chart_suggestions = []
         
-        # Bar charts - categorical x numeric
-        if categorical_columns and numeric_columns:
-            for cat_col in categorical_columns[:3]:  # Limit suggestions
-                if df[cat_col].nunique() <= 15:  # Not too many categories
+        try:
+            # Bar charts - categorical x numeric
+            if categorical_columns and numeric_columns:
+                for cat_col in categorical_columns[:3]:  # Limit suggestions
+                    try:
+                        if df[cat_col].nunique() <= 15:  # Not too many categories
+                            for num_col in numeric_columns[:3]:
+                                chart_suggestions.append({
+                                    "type": "bar",
+                                    "x_axis": cat_col,
+                                    "y_axis": num_col,
+                                    "description": f"Bar chart showing {num_col} by {cat_col}"
+                                })
+                    except Exception as e:
+                        logger.warning(f"Error creating bar chart suggestion for {cat_col}: {e}")
+            
+            # Scatter plots - numeric x numeric
+            if len(numeric_columns) >= 2:
+                for i, x_col in enumerate(numeric_columns[:3]):
+                    for y_col in numeric_columns[i+1:4]:
+                        chart_suggestions.append({
+                            "type": "scatter",
+                            "x_axis": x_col,
+                            "y_axis": y_col,
+                            "description": f"Scatter plot of {y_col} vs {x_col}"
+                        })
+            
+            # Line charts - especially good for time series
+            if datetime_columns and numeric_columns:
+                for date_col in datetime_columns[:2]:
                     for num_col in numeric_columns[:3]:
                         chart_suggestions.append({
-                            "type": "bar",
-                            "x_axis": cat_col,
+                            "type": "line",
+                            "x_axis": date_col,
                             "y_axis": num_col,
-                            "description": f"Bar chart showing {num_col} by {cat_col}"
+                            "description": f"Time series line chart of {num_col} over {date_col}"
                         })
+            
+            # Pie charts - categorical with aggregation
+            for cat_col in categorical_columns[:3]:
+                try:
+                    unique_count = df[cat_col].nunique()
+                    if 2 <= unique_count <= 10:  # Good range for pie chart
+                        if numeric_columns:
+                            chart_suggestions.append({
+                                "type": "pie",
+                                "category": cat_col,
+                                "value": numeric_columns[0],
+                                "description": f"Pie chart showing distribution of {numeric_columns[0]} by {cat_col}"
+                            })
+                except Exception as e:
+                    logger.warning(f"Error creating pie chart suggestion for {cat_col}: {e}")
         
-        # Scatter plots - numeric x numeric
-        if len(numeric_columns) >= 2:
-            for i, x_col in enumerate(numeric_columns[:3]):
-                for y_col in numeric_columns[i+1:4]:
-                    chart_suggestions.append({
-                        "type": "scatter",
-                        "x_axis": x_col,
-                        "y_axis": y_col,
-                        "description": f"Scatter plot of {y_col} vs {x_col}"
-                    })
-        
-        # Line charts - especially good for time series
-        if datetime_columns and numeric_columns:
-            for date_col in datetime_columns[:2]:
-                for num_col in numeric_columns[:3]:
-                    chart_suggestions.append({
-                        "type": "line",
-                        "x_axis": date_col,
-                        "y_axis": num_col,
-                        "description": f"Time series line chart of {num_col} over {date_col}"
-                    })
-        
-        # Pie charts - categorical with aggregation
-        for cat_col in categorical_columns[:3]:
-            if 2 <= df[cat_col].nunique() <= 10:  # Good range for pie chart
-                if numeric_columns:
-                    chart_suggestions.append({
-                        "type": "pie",
-                        "category": cat_col,
-                        "value": numeric_columns[0],
-                        "description": f"Pie chart showing distribution of {numeric_columns[0]} by {cat_col}"
-                    })
+        except Exception as e:
+            logger.warning(f"Error generating chart suggestions: {e}")
         
         response_data = {
             "success": True,
@@ -166,14 +240,14 @@ async def analyze_file_for_charts(file: UploadFile = File(...)):
             "chart_suggestions": chart_suggestions[:10]  # Limit to top 10 suggestions
         }
         
+        logger.info(f"Analysis complete, returning {len(chart_suggestions)} chart suggestions")
         return JSONResponse(content=response_data)
         
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error(f"Error analyzing file for charts: {e}")
+        logger.error(f"Unexpected error analyzing file for charts: {e}")
         raise HTTPException(status_code=500, detail=f"Error analyzing file: {str(e)}")
-    finally:
-        if temp_file_path and os.path.exists(temp_file_path):
-            os.remove(temp_file_path)
 
 @router.post("/generate-chart-data/")
 async def generate_chart_data(
@@ -184,84 +258,149 @@ async def generate_chart_data(
     Generate data for frontend chart libraries (Chart.js, Recharts, etc.)
     This is the recommended approach for Next.js frontend
     """
-    temp_file_path = None
     try:
         # Parse chart configuration
-        config = json.loads(chart_config)
+        try:
+            config = json.loads(chart_config)
+        except json.JSONDecodeError as e:
+            raise HTTPException(status_code=400, detail=f"Invalid chart configuration JSON: {str(e)}")
+        
         chart_type = config.get("type")
         x_axis = config.get("x_axis")
         y_axis = config.get("y_axis")
         
-        # Save and read file
+        logger.info(f"Generating {chart_type} chart with x_axis={x_axis}, y_axis={y_axis}")
+        
+        # Read file content
         file_content = await file.read()
-        temp_file_path = f"temp_{uuid.uuid4()}.csv"
+        logger.info(f"Received file: {file.filename}, size: {len(file_content)} bytes")
         
-        with open(temp_file_path, "wb") as f:
-            f.write(file_content)
+        # Use robust file reading
+        try:
+            df = read_file_robustly(file_content, file.filename)
+            logger.info(f"Successfully read file: {len(df)} rows, {len(df.columns)} columns")
+        except Exception as e:
+            logger.error(f"Failed to read file {file.filename}: {e}")
+            raise HTTPException(status_code=400, detail=f"Error reading file: {str(e)}")
         
-        if file.filename.lower().endswith('.csv'):
-            df = pd.read_csv(temp_file_path)
-        elif file.filename.lower().endswith(('.xlsx', '.xls')):
-            df = pd.read_excel(temp_file_path)
-        else:
-            raise HTTPException(status_code=400, detail="Unsupported file format")
+        # Validate dataframe
+        if df.empty:
+            raise HTTPException(status_code=400, detail="File appears to be empty")
         
         # Generate chart data based on type
         chart_data = {}
         
-        if chart_type == "bar":
-            if x_axis in df.columns and y_axis in df.columns:
-                # Group by x_axis and aggregate y_axis
-                grouped = df.groupby(x_axis)[y_axis].mean().reset_index()
-                chart_data = {
-                    "labels": grouped[x_axis].astype(str).tolist(),
-                    "data": clean_for_json(grouped[y_axis].tolist()),
-                    "type": "bar"
-                }
+        try:
+            if chart_type == "bar":
+                if x_axis in df.columns and y_axis in df.columns:
+                    # Group by x_axis and aggregate y_axis
+                    try:
+                        grouped = df.groupby(x_axis)[y_axis].mean().reset_index()
+                        chart_data = {
+                            "labels": [str(x) for x in grouped[x_axis].tolist()],
+                            "data": clean_for_json(grouped[y_axis].tolist()),
+                            "type": "bar"
+                        }
+                        logger.info(f"Generated bar chart data with {len(chart_data['labels'])} points")
+                    except Exception as e:
+                        raise HTTPException(status_code=400, detail=f"Error creating bar chart: {str(e)}")
+                else:
+                    raise HTTPException(status_code=400, detail=f"Required columns not found: {x_axis}, {y_axis}")
+            
+            elif chart_type == "scatter":
+                if x_axis in df.columns and y_axis in df.columns:
+                    try:
+                        # Remove null values and limit data points for performance
+                        clean_df = df[[x_axis, y_axis]].dropna()
+                        if len(clean_df) > 1000:  # Limit to 1000 points for performance
+                            clean_df = clean_df.sample(1000)
+                        
+                        chart_data = {
+                            "data": [
+                                {"x": clean_for_json(row[x_axis]), "y": clean_for_json(row[y_axis])}
+                                for _, row in clean_df.iterrows()
+                                if not (pd.isna(row[x_axis]) or pd.isna(row[y_axis]))
+                            ],
+                            "type": "scatter"
+                        }
+                        logger.info(f"Generated scatter plot data with {len(chart_data['data'])} points")
+                    except Exception as e:
+                        raise HTTPException(status_code=400, detail=f"Error creating scatter plot: {str(e)}")
+                else:
+                    raise HTTPException(status_code=400, detail=f"Required columns not found: {x_axis}, {y_axis}")
+            
+            elif chart_type == "line":
+                if x_axis in df.columns and y_axis in df.columns:
+                    try:
+                        # Sort by x_axis for proper line chart
+                        sorted_df = df[[x_axis, y_axis]].dropna().sort_values(x_axis)
+                        if len(sorted_df) > 1000:  # Limit for performance
+                            sorted_df = sorted_df.iloc[::len(sorted_df)//1000]  # Sample evenly
+                        
+                        chart_data = {
+                            "labels": [str(x) for x in sorted_df[x_axis].tolist()],
+                            "data": clean_for_json(sorted_df[y_axis].tolist()),
+                            "type": "line"
+                        }
+                        logger.info(f"Generated line chart data with {len(chart_data['labels'])} points")
+                    except Exception as e:
+                        raise HTTPException(status_code=400, detail=f"Error creating line chart: {str(e)}")
+                else:
+                    raise HTTPException(status_code=400, detail=f"Required columns not found: {x_axis}, {y_axis}")
+            
+            elif chart_type == "pie":
+                category_col = config.get("category")
+                value_col = config.get("value")
+                if category_col in df.columns and value_col in df.columns:
+                    try:
+                        # Group by category and sum values
+                        grouped = df.groupby(category_col)[value_col].sum().reset_index()
+                        # Limit to top 10 categories for readability
+                        if len(grouped) > 10:
+                            grouped = grouped.nlargest(10, value_col)
+                        
+                        chart_data = {
+                            "labels": [str(x) for x in grouped[category_col].tolist()],
+                            "data": clean_for_json(grouped[value_col].tolist()),
+                            "type": "pie"
+                        }
+                        logger.info(f"Generated pie chart data with {len(chart_data['labels'])} categories")
+                    except Exception as e:
+                        raise HTTPException(status_code=400, detail=f"Error creating pie chart: {str(e)}")
+                else:
+                    raise HTTPException(status_code=400, detail=f"Required columns not found: {category_col}, {value_col}")
+            
+            elif chart_type == "histogram":
+                if x_axis in df.columns:
+                    try:
+                        # Create histogram bins
+                        clean_series = df[x_axis].dropna()
+                        if len(clean_series) == 0:
+                            raise HTTPException(status_code=400, detail=f"No data available for histogram in column {x_axis}")
+                        
+                        hist, bins = np.histogram(clean_series, bins=20)
+                        chart_data = {
+                            "labels": [f"{bins[i]:.2f}-{bins[i+1]:.2f}" for i in range(len(bins)-1)],
+                            "data": clean_for_json(hist.tolist()),
+                            "type": "bar"  # Histogram is rendered as bar chart
+                        }
+                        logger.info(f"Generated histogram data with {len(chart_data['labels'])} bins")
+                    except Exception as e:
+                        raise HTTPException(status_code=400, detail=f"Error creating histogram: {str(e)}")
+                else:
+                    raise HTTPException(status_code=400, detail=f"Required column not found: {x_axis}")
+            
+            else:
+                raise HTTPException(status_code=400, detail=f"Unsupported chart type: {chart_type}")
         
-        elif chart_type == "scatter":
-            if x_axis in df.columns and y_axis in df.columns:
-                # Remove null values
-                clean_df = df[[x_axis, y_axis]].dropna()
-                chart_data = {
-                    "data": [
-                        {"x": clean_for_json(row[x_axis]), "y": clean_for_json(row[y_axis])}
-                        for _, row in clean_df.iterrows()
-                    ],
-                    "type": "scatter"
-                }
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.error(f"Error generating chart data: {e}")
+            raise HTTPException(status_code=500, detail=f"Error generating chart data: {str(e)}")
         
-        elif chart_type == "line":
-            if x_axis in df.columns and y_axis in df.columns:
-                # Sort by x_axis for proper line chart
-                sorted_df = df[[x_axis, y_axis]].dropna().sort_values(x_axis)
-                chart_data = {
-                    "labels": sorted_df[x_axis].astype(str).tolist(),
-                    "data": clean_for_json(sorted_df[y_axis].tolist()),
-                    "type": "line"
-                }
-        
-        elif chart_type == "pie":
-            category_col = config.get("category")
-            value_col = config.get("value")
-            if category_col in df.columns and value_col in df.columns:
-                # Group by category and sum values
-                grouped = df.groupby(category_col)[value_col].sum().reset_index()
-                chart_data = {
-                    "labels": grouped[category_col].astype(str).tolist(),
-                    "data": clean_for_json(grouped[value_col].tolist()),
-                    "type": "pie"
-                }
-        
-        elif chart_type == "histogram":
-            if x_axis in df.columns:
-                # Create histogram bins
-                hist, bins = np.histogram(df[x_axis].dropna(), bins=20)
-                chart_data = {
-                    "labels": [f"{bins[i]:.2f}-{bins[i+1]:.2f}" for i in range(len(bins)-1)],
-                    "data": clean_for_json(hist.tolist()),
-                    "type": "bar"  # Histogram is rendered as bar chart
-                }
+        if not chart_data:
+            raise HTTPException(status_code=400, detail="No chart data generated")
         
         response_data = {
             "success": True,
@@ -270,14 +409,14 @@ async def generate_chart_data(
             "data_points": len(chart_data.get("data", [])) if isinstance(chart_data.get("data"), list) else len(chart_data.get("labels", []))
         }
         
+        logger.info(f"Chart data generation complete, returning {response_data['data_points']} data points")
         return JSONResponse(content=response_data)
         
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error(f"Error generating chart data: {e}")
+        logger.error(f"Unexpected error generating chart data: {e}")
         raise HTTPException(status_code=500, detail=f"Error generating chart data: {str(e)}")
-    finally:
-        if temp_file_path and os.path.exists(temp_file_path):
-            os.remove(temp_file_path)
 
 @router.post("/generate-chart-image/")
 async def generate_chart_image(
@@ -287,28 +426,26 @@ async def generate_chart_image(
     """
     Generate chart as base64 image (alternative approach for simple use cases)
     """
-    temp_file_path = None
     try:
         # Parse chart configuration
-        config = json.loads(chart_config)
+        try:
+            config = json.loads(chart_config)
+        except json.JSONDecodeError as e:
+            raise HTTPException(status_code=400, detail=f"Invalid chart configuration JSON: {str(e)}")
+        
         chart_type = config.get("type")
         x_axis = config.get("x_axis")
         y_axis = config.get("y_axis")
         title = config.get("title", f"{chart_type.title()} Chart")
         
-        # Save and read file
+        # Read file content
         file_content = await file.read()
-        temp_file_path = f"temp_{uuid.uuid4()}.csv"
         
-        with open(temp_file_path, "wb") as f:
-            f.write(file_content)
-        
-        if file.filename.lower().endswith('.csv'):
-            df = pd.read_csv(temp_file_path)
-        elif file.filename.lower().endswith(('.xlsx', '.xls')):
-            df = pd.read_excel(temp_file_path)
-        else:
-            raise HTTPException(status_code=400, detail="Unsupported file format")
+        # Use robust file reading
+        try:
+            df = read_file_robustly(file_content, file.filename)
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Error reading file: {str(e)}")
         
         # Create matplotlib figure
         plt.style.use('default')
@@ -324,13 +461,14 @@ async def generate_chart_image(
             
             elif chart_type == "scatter":
                 if x_axis in df.columns and y_axis in df.columns:
-                    ax.scatter(df[x_axis], df[y_axis], alpha=0.6)
+                    clean_df = df[[x_axis, y_axis]].dropna()
+                    ax.scatter(clean_df[x_axis], clean_df[y_axis], alpha=0.6)
                     ax.set_xlabel(x_axis)
                     ax.set_ylabel(y_axis)
             
             elif chart_type == "line":
                 if x_axis in df.columns and y_axis in df.columns:
-                    df_sorted = df.sort_values(x_axis)
+                    df_sorted = df[[x_axis, y_axis]].dropna().sort_values(x_axis)
                     ax.plot(df_sorted[x_axis], df_sorted[y_axis])
                     ax.set_xlabel(x_axis)
                     ax.set_ylabel(y_axis)
@@ -360,14 +498,13 @@ async def generate_chart_image(
             
         except Exception as plot_error:
             plt.close(fig)
-            raise plot_error
+            raise HTTPException(status_code=400, detail=f"Error creating chart image: {str(plot_error)}")
             
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error generating chart image: {e}")
         raise HTTPException(status_code=500, detail=f"Error generating chart: {str(e)}")
-    finally:
-        if temp_file_path and os.path.exists(temp_file_path):
-            os.remove(temp_file_path)
 
 @router.post("/get-column-stats/")
 async def get_column_statistics(
@@ -377,21 +514,15 @@ async def get_column_statistics(
     """
     Get detailed statistics for a specific column to help with chart configuration
     """
-    temp_file_path = None
     try:
-        # Save and read file
+        # Read file content
         file_content = await file.read()
-        temp_file_path = f"temp_{uuid.uuid4()}.csv"
         
-        with open(temp_file_path, "wb") as f:
-            f.write(file_content)
-        
-        if file.filename.lower().endswith('.csv'):
-            df = pd.read_csv(temp_file_path)
-        elif file.filename.lower().endswith(('.xlsx', '.xls')):
-            df = pd.read_excel(temp_file_path)
-        else:
-            raise HTTPException(status_code=400, detail="Unsupported file format")
+        # Use robust file reading
+        try:
+            df = read_file_robustly(file_content, file.filename)
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Error reading file: {str(e)}")
         
         if column_name not in df.columns:
             raise HTTPException(status_code=400, detail=f"Column '{column_name}' not found")
@@ -420,24 +551,27 @@ async def get_column_statistics(
             })
         else:
             # For categorical data
-            value_counts = col_data.value_counts().head(10)
-            stats.update({
-                "most_common": {
-                    str(k): int(v) for k, v in value_counts.items()
-                }
-            })
+            try:
+                value_counts = col_data.value_counts().head(10)
+                stats.update({
+                    "most_common": {
+                        str(k): int(v) for k, v in value_counts.items()
+                    }
+                })
+            except Exception as e:
+                logger.warning(f"Error getting value counts for {column_name}: {e}")
+                stats["most_common"] = {}
         
         return JSONResponse(content={
             "success": True,
             "statistics": stats
         })
         
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error getting column statistics: {e}")
         raise HTTPException(status_code=500, detail=f"Error getting statistics: {str(e)}")
-    finally:
-        if temp_file_path and os.path.exists(temp_file_path):
-            os.remove(temp_file_path)
 
 @router.get("/chart-types/")
 async def get_available_chart_types():
@@ -481,3 +615,13 @@ async def get_available_chart_types():
         "success": True,
         "chart_types": chart_types
     })
+
+# Add a test endpoint for CORS verification (as mentioned in the debugging utilities)
+@router.get("/test-cors")
+async def test_cors():
+    """Test endpoint to verify CORS is working"""
+    return {
+        "status": "success",
+        "message": "CORS is working correctly",
+        "timestamp": pd.Timestamp.now().isoformat()
+    }
