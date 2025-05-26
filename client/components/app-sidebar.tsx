@@ -96,11 +96,7 @@ const navigation = [
 
 
 const accountItems = [
-  {
-    title: 'Profile',
-    url: '/dashboard/profile',
-    icon: User
-  },
+  
   {
     title: 'Account Settings',
     url: '/dashboard/account',
@@ -111,11 +107,6 @@ const accountItems = [
     url: '/dashboard/billing',
     icon: RefreshCw
   },
-  {
-    title: 'Help & Support',
-    url: '/dashboard/help',
-    icon: HelpCircle
-  }
 ]
 
 // Theme Toggle Component
