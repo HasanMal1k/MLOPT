@@ -1,29 +1,45 @@
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
+import { ArrowRight } from "lucide-react"
+import Image from "next/image"
+
 export default function Home() {
   return (
-    <section className="h-screen min-w-screen flex items-center justify-center gap-5">
-      {/* Title Veghera */}
-      <div className="h-full w-1/2 flex flex-col gap-5 items-start justify-center px-20 mb-40">
-         <h1 className="text-6xl font-bold">Welcome To MLOpt</h1>
-         <p className="text-lg font-normal tracking-wide">Reducing your machine learning workflow to clicks</p>
-          <Button><Link href={'/dashboard'}> Continue To Dashboard</Link></Button>
-      </div>
+    <div className="min-h-screen bg-black text-white">
+      <section className="h-screen flex items-center justify-center">
+        <div className="w-full max-w-7xl mx-auto grid lg:grid-cols-2 gap-8 px-8">
+          {/* Left Content */}
+          <div className="flex flex-col justify-center space-y-8">
+            <div className="space-y-6">
+              <div className="text-sm text-gray-400 font-medium">FYP-I Project 2024</div>
+              <h1 className="text-6xl lg:text-7xl font-bold">Welcome To MLOPT</h1>
+              <p className="text-xl text-gray-300 leading-relaxed">Reducing your machine learning workflow to clicks</p>
+            </div>
 
-      <div className="h-full w-1/2 bg-white">
+            <Button size="lg" className="w-fit bg-white text-black hover:bg-gray-200 text-lg px-8 py-6">
+              <Link href="/dashboard" className="flex items-center gap-2">
+                Continue To Dashboard
+                <ArrowRight className="h-5 w-5" />
+              </Link>
+            </Button>
 
-      </div>
-    </section>
-  );
+            {/* Team Info moved to bottom */}
+            <div className="pt-8 border-t border-gray-800">
+              <div className="text-sm text-gray-500 space-y-1">
+                <p>Team: Hasan Malik (SP22-BDS-026) & Jawad Idrees (SP22-BDS-020)</p>
+                <p>Bachelor of Data Science | Final Year Project - I</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Content - Image */}
+          <div className="flex items-center justify-center">
+            <div className="relative w-full h-full max-h-[600px]">
+              <Image src="/img.jpg" alt="MLOpt Dashboard" fill className="object-cover rounded-lg" priority />
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  )
 }
-
-
-
-// Pehla sirf ye tha
-
-{/* <div className="text-4xl">
-          MLOpt
-      </div>
-      <div className="flex items-center justify-center flex-col">
-        <Link href={'/dashboard'}>Start Preprocessing</Link>
-      </div> */}

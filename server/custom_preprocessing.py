@@ -50,6 +50,63 @@ def clean_for_json(obj):
     else:
         return obj
 
+def apply_transformations(df: pd.DataFrame, transform_config: dict) -> tuple[pd.DataFrame, list]:
+    """
+    Apply transformations to a dataframe and return the result plus applied transforms
+    """
+    df_transformed = df.copy()
+    applied_transforms = []
+    
+    # Drop columns first
+    if "columns_to_drop" in transform_config:
+        columns_to_drop = transform_config["columns_to_drop"]
+        if columns_to_drop:
+            # Filter to only include columns that exist in the dataframe
+            valid_columns_to_drop = [col for col in columns_to_drop if col in df_transformed.columns]
+            if valid_columns_to_drop:
+                df_transformed = df_transformed.drop(columns=valid_columns_to_drop)
+                applied_transforms.append(f"Dropped columns: {', '.join(valid_columns_to_drop)}")
+    
+    # Apply data type transformations
+    if "data_types" in transform_config:
+        for column, new_type in transform_config["data_types"].items():
+            if column in df_transformed.columns:
+                try:
+                    if new_type == "int":
+                        df_transformed[column] = pd.to_numeric(df_transformed[column], errors='coerce', downcast='integer')
+                    elif new_type == "float":
+                        df_transformed[column] = pd.to_numeric(df_transformed[column], errors='coerce', downcast='float')
+                    elif new_type == "datetime":
+                        df_transformed[column] = pd.to_datetime(df_transformed[column], errors='coerce')
+                    else:  # string
+                        df_transformed[column] = df_transformed[column].astype(str)
+                    
+                    applied_transforms.append(f"Converted {column} to {new_type}")
+                except Exception as conv_error:
+                    applied_transforms.append(f"Failed to convert {column} to {new_type}: {str(conv_error)}")
+    
+    return df_transformed, applied_transforms
+
+def clean_preview_data(data):
+    """Clean preview data for JSON serialization"""
+    cleaned = []
+    for row in data:
+        clean_row = {}
+        for key, value in row.items():
+            if pd.isna(value):
+                clean_row[key] = None
+            elif isinstance(value, (np.integer, np.int64)):
+                clean_row[key] = int(value)
+            elif isinstance(value, (np.floating, np.float64)):
+                if pd.isna(value) or np.isnan(value) or np.isinf(value):
+                    clean_row[key] = None
+                else:
+                    clean_row[key] = float(value)
+            else:
+                clean_row[key] = str(value) if value is not None else None
+        cleaned.append(clean_row)
+    return cleaned
+
 @router.post("/analyze-file/")
 async def analyze_file(file: UploadFile = File(...)):
     """
@@ -126,8 +183,76 @@ async def analyze_file(file: UploadFile = File(...)):
             detail=f"Error analyzing file: {str(e)}"
         )
 
+@router.post("/preview-transformation/")
+async def preview_transformation(
+    file: UploadFile = File(...),
+    transformations: str = Form(...)
+):
+    """Preview transformations before applying them - FIXED ENDPOINT NAME"""
+    temp_file_path = None
+    try:
+        # Parse the transformations
+        transform_config = json.loads(transformations)
+        
+        # Generate a unique filename
+        unique_id = str(uuid.uuid4())[:8]
+        original_filename = file.filename
+        safe_filename = f"{unique_id}_{original_filename}"
+        
+        # Save the uploaded file temporarily
+        temp_file_path = f"temp_{safe_filename}"
+        with open(temp_file_path, "wb") as f:
+            content = await file.read()
+            f.write(content)
+        
+        # Read the file
+        if original_filename.lower().endswith('.csv'):
+            df = pd.read_csv(temp_file_path)
+        elif original_filename.lower().endswith('.xlsx'):
+            df = pd.read_excel(temp_file_path)
+        else:
+            raise HTTPException(status_code=400, detail="File format not supported")
+        
+        # Remove the temporary file
+        if os.path.exists(temp_file_path):
+            os.remove(temp_file_path)
+        
+        # Apply transformations to get preview
+        transformed_df, applied_transforms = apply_transformations(df.copy(), transform_config)
+        
+        # Get first 5 rows for preview
+        original_preview = df.head(5).to_dict('records')
+        transformed_preview = transformed_df.head(5).to_dict('records')
+        
+        # Clean the preview data
+        original_clean = clean_preview_data(original_preview)
+        transformed_clean = clean_preview_data(transformed_preview)
+        
+        return JSONResponse(content={
+            "success": True,
+            "preview": {
+                "original": original_clean,
+                "transformed": transformed_clean,
+                "columns": {
+                    "original": list(df.columns),
+                    "transformed": list(transformed_df.columns)
+                }
+            },
+            "transformations_applied": applied_transforms
+        })
+    
+    except Exception as e:
+        # Clean up if needed
+        if temp_file_path and os.path.exists(temp_file_path):
+            os.remove(temp_file_path)
+        
+        return JSONResponse(
+            status_code=500,
+            content={"success": False, "error": str(e)}
+        )
+
 @router.post("/apply-transformations/")
-async def apply_transformations(
+async def apply_transformations_endpoint(
     file: UploadFile = File(...),
     transformations: str = Form(...)
 ):
@@ -149,71 +274,52 @@ async def apply_transformations(
         # Read the file with pandas
         df = pd.read_csv(temp_file_path)
         
+        # Apply transformations
+        transformed_df, applied_transforms = apply_transformations(df, transform_config)
+        
         # Track changes for reporting
         transformation_report = {
             "data_types": {},
             "columns_dropped": [],
-            "transformations_applied": []
+            "transformations_applied": applied_transforms
         }
         
-        # Drop columns first
+        # Record what was actually done
         if "columns_to_drop" in transform_config:
             columns_to_drop = transform_config["columns_to_drop"]
             if columns_to_drop:
-                # Filter to only include columns that exist in the dataframe
                 valid_columns_to_drop = [col for col in columns_to_drop if col in df.columns]
-                if valid_columns_to_drop:
-                    df = df.drop(columns=valid_columns_to_drop)
-                    transformation_report["columns_dropped"] = valid_columns_to_drop
-                    for col in valid_columns_to_drop:
-                        transformation_report["transformations_applied"].append(f"Dropped column {col}")
+                transformation_report["columns_dropped"] = valid_columns_to_drop
         
-        # Apply data type transformations
         if "data_types" in transform_config:
             for column, new_type in transform_config["data_types"].items():
-                if column in df.columns:
-                    # Store original data type
+                if column in df.columns and column in transformed_df.columns:
                     transformation_report["data_types"][column] = {
                         "original": str(df[column].dtype),
                         "converted_to": new_type
                     }
-                    
-                    # Convert data type
-                    try:
-                        if new_type == "int":
-                            df[column] = pd.to_numeric(df[column], errors='coerce', downcast='integer')
-                        elif new_type == "float":
-                            df[column] = pd.to_numeric(df[column], errors='coerce', downcast='float')
-                        elif new_type == "datetime":
-                            df[column] = pd.to_datetime(df[column], errors='coerce')
-                        else:  # string
-                            df[column] = df[column].astype(str)
-                        
-                        transformation_report["transformations_applied"].append(f"Converted {column} to {new_type}")
-                    except Exception as conv_error:
-                        transformation_report["transformations_applied"].append(f"Failed to convert {column} to {new_type}: {str(conv_error)}")
         
         # Clean DataFrame of any remaining NaN/inf values before saving
         # Replace inf with NaN, then handle NaN appropriately
-        df = df.replace([np.inf, -np.inf], np.nan)
+        transformed_df = transformed_df.replace([np.inf, -np.inf], np.nan)
         
         # For numeric columns, fill NaN with 0 or median
-        for col in df.select_dtypes(include=[np.number]).columns:
-            if df[col].isna().any():
+        for col in transformed_df.select_dtypes(include=[np.number]).columns:
+            if transformed_df[col].isna().any():
                 # Use median if available, otherwise 0
-                fill_value = df[col].median() if not df[col].isna().all() else 0
+                fill_value = transformed_df[col].median() if not transformed_df[col].isna().all() else 0
                 if pd.isna(fill_value):
                     fill_value = 0
-                df[col] = df[col].fillna(fill_value)
+                transformed_df[col] = transformed_df[col].fillna(fill_value)
         
         # For non-numeric columns, fill NaN with empty string
-        for col in df.select_dtypes(exclude=[np.number]).columns:
-            df[col] = df[col].fillna('')
+        for col in transformed_df.select_dtypes(exclude=[np.number]).columns:
+            transformed_df[col] = transformed_df[col].fillna('')
         
         # Save transformed file
         output_filename = f"transformed_{uuid.uuid4()}_{file.filename}"
         output_path = result_folder / output_filename
-        df.to_csv(output_path, index=False)
+        transformed_df.to_csv(output_path, index=False)
         
         # Save transformation report
         report_filename = f"{output_filename}.report.json"
@@ -252,82 +358,11 @@ async def apply_transformations(
             detail=f"Error applying transformations: {str(e)}"
         )
 
+# Keep the old endpoint for backward compatibility (with 's')
 @router.post("/preview-transformations/")
-async def preview_transformations(
+async def preview_transformations_legacy(
     file: UploadFile = File(...),
     transformations: str = Form(...)
 ):
-    """Preview transformations before applying them"""
-    try:
-        # Parse the transformations
-        transform_config = json.loads(transformations)
-        
-        # Generate a unique filename
-        unique_id = str(uuid.uuid4())[:8]
-        original_filename = file.filename
-        safe_filename = f"{unique_id}_{original_filename}"
-        
-        # Save the uploaded file temporarily
-        temp_file_path = Path(f"temp_{safe_filename}")
-        with open(temp_file_path, "wb") as f:
-            content = await file.read()
-            f.write(content)
-        
-        # Read the file
-        if original_filename.lower().endswith('.csv'):
-            df = pd.read_csv(temp_file_path)
-        elif original_filename.lower().endswith('.xlsx'):
-            df = pd.read_excel(temp_file_path)
-        else:
-            raise HTTPException(status_code=400, detail="File format not supported")
-        
-        # Remove the temporary file
-        os.remove(temp_file_path)
-        
-        # Apply transformations to get preview
-        transformed_df, applied_transforms = apply_transformations(df.copy(), transform_config)
-        
-        # Get first 5 rows for preview
-        original_preview = df.head(5).to_dict('records')
-        transformed_preview = transformed_df.head(5).to_dict('records')
-        
-        # Clean the data for JSON serialization
-        def clean_for_json(obj):
-            if isinstance(obj, (np.integer, np.int64)):
-                return int(obj)
-            elif isinstance(obj, (np.floating, np.float64)):
-                if pd.isna(obj):
-                    return None
-                return float(obj)
-            elif pd.isna(obj):
-                return None
-            else:
-                return obj
-        
-        # Clean the preview data
-        original_clean = []
-        for row in original_preview:
-            clean_row = {k: clean_for_json(v) for k, v in row.items()}
-            original_clean.append(clean_row)
-            
-        transformed_clean = []
-        for row in transformed_preview:
-            clean_row = {k: clean_for_json(v) for k, v in row.items()}
-            transformed_clean.append(clean_row)
-        
-        return {
-            "success": True,
-            "original": original_clean,
-            "transformed": transformed_clean,
-            "columns": {
-                "original": list(df.columns),
-                "transformed": list(transformed_df.columns)
-            },
-            "transformations_applied": applied_transforms
-        }
-    
-    except Exception as e:
-        return JSONResponse(
-            status_code=500,
-            content={"success": False, "error": str(e)}
-        )
+    """Legacy endpoint - redirects to the correct one"""
+    return await preview_transformation(file, transformations)

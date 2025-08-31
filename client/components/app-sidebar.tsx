@@ -88,7 +88,8 @@ const navigation = [
       {
         title: 'Transformations',
         url: '/dashboard/transformations',
-        icon: Sparkles
+        icon: Sparkles,
+        badge: 'Beta'
       }
     ]
   }
@@ -235,15 +236,15 @@ export function AppSidebar() {
       {/* Header with Logo */}
       <SidebarHeader className="border-b border-border/40 p-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 to-purple-600 text-white">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-transparent text-white">
             <Brain className="h-5 w-5" />
           </div>
           <div className="flex flex-col">
-            <span className="text-lg font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            <span className="text-lg font-bold text-gray-100">
               MLOpt
             </span>
             <span className="text-xs text-muted-foreground">
-              Automate MLOps Workflow
+              Automate ML Workflow
             </span>
           </div>
         </div>

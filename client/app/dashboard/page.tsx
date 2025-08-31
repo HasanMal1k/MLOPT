@@ -163,7 +163,7 @@ export default function Dashboard() {
           </Card>
           
           {/* Quick Actions */}
-          <div>
+          {/* <div>
             <h2 className="text-xl font-semibold mb-3">Quick Actions</h2>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <Card>
@@ -252,7 +252,7 @@ export default function Dashboard() {
               </Card>
             </div>
           </div>
-          
+           */}
           {/* Recent Files */}
           <div>
             <h2 className="text-xl font-semibold mb-3">Recent Files</h2>

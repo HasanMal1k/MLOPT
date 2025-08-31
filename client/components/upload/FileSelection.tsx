@@ -1,4 +1,3 @@
-// components/upload/FileSelection.tsx - Fixed version
 'use client'
 
 import { useState } from "react"
@@ -85,13 +84,13 @@ export default function FileSelection({
       <div className="text-center">
         <h2 className="text-2xl font-bold mb-2">Upload Your Data Files</h2>
         <p className="text-muted-foreground">
-          Choose files from your computer, import from Kaggle, or connect cloud storage
+          Choose files from your computer, import from Kaggle
         </p>
       </div>
 
       {/* Upload Methods Tabs */}
       <Tabs value={activeTab} onValueChange={onTabChange} className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="upload" className="flex items-center gap-2">
             <Upload className="h-4 w-4" />
             Local Files
@@ -110,13 +109,13 @@ export default function FileSelection({
               </Badge>
             )}
           </TabsTrigger>
-          <TabsTrigger value="cloud" className="flex items-center gap-2" disabled>
+          {/* <TabsTrigger value="cloud" className="flex items-center gap-2" disabled>
             <Cloud className="h-4 w-4" />
             Cloud Storage
             <Badge variant="outline" className="ml-1 text-xs">
               Soon
             </Badge>
-          </TabsTrigger>
+          </TabsTrigger> */}
         </TabsList>
 
         {/* Local File Upload Tab */}
@@ -283,7 +282,7 @@ export default function FileSelection({
         </TabsContent>
 
         {/* Cloud Storage Tab (Placeholder) */}
-        <TabsContent value="cloud" className="space-y-4">
+        {/* <TabsContent value="cloud" className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -331,7 +330,7 @@ export default function FileSelection({
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
+        </TabsContent> */}
       </Tabs>
 
       {/* Continue Button */}
@@ -358,7 +357,7 @@ export default function FileSelection({
         >
           Continue to Review
           {files.length > 0 && (
-            <Badge variant="secondary" className="ml-2 bg-white/20">
+            <Badge variant="secondary" className="ml-2 bg-black">
               {files.length}
             </Badge>
           )}
