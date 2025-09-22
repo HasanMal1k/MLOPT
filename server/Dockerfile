@@ -19,9 +19,9 @@ RUN pip install --upgrade pip setuptools wheel \
 COPY . .
 
 # Expose the port the app listens on
-EXPOSE 8080
+EXPOSE 8000
 
 # Default command (assumes your entrypoint is app.py)
 # Replace "app.py" with your filename if different.
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080", "--workers", "1"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]
 
