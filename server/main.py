@@ -2,6 +2,7 @@ from fastapi import FastAPI, File, UploadFile, HTTPException, BackgroundTasks, F
 from fastapi.responses import JSONResponse, HTMLResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from ml_training import router as ml_router
 from pathlib import Path
 import logging
 import os
@@ -142,6 +143,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(ml_router)
+
+
 # Create folders to store uploaded and processed files
 UPLOAD_FOLDER = Path("files")
 PROCESSED_FOLDER = Path("processed_files")
@@ -151,6 +155,10 @@ STATUS_FOLDER = Path("processing_status")
 UPLOAD_FOLDER.mkdir(exist_ok=True)
 PROCESSED_FOLDER.mkdir(exist_ok=True)
 STATUS_FOLDER.mkdir(exist_ok=True)
+
+# Model Directory
+Path("models").mkdir(exist_ok=True)
+Path("uploads").mkdir(exist_ok=True)
 
 @app.get("/")
 async def root():
