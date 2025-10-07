@@ -21,6 +21,7 @@ from data_preprocessing import process_data_file, update_status, generate_eda_re
 from custom_preprocessing import router as custom_preprocessing_router
 from transformations import router as transformations_router
 from time_series_preprocessing import router as time_series_router
+from time_series_training import router as time_series_training_router
 from universal_file_handler import (
     normalize_any_file, 
     validate_file_before_processing,
@@ -123,7 +124,8 @@ app = FastAPI(
 # Register custom routers
 app.include_router(custom_preprocessing_router)
 app.include_router(transformations_router)
-app.include_router(time_series_router)  # Register the time series router
+app.include_router(time_series_router)  # Register the time series preprocessing router
+app.include_router(time_series_training_router)  # Register the time series training router
 app.include_router(visualization_router)
 
 

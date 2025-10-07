@@ -54,6 +54,7 @@ import {
 import { Separator } from "@/components/ui/separator"
 import { useToast } from "@/hooks/use-toast"
 import { cn } from "@/lib/utils"
+import { title } from 'process'
 
 const navigation = [
   {
@@ -90,6 +91,12 @@ const navigation = [
         url: '/dashboard/transformations',
         icon: Sparkles,
         badge: 'Beta'
+      },
+      {
+        title: 'Models',
+        url: '/dashboard/blueprints',
+        icon: Braces,
+        badge: 'New'
       }
     ]
   }

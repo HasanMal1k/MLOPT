@@ -568,7 +568,7 @@ export default function BlueprintsPage() {
                         <Button 
                           size="sm" 
                           onClick={() => handleStartMLWorkflow(dataset)}
-                          className="bg-blue-600 hover:bg-blue-700"
+                          className="bg-green-400 hover:bg-green-500"
                         >
                           <Play className="h-4 w-4 mr-2" />
                           Start ML
