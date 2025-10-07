@@ -1,0 +1,3 @@
+Model,status,MAE,RMSE,MSE,R2,TT (Sec),SMAPE
+Moving Average,ok,3.1704,4.063,16.5081,0.0,0.1,45.63
+Simple Mean,ok,,,,0.0,0.05,50.0

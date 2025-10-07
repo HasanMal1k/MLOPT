@@ -42,12 +42,14 @@ import {
   Loader2,
   BarChart3,
   TrendingUp,
+  Clock,
   Zap,
   CheckCircle,
   AlertCircle,
   Sparkles,
   Database,
-  Award
+  Award,
+  Layers
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 
@@ -89,10 +91,19 @@ export default function MLTrainingPage() {
   
   // Data state
   const [fileMetadata, setFileMetadata] = useState<any>(null)
-  const [taskType, setTaskType] = useState<'classification' | 'regression' | null>(null)
+  const [taskType, setTaskType] = useState<'classification' | 'regression' | 'time_series' | null>(null)
   const [targetColumn, setTargetColumn] = useState('')
   const [featureAnalysis, setFeatureAnalysis] = useState<FeatureAnalysis | null>(null)
   const [selectedFeatures, setSelectedFeatures] = useState<string[]>([])
+  
+  // Time series specific state
+  const [timeColumn, setTimeColumn] = useState('')
+  const [detectedTimeColumns, setDetectedTimeColumns] = useState<string[]>([])
+  const [forecastingHorizon, setForecastingHorizon] = useState<number>(12)
+  const [isDetectingTimeColumns, setIsDetectingTimeColumns] = useState(false)
+  const [forecastingType, setForecastingType] = useState<'univariate' | 'multivariate' | 'exogenous' | null>(null)
+  const [exogenousColumns, setExogenousColumns] = useState<string[]>([])
+  
   const [trainingConfig, setTrainingConfig] = useState<TrainingConfig>({
     target_column: '',
     train_size: 0.8,
@@ -159,6 +170,53 @@ export default function MLTrainingPage() {
     }
   }
 
+  const detectTimeColumns = async () => {
+    setIsDetectingTimeColumns(true)
+    setErrorMessage(null)
+    
+    try {
+      // Get file content
+      const response = await fetch(`/api/files/downloads?fileId=${fileId}`)
+      if (!response.ok) throw new Error('Failed to get file')
+      
+      const fileBlob = await response.blob()
+      
+      // Send to backend for time column detection
+      const formData = new FormData()
+      formData.append('file', fileBlob, filename)
+
+      const detectionResponse = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/ml/detect-time-columns/`, {
+        method: 'POST',
+        body: formData
+      })
+
+      if (!detectionResponse.ok) {
+        const errorData = await detectionResponse.json()
+        throw new Error(errorData.detail || 'Failed to detect time columns')
+      }
+      
+      const result = await detectionResponse.json()
+      if (result.success) {
+        setDetectedTimeColumns(result.time_columns || [])
+        
+        // Auto-select the first detected time column
+        if (result.time_columns && result.time_columns.length > 0) {
+          setTimeColumn(result.time_columns[0])
+        }
+        
+        toast({
+          title: "Time Columns Detected",
+          description: `Found ${result.time_columns?.length || 0} potential time columns`
+        })
+      }
+    } catch (error) {
+      console.error('Time column detection error:', error)
+      setErrorMessage(`Time column detection failed: ${error}`)
+    } finally {
+      setIsDetectingTimeColumns(false)
+    }
+  }
+
   const analyzeFeatures = async () => {
     setIsAnalyzingFeatures(true)
     setErrorMessage(null)
@@ -218,23 +276,44 @@ export default function MLTrainingPage() {
       const fileBlob = await response.blob()
       console.log('File blob size:', fileBlob.size)
       
-      // Prepare configuration data
       const formData = new FormData()
       formData.append('file', fileBlob, filename)
-      formData.append('task_type', taskType!)
-      formData.append('target_column', targetColumn)
-      formData.append('selected_features', JSON.stringify(selectedFeatures))
-      formData.append('train_size', trainingConfig.train_size.toString())
-      formData.append('session_id', trainingConfig.session_id.toString())
-      formData.append('normalize', trainingConfig.normalize.toString())
-      formData.append('transformation', trainingConfig.transformation.toString())
-      formData.append('remove_outliers', trainingConfig.remove_outliers.toString())
-      formData.append('outliers_threshold', trainingConfig.outliers_threshold.toString())
-      formData.append('feature_selection', trainingConfig.feature_selection.toString())
-      formData.append('polynomial_features', trainingConfig.polynomial_features.toString())
+      
+      let configEndpoint = ''
+      
+      if (taskType === 'time_series') {
+        // Time series configuration
+        configEndpoint = `${process.env.NEXT_PUBLIC_BACKEND_URL}/ml/configure-time-series-with-file/`
+        
+        formData.append('forecasting_type', forecastingType!)
+        formData.append('target_column', targetColumn)
+        formData.append('time_column', timeColumn)
+        formData.append('exogenous_columns', JSON.stringify(exogenousColumns))
+        formData.append('forecast_horizon', forecastingHorizon.toString())
+        formData.append('train_split', trainingConfig.train_size.toString())
+        formData.append('include_deep_learning', 'true')
+        formData.append('include_statistical', 'true')
+        formData.append('include_ml', 'true')
+        formData.append('max_epochs', '10')
+      } else {
+        // Regular ML configuration
+        configEndpoint = `${process.env.NEXT_PUBLIC_BACKEND_URL}/ml/configure-training-with-file/`
+        
+        formData.append('task_type', taskType!)
+        formData.append('target_column', targetColumn)
+        formData.append('selected_features', JSON.stringify(selectedFeatures))
+        formData.append('train_size', trainingConfig.train_size.toString())
+        formData.append('session_id', trainingConfig.session_id.toString())
+        formData.append('normalize', trainingConfig.normalize.toString())
+        formData.append('transformation', trainingConfig.transformation.toString())
+        formData.append('remove_outliers', trainingConfig.remove_outliers.toString())
+        formData.append('outliers_threshold', trainingConfig.outliers_threshold.toString())
+        formData.append('feature_selection', trainingConfig.feature_selection.toString())
+        formData.append('polynomial_features', trainingConfig.polynomial_features.toString())
+      }
 
       console.log('Sending configuration to backend...')
-      const configResponse = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/ml/configure-training-with-file/`, {
+      const configResponse = await fetch(configEndpoint, {
         method: 'POST',
         body: formData
       })
@@ -267,7 +346,7 @@ export default function MLTrainingPage() {
         
         toast({
           title: "Configuration Complete",
-          description: `Training configured with ID: ${newConfigId}`
+          description: `${taskType === 'time_series' ? 'Time series' : 'ML'} training configured successfully`
         })
       } else {
         throw new Error('No config_id returned from backend')
@@ -354,16 +433,88 @@ export default function MLTrainingPage() {
 
   // Step navigation functions
   const handleTaskTypeNext = () => {
-    if (!taskType || !targetColumn) {
+    if (!taskType) {
       toast({
         variant: "destructive",
         title: "Selection Required",
-        description: "Please select task type and target column"
+        description: "Please select a machine learning task type"
+      })
+      return
+    }
+
+    if (taskType === 'time_series') {
+      if (!forecastingType) {
+        toast({
+          variant: "destructive",
+          title: "Forecasting Type Required",
+          description: "Please select univariate, multivariate, or exogenous forecasting"
+        })
+        return
+      }
+
+      if (!timeColumn) {
+        toast({
+          variant: "destructive",
+          title: "Time Column Required",
+          description: "Please select a time column"
+        })
+        return
+      }
+
+      if (forecastingType === 'univariate' && !targetColumn) {
+        toast({
+          variant: "destructive",
+          title: "Target Column Required",
+          description: "Please select a target column for univariate forecasting"
+        })
+        return
+      }
+
+      if (forecastingType === 'multivariate' && selectedFeatures.length === 0) {
+        toast({
+          variant: "destructive",
+          title: "Target Columns Required", 
+          description: "Please select at least one target column for multivariate forecasting"
+        })
+        return
+      }
+
+      if (forecastingType === 'exogenous') {
+        if (!targetColumn) {
+          toast({
+            variant: "destructive",
+            title: "Target Column Required",
+            description: "Please select a target column for exogenous forecasting"
+          })
+          return
+        }
+        
+        if (exogenousColumns.length === 0) {
+          toast({
+            variant: "destructive",
+            title: "Exogenous Variables Required",
+            description: "Please select at least one exogenous variable"
+          })
+          return
+        }
+      }
+      
+      // For time series, skip feature analysis and go directly to time series configuration
+      setCurrentStep(2)
+      return
+    }
+
+    // Regular ML validation
+    if (!targetColumn) {
+      toast({
+        variant: "destructive",
+        title: "Target Column Required",
+        description: "Please select a target column"
       })
       return
     }
     
-    // Start feature analysis
+    // Start feature analysis for classification/regression
     analyzeFeatures()
     setCurrentStep(1)
   }
@@ -532,8 +683,8 @@ export default function MLTrainingPage() {
               {/* Task Type Selection */}
               <div>
                 <h4 className="font-medium mb-3">Machine Learning Task Type</h4>
-                <RadioGroup value={taskType || ''} onValueChange={(value: 'classification' | 'regression') => setTaskType(value)}>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <RadioGroup value={taskType || ''} onValueChange={(value: 'classification' | 'regression' | 'time_series') => setTaskType(value)}>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="flex items-center space-x-2 p-4 border-2 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
                       <RadioGroupItem value="classification" id="classification" />
                       <Label htmlFor="classification" className="cursor-pointer flex-1">
@@ -563,12 +714,363 @@ export default function MLTrainingPage() {
                         </div>
                       </Label>
                     </div>
+                    
+                    <div className="flex items-center space-x-2 p-4 border-2 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
+                      <RadioGroupItem value="time_series" id="time_series" />
+                      <Label htmlFor="time_series" className="cursor-pointer flex-1">
+                        <div className="flex items-center gap-3">
+                          <Clock className="h-6 w-6 text-purple-600" />
+                          <div>
+                            <div className="font-medium">Time Series</div>
+                            <div className="text-sm text-muted-foreground">
+                              Forecast future values (sales, stock prices)
+                            </div>
+                          </div>
+                        </div>
+                      </Label>
+                    </div>
                   </div>
                 </RadioGroup>
               </div>
 
-              {/* Target Column Selection */}
-              {taskType && (
+              {/* Time Series Configuration */}
+              {taskType === 'time_series' && (
+                <div className="space-y-6">
+                  {/* Forecasting Type Selection */}
+                  <div>
+                    <h4 className="font-medium mb-3">Forecasting Type</h4>
+                    <RadioGroup 
+                      value={forecastingType || ''} 
+                      onValueChange={(value: 'univariate' | 'multivariate' | 'exogenous') => setForecastingType(value)}
+                    >
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="flex items-center space-x-2 p-4 border-2 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
+                          <RadioGroupItem value="univariate" id="univariate" />
+                          <Label htmlFor="univariate" className="cursor-pointer flex-1">
+                            <div className="flex items-center gap-3">
+                              <TrendingUp className="h-6 w-6 text-blue-600" />
+                              <div>
+                                <div className="font-medium">Univariate</div>
+                                <div className="text-sm text-muted-foreground">
+                                  Forecast single time series (sales over time)
+                                </div>
+                              </div>
+                            </div>
+                          </Label>
+                        </div>
+                        
+                        <div className="flex items-center space-x-2 p-4 border-2 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
+                          <RadioGroupItem value="multivariate" id="multivariate" />
+                          <Label htmlFor="multivariate" className="cursor-pointer flex-1">
+                            <div className="flex items-center gap-3">
+                              <BarChart3 className="h-6 w-6 text-green-600" />
+                              <div>
+                                <div className="font-medium">Multivariate</div>
+                                <div className="text-sm text-muted-foreground">
+                                  Forecast multiple related series (multiple products)
+                                </div>
+                              </div>
+                            </div>
+                          </Label>
+                        </div>
+                        
+                        <div className="flex items-center space-x-2 p-4 border-2 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
+                          <RadioGroupItem value="exogenous" id="exogenous" />
+                          <Label htmlFor="exogenous" className="cursor-pointer flex-1">
+                            <div className="flex items-center gap-3">
+                              <Layers className="h-6 w-6 text-purple-600" />
+                              <div>
+                                <div className="font-medium">Exogenous</div>
+                                <div className="text-sm text-muted-foreground">
+                                  Use external factors (weather, holidays, prices)
+                                </div>
+                              </div>
+                            </div>
+                          </Label>
+                        </div>
+                      </div>
+                    </RadioGroup>
+                  </div>
+
+                  {/* Show explanation based on forecasting type */}
+                  {forecastingType && (
+                    <Alert>
+                      <Sparkles className="h-4 w-4" />
+                      <AlertTitle>
+                        {forecastingType === 'univariate' && 'Univariate Forecasting'}
+                        {forecastingType === 'multivariate' && 'Multivariate Forecasting'}
+                        {forecastingType === 'exogenous' && 'Exogenous Forecasting'}
+                      </AlertTitle>
+                      <AlertDescription>
+                        {forecastingType === 'univariate' && 
+                          'You will forecast a single target variable using only its historical values and time patterns.'
+                        }
+                        {forecastingType === 'multivariate' && 
+                          'You will forecast multiple target variables simultaneously, capturing relationships between different time series.'
+                        }
+                        {forecastingType === 'exogenous' && 
+                          'You will forecast a target variable using both its historical values and external/exogenous variables that may influence it.'
+                        }
+                      </AlertDescription>
+                    </Alert>
+                  )}
+
+                  {/* Time Column Detection - only show if forecasting type is selected */}
+                  {forecastingType && (
+                    <div>
+                      <div className="flex items-center justify-between mb-3">
+                        <h4 className="font-medium">Time Column</h4>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={detectTimeColumns}
+                          disabled={isDetectingTimeColumns}
+                        >
+                          {isDetectingTimeColumns ? (
+                            <>
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              Detecting...
+                            </>
+                          ) : (
+                            <>
+                              <Clock className="h-4 w-4 mr-2" />
+                              Auto-Detect
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                        {fileMetadata?.column_names?.map((column: string) => {
+                          const isDetected = detectedTimeColumns.includes(column)
+                          const isSelected = timeColumn === column
+                          
+                          return (
+                            <div
+                              key={column}
+                              className={`p-3 border-2 rounded-lg cursor-pointer transition-colors ${
+                                isSelected
+                                  ? 'border-purple-500 bg-purple-50' 
+                                  : isDetected
+                                  ? 'border-purple-200 bg-purple-25 hover:bg-purple-50'
+                                  : 'border-gray-200 hover:bg-gray-50'
+                              }`}
+                              onClick={() => setTimeColumn(column)}
+                            >
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <div className="font-medium flex items-center gap-2">
+                                    {column}
+                                    {isDetected && (
+                                      <Badge variant="outline" className="text-xs bg-purple-100 text-purple-700">
+                                        Auto-detected
+                                      </Badge>
+                                    )}
+                                  </div>
+                                  <div className="text-sm text-muted-foreground">
+                                    {fileMetadata?.statistics?.[column]?.dtype || 'Unknown type'}
+                                  </div>
+                                </div>
+                                {isSelected && (
+                                  <CheckCircle className="h-5 w-5 text-purple-600" />
+                                )}
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Target Column Selection */}
+                  {timeColumn && (
+                    <div>
+                      <h4 className="font-medium mb-3">
+                        {forecastingType === 'multivariate' 
+                          ? 'Target Columns (Select multiple variables to forecast)' 
+                          : 'Target Column (Variable to forecast)'
+                        }
+                      </h4>
+                      
+                      {forecastingType === 'multivariate' ? (
+                        // Multiple selection for multivariate
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                          {fileMetadata?.column_names?.filter((col: string) => col !== timeColumn).map((column: string) => (
+                            <div
+                              key={column}
+                              className={`p-3 border-2 rounded-lg cursor-pointer transition-colors ${
+                                selectedFeatures.includes(column)
+                                  ? 'border-blue-500 bg-blue-50' 
+                                  : 'border-gray-200 hover:bg-gray-50'
+                              }`}
+                              onClick={() => {
+                                if (selectedFeatures.includes(column)) {
+                                  setSelectedFeatures(prev => prev.filter(f => f !== column))
+                                } else {
+                                  setSelectedFeatures(prev => [...prev, column])
+                                }
+                              }}
+                            >
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <div className="font-medium">{column}</div>
+                                  <div className="text-sm text-muted-foreground">
+                                    {fileMetadata?.statistics?.[column]?.dtype || 'Unknown type'}
+                                  </div>
+                                </div>
+                                <Checkbox 
+                                  checked={selectedFeatures.includes(column)}
+                                  readOnly
+                                />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        // Single selection for univariate and exogenous
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                          {fileMetadata?.column_names?.filter((col: string) => col !== timeColumn).map((column: string) => (
+                            <div
+                              key={column}
+                              className={`p-3 border-2 rounded-lg cursor-pointer transition-colors ${
+                                targetColumn === column 
+                                  ? 'border-blue-500 bg-blue-50' 
+                                  : 'border-gray-200 hover:bg-gray-50'
+                              }`}
+                              onClick={() => setTargetColumn(column)}
+                            >
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <div className="font-medium">{column}</div>
+                                  <div className="text-sm text-muted-foreground">
+                                    {fileMetadata?.statistics?.[column]?.dtype || 'Unknown type'}
+                                  </div>
+                                </div>
+                                {targetColumn === column && (
+                                  <CheckCircle className="h-5 w-5 text-blue-600" />
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Exogenous Variables Selection */}
+                  {forecastingType === 'exogenous' && targetColumn && (
+                    <div>
+                      <h4 className="font-medium mb-3">Exogenous Variables (External factors that influence the target)</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                        {fileMetadata?.column_names?.filter((col: string) => 
+                          col !== timeColumn && col !== targetColumn
+                        ).map((column: string) => (
+                          <div
+                            key={column}
+                            className={`p-3 border-2 rounded-lg cursor-pointer transition-colors ${
+                              exogenousColumns.includes(column)
+                                ? 'border-green-500 bg-green-50' 
+                                : 'border-gray-200 hover:bg-gray-50'
+                            }`}
+                            onClick={() => {
+                              if (exogenousColumns.includes(column)) {
+                                setExogenousColumns(prev => prev.filter(c => c !== column))
+                              } else {
+                                setExogenousColumns(prev => [...prev, column])
+                              }
+                            }}
+                          >
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <div className="font-medium">{column}</div>
+                                <div className="text-sm text-muted-foreground">
+                                  {fileMetadata?.statistics?.[column]?.dtype || 'Unknown type'}
+                                </div>
+                              </div>
+                              <Checkbox 
+                                checked={exogenousColumns.includes(column)}
+                                readOnly
+                              />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      
+                      {exogenousColumns.length > 0 && (
+                        <div className="mt-3 p-3 bg-green-50 rounded-lg">
+                          <div className="text-sm font-medium text-green-900">
+                            Selected Exogenous Variables: {exogenousColumns.length}
+                          </div>
+                          <div className="text-xs text-green-700">
+                            {exogenousColumns.join(', ')}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Forecasting Configuration */}
+                  {((forecastingType === 'univariate' && targetColumn) ||
+                    (forecastingType === 'multivariate' && selectedFeatures.length > 0) ||
+                    (forecastingType === 'exogenous' && targetColumn && exogenousColumns.length > 0)) && (
+                    <div>
+                      <h4 className="font-medium mb-3">Forecasting Configuration</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                          <Label htmlFor="forecast-horizon">Forecasting Horizon</Label>
+                          <Select 
+                            value={forecastingHorizon.toString()} 
+                            onValueChange={(value) => setForecastingHorizon(parseInt(value))}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select horizon" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="7">7 periods</SelectItem>
+                              <SelectItem value="12">12 periods</SelectItem>
+                              <SelectItem value="24">24 periods</SelectItem>
+                              <SelectItem value="30">30 periods</SelectItem>
+                              <SelectItem value="52">52 periods</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        
+                        <div>
+                          <Label htmlFor="train-split">Train/Test Split</Label>
+                          <Select 
+                            value={(trainingConfig.train_size || 0.8).toString()} 
+                            onValueChange={(value) => setTrainingConfig(prev => ({ ...prev, train_size: parseFloat(value) }))}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="0.7">70% / 30%</SelectItem>
+                              <SelectItem value="0.8">80% / 20%</SelectItem>
+                              <SelectItem value="0.9">90% / 10%</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        
+                        <div className="flex items-end">
+                          <div className="p-3 bg-blue-50 rounded-lg w-full">
+                            <div className="text-sm font-medium text-blue-900">Configuration Ready</div>
+                            <div className="text-xs text-blue-700">
+                              {forecastingType === 'multivariate' 
+                                ? `${selectedFeatures.length} targets selected`
+                                : `${targetColumn} → ${forecastingType}`
+                              }
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Regular Target Column Selection (for classification/regression) */}
+              {taskType && taskType !== 'time_series' && (
                 <div>
                   <h4 className="font-medium mb-3">Select Target Column</h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">

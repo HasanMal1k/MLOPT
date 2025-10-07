@@ -1,4 +1,4 @@
-# Dockerfile (development / simple)
+# syntax=docker/dockerfile:1
 FROM python:3.11-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1
@@ -6,22 +6,26 @@ ENV PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
-# Install build tools for packages that need compilation (optional but safe)
-RUN apt-get update && apt-get install -y --no-install-recommends build-essential gcc \
+# Install system deps + uv (non-interactive)
+RUN apt-get update && apt-get install -y --no-install-recommends curl build-essential gcc \
+ && curl -LsSf https://astral.sh/uv/install.sh | sh \
  && rm -rf /var/lib/apt/lists/*
 
-# Copy and install dependencies first (cacheable)
-COPY requirements.txt .
-RUN pip install --upgrade pip setuptools wheel \
- && pip install --no-cache-dir -r requirements.txt
+# Add uv to PATH
+ENV PATH="/root/.local/bin:$PATH"
 
-# Copy application code
+# ✅ Check uv version
+RUN uv --version
+
+# Copy dependencies
+COPY requirements.txt .
+
+# Install dependencies using uv with unsafe-best-match strategy
+RUN uv pip install --system --index-strategy unsafe-best-match -r requirements.txt
+
+# Copy app source
 COPY . .
 
-# Expose the port the app listens on
 EXPOSE 8000
 
-# Default command (assumes your entrypoint is app.py)
-# Replace "app.py" with your filename if different.
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]
-
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
