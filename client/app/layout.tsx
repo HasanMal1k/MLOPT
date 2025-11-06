@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { Geist } from 'next/font/google'
+import { Inter } from 'next/font/google'
 import { ThemeProvider } from "@/components/theme-provider"; 
 import { Toaster } from "@/components/ui/toaster";
 
@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   description: "Choose What You Want To Do",
 };
 
-const geist = Geist({subsets: ['latin']})
+const inter = Inter({subsets: ['latin']})
 
 export default function RootLayout({
   children,
@@ -19,7 +19,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={geist.className}
+        className={inter.className}
       >
         <ThemeProvider
             attribute="class"

@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, BackgroundTasks, Form, File, UploadFile
-from fastapi.responses import JSONResponse, FileResponse
+from fastapi.responses import JSONResponse, FileResponse, StreamingResponse
 from pydantic import BaseModel
 from typing import Dict, List, Optional, Any, Union
 import pandas as pd
@@ -14,6 +14,8 @@ import tempfile
 import shutil
 from io import StringIO, BytesIO
 from datetime import datetime
+import asyncio
+from collections import deque
 
 def clean_for_json(obj):
     """Clean object to make it JSON serializable by handling NaN/inf values"""
@@ -50,6 +52,27 @@ router = APIRouter(prefix="/ml", tags=["Machine Learning"])
 training_tasks = {}
 feature_analysis_cache = {}
 training_tasks: Dict[str, Dict] = {}
+
+# Storage for SSE connections and model results
+active_sse_connections: Dict[str, deque] = {}
+model_results_queue: Dict[str, List[Dict]] = {}
+
+# Helper function to push model results
+def push_model_result(task_id: str, model_result: Dict):
+    """Push a completed model result to the queue for SSE streaming"""
+    if task_id not in model_results_queue:
+        model_results_queue[task_id] = []
+    
+    # Add result with metadata
+    result_event = {
+        "type": "model_completed",
+        "task_id": task_id,
+        "model": clean_for_json(model_result),
+        "timestamp": datetime.now().isoformat()
+    }
+    
+    model_results_queue[task_id].append(result_event)
+    logger.info(f"📊 Pushed model result for {task_id}: {model_result.get('Model', 'Unknown')}")
 
 # Pydantic models
 class FeatureSelectionRequest(BaseModel):
@@ -765,56 +788,232 @@ async def run_regular_ml_training(config_id: str, config: dict):
             )
         
         training_tasks[config_id]["status"] = "training"
-        logger.info("Starting model comparison...")
+        logger.info("Starting model comparison with streaming results...")
         
-        # FORCE compare_models to run - use all available models
+        # Log dataset information for verification
+        logger.info(f"=" * 80)
+        logger.info(f"TRAINING DATASET INFORMATION:")
+        logger.info(f"  - Total Rows: {len(data)}")
+        logger.info(f"  - Total Features: {len(data.columns)}")
+        logger.info(f"  - Target Column: {config['target_column']}")
+        logger.info(f"  - Training Rows (~80%): {int(len(data) * 0.8)}")
+        logger.info(f"  - Total Features: {len(data.columns)}")
+        logger.info(f"  - Target Column: {config['target_column']}")
+        logger.info(f"  - Training Rows (~80%): {int(len(data) * 0.8)}")
+        logger.info(f"  - Testing Rows (~20%): {int(len(data) * 0.2)}")
+        logger.info(f"  - Cross-Validation Folds: {config.get('cv_folds', 3)}")
+        logger.info(f"  - Sort Metric: {config.get('sort_metric', 'auto')}")
+        logger.info(f"  - Hyperparameter Tuning: {config.get('hyperparameter_tuning', False)}")
+        logger.info(f"=" * 80)
+        
+        # Initialize results queue for this task
+        if config_id not in model_results_queue:
+            model_results_queue[config_id] = []
+        
+        # Get training parameters
+        cv_folds = config.get('cv_folds', 3)
+        sort_metric = config.get('sort_metric', 'auto')
+        hyperparameter_tuning = config.get('hyperparameter_tuning', False)
+        tuning_iterations = config.get('tuning_iterations', 10)
+        
+        # STREAM RESULTS: Train models one by one and push results immediately
         if config["task_type"] == "regression":
-            # Get all available regression models and run them
+            # Get all available regression models
             available_models = regression_module.models()
-            logger.info(f"Available regression models: {len(available_models)}")
+            logger.info(f"Training {len(available_models)} regression models with streaming results...")
             
-            # Compare ALL models (no selection limit)
-            best_models = regression_module.compare_models(
-                include=None,  # Include all models
-                fold=3,        # Reduce CV folds for speed
-                sort='R2',     # Sort by R2
-                turbo=False    # Don't use turbo mode
-            )
+            all_results = []
+            model_id_map = {}  # Map model names to IDs
             
-            leaderboard = regression_module.pull()
+            # Train each model individually - use index as model ID
+            for idx, (model_id, row) in enumerate(available_models.iterrows(), 1):
+                model_name = row['Name']
+                model_id_map[model_name] = model_id
+                
+                try:
+                    logger.info(f"[{idx}/{len(available_models)}] 🔄 TRAINING {model_name} (ID: {model_id})...")
+                    training_tasks[config_id]["current_model"] = model_name
+                    training_tasks[config_id]["progress"] = f"{idx}/{len(available_models)}"
+                    
+                    # Train single model using index as ID
+                    import time
+                    start_time = time.time()
+                    
+                    logger.info(f"  ➤ Creating model with {cv_folds}-fold cross-validation...")
+                    
+                    # Apply hyperparameter tuning if enabled
+                    if hyperparameter_tuning:
+                        model = regression_module.tune_model(
+                            regression_module.create_model(model_id, fold=cv_folds, verbose=False),
+                            n_iter=tuning_iterations,
+                            optimize=sort_metric if sort_metric != 'auto' else 'R2',
+                            verbose=False
+                        )
+                    else:
+                        model = regression_module.create_model(
+                            model_id,
+                            fold=cv_folds,
+                            verbose=False
+                        )
+                    
+                    training_time = time.time() - start_time
+                    
+                    # Get metrics for this model
+                    metrics = regression_module.pull()
+                    if not metrics.empty:
+                        result = metrics.iloc[-1].to_dict()
+                        result['Model'] = model_name
+                        result['TT (Sec)'] = round(training_time, 2)
+                        
+                        # Log detailed training info
+                        logger.info(f"  ✅ COMPLETED in {training_time:.3f}s")
+                        logger.info(f"     - R² Score: {result.get('R2', 0):.4f}")
+                        logger.info(f"     - MAE: {result.get('MAE', 0):.4f}")
+                        logger.info(f"     - RMSE: {result.get('RMSE', 0):.4f}")
+                        
+                        all_results.append(result)
+                        
+                        # 🚀 PUSH RESULT IMMEDIATELY
+                        push_model_result(config_id, result)
+                        logger.info(f"  📤 Result pushed to frontend stream")
+                    
+                except Exception as model_error:
+                    import traceback
+                    error_details = traceback.format_exc()
+                    logger.error(f"⚠️ Regression Model {model_name} (ID: {model_id}) failed: {model_error}")
+                    logger.error(f"Full traceback:\n{error_details}")
+                    # Push failed model result
+                    failed_result = {
+                        'Model': model_name,
+                        'status': 'failed',
+                        'error': str(model_error)
+                    }
+                    push_model_result(config_id, failed_result)
             
-            # Get top 5 models
-            if isinstance(best_models, list):
-                top_models = best_models[:5]
-                best_model = best_models[0]
+            # Create leaderboard from all results
+            leaderboard = pd.DataFrame(all_results)
+            if not leaderboard.empty:
+                # Sort by the specified metric or default to R2
+                sort_by = sort_metric if sort_metric != 'auto' else 'R2'
+                leaderboard = leaderboard.sort_values(sort_by, ascending=False)
+                best_model_name = leaderboard.iloc[0]['Model']
+                best_model_id = model_id_map[best_model_name]
+                # Get the actual model using ID
+                if hyperparameter_tuning:
+                    best_model = regression_module.tune_model(
+                        regression_module.create_model(best_model_id, fold=cv_folds, verbose=False),
+                        n_iter=tuning_iterations,
+                        optimize=sort_by,
+                        verbose=False
+                    )
+                else:
+                    best_model = regression_module.create_model(best_model_id, fold=cv_folds, verbose=False)
             else:
-                top_models = [best_models]
-                best_model = best_models
+                raise Exception("No models completed successfully")
                 
         else:
-            # Get all available classification models and run them
+            # Get all available classification models
             available_models = classification_module.models()
-            logger.info(f"Available classification models: {len(available_models)}")
+            logger.info(f"Training {len(available_models)} classification models with streaming results...")
             
-            # Compare ALL models (no selection limit)
-            best_models = classification_module.compare_models(
-                include=None,  # Include all models
-                fold=3,        # Reduce CV folds for speed
-                sort='Accuracy', # Sort by Accuracy
-                turbo=False    # Don't use turbo mode
-            )
+            all_results = []
+            model_id_map = {}  # Map model names to IDs
             
-            leaderboard = classification_module.pull()
+            # Train each model individually - use index as model ID
+            for idx, (model_id, row) in enumerate(available_models.iterrows(), 1):
+                model_name = row['Name']
+                model_id_map[model_name] = model_id
+                
+                try:
+                    logger.info(f"[{idx}/{len(available_models)}] 🔄 TRAINING {model_name} (ID: {model_id})...")
+                    training_tasks[config_id]["current_model"] = model_name
+                    training_tasks[config_id]["progress"] = f"{idx}/{len(available_models)}"
+                    
+                    # Train single model using index as ID
+                    import time
+                    start_time = time.time()
+                    
+                    logger.info(f"  ➤ Creating model with {cv_folds}-fold cross-validation...")
+                    
+                    # Apply hyperparameter tuning if enabled
+                    if hyperparameter_tuning:
+                        model = classification_module.tune_model(
+                            classification_module.create_model(model_id, fold=cv_folds, verbose=False),
+                            n_iter=tuning_iterations,
+                            optimize=sort_metric if sort_metric != 'auto' else 'Accuracy',
+                            verbose=False
+                        )
+                    else:
+                        model = classification_module.create_model(
+                            model_id,
+                            fold=cv_folds,
+                            verbose=False
+                        )
+                    
+                    training_time = time.time() - start_time
+                    
+                    # Get metrics for this model
+                    metrics = classification_module.pull()
+                    if not metrics.empty:
+                        result = metrics.iloc[-1].to_dict()
+                        result['Model'] = model_name
+                        result['TT (Sec)'] = round(training_time, 2)
+                        
+                        # Log detailed training info
+                        logger.info(f"  ✅ COMPLETED in {training_time:.3f}s")
+                        logger.info(f"     - Accuracy: {result.get('Accuracy', 0):.4f}")
+                        logger.info(f"     - AUC: {result.get('AUC', 0):.4f}")
+                        logger.info(f"     - F1: {result.get('F1', 0):.4f}")
+                        
+                        all_results.append(result)
+                        
+                        # 🚀 PUSH RESULT IMMEDIATELY
+                        push_model_result(config_id, result)
+                        logger.info(f"  📤 Result pushed to frontend stream")
+                        
+                        all_results.append(result)
+                        
+                        # 🚀 PUSH RESULT IMMEDIATELY
+                        push_model_result(config_id, result)
+                        logger.info(f"✅ Completed {model_name} - Pushed to stream")
+                    
+                except Exception as model_error:
+                    import traceback
+                    error_details = traceback.format_exc()
+                    logger.error(f"⚠️ Classification Model {model_name} (ID: {model_id}) failed: {model_error}")
+                    logger.error(f"Full traceback:\n{error_details}")
+                    # Push failed model result
+                    failed_result = {
+                        'Model': model_name,
+                        'status': 'failed',
+                        'error': str(model_error)
+                    }
+                    push_model_result(config_id, failed_result)
             
-            # Get top 5 models
-            if isinstance(best_models, list):
-                top_models = best_models[:5]
-                best_model = best_models[0]
+            # Create leaderboard from all results
+            leaderboard = pd.DataFrame(all_results)
+            if not leaderboard.empty:
+                # Sort by the specified metric or default to Accuracy
+                sort_by = sort_metric if sort_metric != 'auto' else 'Accuracy'
+                leaderboard = leaderboard.sort_values(sort_by, ascending=False)
+                best_model_name = leaderboard.iloc[0]['Model']
+                best_model_id = model_id_map[best_model_name]
+                # Get the actual model using ID
+                if hyperparameter_tuning:
+                    best_model = classification_module.tune_model(
+                        classification_module.create_model(best_model_id, fold=cv_folds, verbose=False),
+                        n_iter=tuning_iterations,
+                        optimize=sort_by,
+                        verbose=False
+                    )
+                else:
+                    best_model = classification_module.create_model(best_model_id, fold=cv_folds, verbose=False)
+                best_model = classification_module.create_model(best_model_id, fold=3, verbose=False)
+                best_model = classification_module.create_model(best_model_name, fold=3, verbose=False)
             else:
-                top_models = [best_models]
-                best_model = best_models
+                raise Exception("No models completed successfully")
         
-        logger.info(f"Training completed. Best model: {best_model}")
+        logger.info(f"All models trained. Best model: {best_model_name}")
         
         training_tasks[config_id]["status"] = "finalizing"
         
@@ -828,45 +1027,28 @@ async def run_regular_ml_training(config_id: str, config: dict):
         models_dir.mkdir(parents=True, exist_ok=True)
         
         # Save the finalized best model
+        saved_count = 1  # Count the best model
         if config["task_type"] == "regression":
             regression_module.save_model(final_best_model, str(models_dir / 'best_model'))
-            # Save top models (FIX: iterate through ALL top models)
-            saved_count = 1  # Count the best model
-            for i, model in enumerate(top_models[:5], start=1):  # Limit to top 5
-                try:
-                    finalized = regression_module.finalize_model(model)
-                    regression_module.save_model(finalized, str(models_dir / f'top_{i}_model'))
-                    saved_count += 1
-                    logger.info(f"Saved model {i}: {str(model)}")
-                except Exception as e:
-                    logger.warning(f"Failed to save model {i}: {str(e)}")
+            logger.info(f"Saved best model: {best_model_name}")
         else:
             classification_module.save_model(final_best_model, str(models_dir / 'best_model'))
-            # Save top models (FIX: iterate through ALL top models)
-            saved_count = 1  # Count the best model
-            for i, model in enumerate(top_models[:5], start=1):  # Limit to top 5
-                try:
-                    finalized = classification_module.finalize_model(model)
-                    classification_module.save_model(finalized, str(models_dir / f'top_{i}_model'))
-                    saved_count += 1
-                    logger.info(f"Saved model {i}: {str(model)}")
-                except Exception as e:
-                    logger.warning(f"Failed to save model {i}: {str(e)}")
+            logger.info(f"Saved best model: {best_model_name}")
         
         # Save leaderboard
         leaderboard.to_csv(models_dir / 'leaderboard.csv', index=False)
         
-        # Update final status (FIX: use saved_count instead of len(top_models))
-        from datetime import datetime
+        # Update final status
         training_tasks[config_id].update({
             "status": "completed",
             "leaderboard": leaderboard.to_dict('records'),
-            "best_model_name": str(best_model),
-            "models_saved": saved_count,  # Use actual saved count
+            "best_model_name": best_model_name,
+            "models_saved": saved_count,
             "models_dir": str(models_dir),
             "completed_at": datetime.now().isoformat(),
-            "total_models_tested": len(available_models),
-            "training_notes": "Ran all available models with minimal preprocessing"
+            "total_models_tested": len(all_results),
+            "successful_models": len([r for r in all_results if r.get('status') != 'failed']),
+            "training_notes": "Streamed results in real-time as models completed"
         })
         
         logger.info(f"Training completed successfully for {config_id}. Tested {len(available_models)} models.")
@@ -884,7 +1066,7 @@ async def run_regular_ml_training(config_id: str, config: dict):
         
 @router.post("/start-training/")
 async def start_training(background_tasks: BackgroundTasks, config_id: str = Form(...)):
-    """Start model training in background"""
+    """Start model training in background using thread pool"""
     try:
         if config_id not in training_tasks:
             raise HTTPException(status_code=404, detail="Configuration not found")
@@ -895,11 +1077,25 @@ async def start_training(background_tasks: BackgroundTasks, config_id: str = For
         # Add timestamp
         from datetime import datetime
         training_tasks[config_id]["started_at"] = datetime.now().isoformat()
-        
-        # Start background training
-        background_tasks.add_task(run_training_task, config_id, config)
-        
         training_tasks[config_id]["status"] = "started"
+        
+        # Run training in thread pool to avoid blocking
+        import asyncio
+        from concurrent.futures import ThreadPoolExecutor
+        
+        def train_in_thread():
+            """Wrapper to run training in a separate thread"""
+            # Create new event loop for this thread
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            try:
+                loop.run_until_complete(run_training_task(config_id, config))
+            finally:
+                loop.close()
+        
+        # Start in thread pool
+        executor = ThreadPoolExecutor(max_workers=1)
+        executor.submit(train_in_thread)
         
         return JSONResponse({
             "success": True,
@@ -938,6 +1134,169 @@ async def get_training_status(task_id: str):
         response["error"] = task.get("error")
     
     return JSONResponse(clean_for_json(response))
+
+@router.get("/training-stream/{task_id}")
+async def stream_training_results(task_id: str):
+    """Stream model results as they complete using Server-Sent Events with real-time updates"""
+    if task_id not in training_tasks:
+        raise HTTPException(status_code=404, detail="Task not found")
+    
+    async def event_generator():
+        """Generate SSE events for model results with immediate flushing"""
+        # Send initial connection event with padding to force flush
+        connection_data = {'type': 'connected', 'task_id': task_id}
+        connection_msg = f"data: {json.dumps(connection_data)}\n\n" + (" " * 2048) + "\n\n"
+        yield connection_msg
+        
+        # If there are already completed models in queue, send them immediately
+        if task_id in model_results_queue and model_results_queue[task_id]:
+            logger.info(f"📤 Sending {len(model_results_queue[task_id])} cached results to new SSE connection")
+            for result in model_results_queue[task_id]:
+                result_msg = f"data: {json.dumps(clean_for_json(result))}\n\n" + (" " * 2048) + "\n\n"
+                yield result_msg
+                await asyncio.sleep(0.05)  # Small delay between cached results
+        
+        last_check = len(model_results_queue.get(task_id, []))
+        heartbeat_counter = 0
+        
+        while True:
+            task = training_tasks.get(task_id)
+            if not task:
+                error_msg = f"data: {json.dumps({'type': 'error', 'message': 'Task not found'})}\n\n"
+                yield error_msg
+                break
+            
+            # Check if there are new results in the queue
+            has_new_results = False
+            if task_id in model_results_queue:
+                current_results = model_results_queue[task_id]
+                if len(current_results) > last_check:
+                    # Send new results one by one with padding to force flush
+                    for result in current_results[last_check:]:
+                        # Add padding to force immediate delivery (2KB padding)
+                        result_msg = f"data: {json.dumps(clean_for_json(result))}\n\n" + (" " * 2048) + "\n\n"
+                        yield result_msg
+                        has_new_results = True
+                        await asyncio.sleep(0.01)  # Tiny delay between events
+                    last_check = len(current_results)
+            
+            # Check task status
+            status = task.get("status")
+            
+            if status == "completed":
+                # Send completion event with final summary
+                completion_data = {
+                    "type": "completed",
+                    "task_id": task_id,
+                    "best_model_name": task.get("best_model_name"),
+                    "models_saved": task.get("models_saved"),
+                    "total_models_tested": task.get("total_models_tested"),
+                    "leaderboard": clean_for_json(task.get("leaderboard", []))
+                }
+                completion_msg = f"data: {json.dumps(completion_data)}\n\n"
+                yield completion_msg
+                break
+            
+            elif status == "failed":
+                # Send error event
+                error_data = {
+                    "type": "error",
+                    "task_id": task_id,
+                    "error": task.get("error", "Unknown error")
+                }
+                error_msg = f"data: {json.dumps(error_data)}\n\n"
+                yield error_msg
+                break
+            
+            # Send heartbeat periodically to keep connection alive
+            if not has_new_results:
+                heartbeat_counter += 1
+                if heartbeat_counter >= 5:
+                    yield ": heartbeat\n\n"
+                    heartbeat_counter = 0
+            else:
+                heartbeat_counter = 0
+            
+            # Very short wait for real-time responsiveness
+            await asyncio.sleep(0.1)
+    
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",  # Disable nginx buffering
+            "Content-Type": "text/event-stream; charset=utf-8"
+        }
+    )
+
+@router.post("/predict/")
+async def predict_with_model(
+    config_id: str = Form(...),
+    model_name: str = Form(...),
+    input_data: str = Form(...)
+):
+    """Make predictions using a trained model"""
+    try:
+        if config_id not in training_tasks:
+            raise HTTPException(status_code=404, detail="Training configuration not found")
+        
+        task = training_tasks[config_id]
+        
+        if task.get("status") != "completed":
+            raise HTTPException(status_code=400, detail="Training not completed yet")
+        
+        # Parse input data
+        try:
+            inputs = json.loads(input_data)
+        except:
+            raise HTTPException(status_code=400, detail="Invalid input data format")
+        
+        # Load the trained model
+        models_dir = Path("models") / config_id
+        model_file = models_dir / f"{model_name.replace(' ', '_')}.pkl"
+        
+        if not model_file.exists():
+            # Try best model
+            model_file = models_dir / "best_model.pkl"
+            if not model_file.exists():
+                raise HTTPException(status_code=404, detail=f"Model file not found: {model_name}")
+        
+        # Load model
+        import joblib
+        model = joblib.load(model_file)
+        
+        # Prepare input dataframe
+        input_df = pd.DataFrame([inputs])
+        
+        # Make prediction
+        prediction = model.predict(input_df)[0]
+        
+        # Get prediction probability if classification
+        prediction_proba = None
+        if hasattr(model, 'predict_proba'):
+            try:
+                proba = model.predict_proba(input_df)[0]
+                prediction_proba = float(max(proba))
+            except:
+                pass
+        
+        return JSONResponse({
+            "success": True,
+            "prediction": float(prediction) if isinstance(prediction, (np.integer, np.floating)) else prediction,
+            "confidence": prediction_proba,
+            "model_name": model_name,
+            "input_data": inputs
+        })
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Prediction error: {str(e)}")
+        import traceback
+        logger.error(traceback.format_exc())
+        raise HTTPException(status_code=500, detail=f"Prediction failed: {str(e)}")
 
 @router.get("/download-model/{task_id}/{model_name}")
 async def download_model(task_id: str, model_name: str):
@@ -1228,7 +1587,14 @@ async def configure_training_with_file(
     remove_outliers: bool = Form(True),
     outliers_threshold: float = Form(0.05),
     feature_selection: bool = Form(True),
-    polynomial_features: bool = Form(False)
+    polynomial_features: bool = Form(False),
+    # New advanced parameters
+    cv_folds: int = Form(3),
+    sort_metric: str = Form('auto'),
+    hyperparameter_tuning: bool = Form(False),
+    tuning_iterations: int = Form(10),
+    ensemble_methods: bool = Form(False),
+    stacking_enabled: bool = Form(False)
 ):
     """Configure training with uploaded file"""
     try:
@@ -1295,7 +1661,14 @@ async def configure_training_with_file(
                 "remove_outliers": remove_outliers,
                 "outliers_threshold": outliers_threshold,
                 "feature_selection": feature_selection,
-                "polynomial_features": polynomial_features
+                "polynomial_features": polynomial_features,
+                # Advanced parameters
+                "cv_folds": cv_folds,
+                "sort_metric": sort_metric,
+                "hyperparameter_tuning": hyperparameter_tuning,
+                "tuning_iterations": tuning_iterations,
+                "ensemble_methods": ensemble_methods,
+                "stacking_enabled": stacking_enabled
             },
             "data_file": str(training_file_path),
             "data_shape": data.shape,
@@ -1304,6 +1677,11 @@ async def configure_training_with_file(
         }
         
         logger.info(f"Configuration saved with ID: {config_id}")
+        logger.info(f"  - CV Folds: {cv_folds}")
+        logger.info(f"  - Sort Metric: {sort_metric}")
+        logger.info(f"  - Hyperparameter Tuning: {hyperparameter_tuning}")
+        logger.info(f"  - Ensemble Methods: {ensemble_methods}")
+        logger.info(f"  - Stacking: {stacking_enabled}")
         
         return JSONResponse({
             "success": True,

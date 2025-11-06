@@ -143,6 +143,7 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],  # Important for SSE
 )
 
 app.include_router(ml_router)

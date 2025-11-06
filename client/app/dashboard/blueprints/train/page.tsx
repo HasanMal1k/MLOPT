@@ -14,6 +14,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
+import { Input } from "@/components/ui/input"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -49,7 +50,8 @@ import {
   Sparkles,
   Database,
   Award,
-  Layers
+  Layers,
+  RefreshCw
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 
@@ -116,10 +118,24 @@ export default function MLTrainingPage() {
     polynomial_features: false
   })
 
+  // Advanced training parameters
+  const [cvFolds, setCvFolds] = useState<number>(3)
+  const [sortMetric, setSortMetric] = useState<string>('auto') // Performance metric to optimize
+  const [hyperparameterTuning, setHyperparameterTuning] = useState<boolean>(false)
+  const [tuningIterations, setTuningIterations] = useState<number>(10)
+  const [ensembleMethods, setEnsembleMethods] = useState<boolean>(false)
+  const [stackingEnabled, setStackingEnabled] = useState<boolean>(false)
+
   // Training state
   const [configId, setConfigId] = useState<string | null>(null)
   const [trainingStatus, setTrainingStatus] = useState<string>('idle')
   const [trainingResults, setTrainingResults] = useState<any>(null)
+
+  // Model testing state
+  const [selectedModelForTest, setSelectedModelForTest] = useState<string | null>(null)
+  const [testInputs, setTestInputs] = useState<Record<string, string>>({})
+  const [testPrediction, setTestPrediction] = useState<any>(null)
+  const [isTesting, setIsTesting] = useState(false)
 
   // Loading states
   const [isLoadingFile, setIsLoadingFile] = useState(true)
@@ -310,6 +326,14 @@ export default function MLTrainingPage() {
         formData.append('outliers_threshold', trainingConfig.outliers_threshold.toString())
         formData.append('feature_selection', trainingConfig.feature_selection.toString())
         formData.append('polynomial_features', trainingConfig.polynomial_features.toString())
+        
+        // Add new advanced parameters
+        formData.append('cv_folds', cvFolds.toString())
+        formData.append('sort_metric', sortMetric)
+        formData.append('hyperparameter_tuning', hyperparameterTuning.toString())
+        formData.append('tuning_iterations', tuningIterations.toString())
+        formData.append('ensemble_methods', ensembleMethods.toString())
+        formData.append('stacking_enabled', stackingEnabled.toString())
       }
 
       console.log('Sending configuration to backend...')
@@ -390,9 +414,17 @@ export default function MLTrainingPage() {
       
       const result = await response.json()
       console.log('Training started:', result)
+      console.log('Result success:', result.success)
+      console.log('Config ID:', currentConfigId)
       
       if (result.success) {
-        pollTrainingStatus(currentConfigId)
+        // Use SSE streaming instead of polling
+        console.log('📞 Calling streamTrainingResults with:', currentConfigId)
+        streamTrainingResults(currentConfigId)
+      } else {
+        console.error('❌ Training start did not return success')
+        setErrorMessage('Training failed to start properly')
+        setIsTraining(false)
       }
     } catch (error) {
       console.error('Training start error:', error)
@@ -401,7 +433,132 @@ export default function MLTrainingPage() {
     }
   }
 
-  const pollTrainingStatus = async (taskId: string) => {
+  // Replace polling with Server-Sent Events for real-time updates
+  const streamTrainingResults = (taskId: string) => {
+    console.log('🚀 Starting SSE stream for task:', taskId)
+    
+    try {
+      const eventSource = new EventSource(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/ml/training-stream/${taskId}`
+      )
+
+      console.log('📡 EventSource created, waiting for connection...')
+
+      // Initialize leaderboard array
+      const liveLeaderboard: any[] = []
+
+      eventSource.onopen = () => {
+        console.log('✅ SSE connection opened successfully')
+      }
+
+      eventSource.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data)
+        console.log('📊 SSE Event received:', data.type, data)
+
+        if (data.type === 'connected') {
+          console.log('✅ Connected to training stream')
+          setTrainingStatus('training')
+        }
+        
+        else if (data.type === 'model_completed') {
+          // Add model to live leaderboard
+          const modelResult = data.model
+          
+          // Only add if not a failed model
+          if (modelResult.status !== 'failed') {
+            liveLeaderboard.push(modelResult)
+            
+            // Sort leaderboard by performance metric
+            const sortedLeaderboard = [...liveLeaderboard].sort((a, b) => {
+              const metricA = a.R2 || a.Accuracy || 0
+              const metricB = b.R2 || b.Accuracy || 0
+              return metricB - metricA
+            })
+            
+            // Update training results in real-time
+            setTrainingResults((prev: any) => ({
+              ...prev,
+              leaderboard: sortedLeaderboard,
+              total_models_tested: liveLeaderboard.length,
+              current_model: modelResult.Model
+            }))
+
+            console.log(`✅ Model added to leaderboard: ${modelResult.Model} (${liveLeaderboard.length} total)`)
+            
+            // Show toast notification
+            toast({
+              title: `Model Completed: ${modelResult.Model}`,
+              description: `Score: ${(modelResult.R2 || modelResult.Accuracy || 0).toFixed(4)}`,
+              duration: 2000
+            })
+          }
+        }
+        
+        else if (data.type === 'completed') {
+          console.log('🎉 Training completed!')
+          
+          setTrainingResults({
+            leaderboard: data.leaderboard || liveLeaderboard,
+            best_model_name: data.best_model_name,
+            models_saved: data.models_saved,
+            total_models_tested: data.total_models_tested,
+            completed_at: new Date().toISOString()
+          })
+          
+          setTrainingStatus('completed')
+          setIsTraining(false)
+          setCurrentStep(4) // Move to results
+          
+          toast({
+            title: "Training Complete!",
+            description: `${data.total_models_tested} models trained. Best: ${data.best_model_name}`,
+          })
+          
+          eventSource.close()
+        }
+        
+        else if (data.type === 'error') {
+          console.error('❌ Training error:', data.error)
+          setErrorMessage(data.error || 'Training failed')
+          setIsTraining(false)
+          setTrainingStatus('failed')
+          
+          toast({
+            variant: "destructive",
+            title: "Training Failed",
+            description: data.error
+          })
+          
+          eventSource.close()
+        }
+      } catch (error) {
+        console.error('Error parsing SSE event:', error)
+      }
+    }
+
+    eventSource.onerror = (error) => {
+      console.error('❌ SSE connection error:', error)
+      console.error('SSE readyState:', eventSource.readyState)
+      eventSource.close()
+      
+      // Fallback to polling if SSE fails
+      console.log('⚠️ Falling back to polling...')
+      pollTrainingStatusFallback(taskId)
+    }
+
+    // Store event source for cleanup
+    return eventSource
+    } catch (error) {
+      console.error('❌ Failed to create EventSource:', error)
+      // Fallback to polling immediately
+      pollTrainingStatusFallback(taskId)
+      return null
+    }
+  }
+
+  // Fallback polling function if SSE fails
+  const pollTrainingStatusFallback = async (taskId: string) => {
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/ml/training-status/${taskId}`)
       
@@ -413,7 +570,7 @@ export default function MLTrainingPage() {
       if (result.status === 'completed') {
         setTrainingResults(result)
         setIsTraining(false)
-        setCurrentStep(4) // Move to results
+        setCurrentStep(4)
         toast({
           title: "Training Complete!",
           description: "Your models have been trained successfully."
@@ -422,12 +579,11 @@ export default function MLTrainingPage() {
         setErrorMessage(result.error || 'Training failed')
         setIsTraining(false)
       } else {
-        // Continue polling
-        setTimeout(() => pollTrainingStatus(taskId), 3000)
+        setTimeout(() => pollTrainingStatusFallback(taskId), 3000)
       }
     } catch (error) {
       console.error('Status check error:', error)
-      setTimeout(() => pollTrainingStatus(taskId), 5000)
+      setTimeout(() => pollTrainingStatusFallback(taskId), 5000)
     }
   }
 
@@ -1256,78 +1412,299 @@ export default function MLTrainingPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <div>
-                    <Label>Training Data Split</Label>
-                    <Select 
-                      value={trainingConfig.train_size.toString()} 
-                      onValueChange={(value) => setTrainingConfig(prev => ({ ...prev, train_size: parseFloat(value) }))}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="0.7">70% Training, 30% Testing</SelectItem>
-                        <SelectItem value="0.8">80% Training, 20% Testing</SelectItem>
-                        <SelectItem value="0.9">90% Training, 10% Testing</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div>
-                    <Label>Outlier Threshold</Label>
-                    <Select 
-                      value={trainingConfig.outliers_threshold.toString()} 
-                      onValueChange={(value) => setTrainingConfig(prev => ({ ...prev, outliers_threshold: parseFloat(value) }))}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="0.01">1% (Very Strict)</SelectItem>
-                        <SelectItem value="0.05">5% (Recommended)</SelectItem>
-                        <SelectItem value="0.1">10% (Lenient)</SelectItem>
-                      </SelectContent>
-                    </Select>
+              <div className="space-y-6">
+                {/* Basic Parameters */}
+                <div>
+                  <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                    <Settings className="h-5 w-5" />
+                    Basic Configuration
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-4">
+                      <div>
+                        <Label>Training Data Split</Label>
+                        <Select 
+                          value={trainingConfig.train_size.toString()} 
+                          onValueChange={(value) => setTrainingConfig(prev => ({ ...prev, train_size: parseFloat(value) }))}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="0.6">60% Training, 40% Testing</SelectItem>
+                            <SelectItem value="0.7">70% Training, 30% Testing</SelectItem>
+                            <SelectItem value="0.8">80% Training, 20% Testing</SelectItem>
+                            <SelectItem value="0.9">90% Training, 10% Testing</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Split ratio for training and testing datasets
+                        </p>
+                      </div>
+                      
+                      <div>
+                        <Label>Cross-Validation Folds</Label>
+                        <Select 
+                          value={cvFolds.toString()} 
+                          onValueChange={(value) => setCvFolds(parseInt(value))}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="3">3 Folds (Fast)</SelectItem>
+                            <SelectItem value="5">5 Folds (Balanced)</SelectItem>
+                            <SelectItem value="10">10 Folds (Thorough)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          More folds = more accurate but slower training
+                        </p>
+                      </div>
+
+                      <div>
+                        <Label>Optimization Metric</Label>
+                        <Select 
+                          value={sortMetric} 
+                          onValueChange={setSortMetric}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="auto">Auto (Recommended)</SelectItem>
+                            {taskType === 'regression' ? (
+                              <>
+                                <SelectItem value="R2">R² Score</SelectItem>
+                                <SelectItem value="MAE">Mean Absolute Error</SelectItem>
+                                <SelectItem value="RMSE">Root Mean Squared Error</SelectItem>
+                                <SelectItem value="RMSLE">Root Mean Squared Log Error</SelectItem>
+                              </>
+                            ) : (
+                              <>
+                                <SelectItem value="Accuracy">Accuracy</SelectItem>
+                                <SelectItem value="AUC">AUC</SelectItem>
+                                <SelectItem value="F1">F1 Score</SelectItem>
+                                <SelectItem value="Precision">Precision</SelectItem>
+                                <SelectItem value="Recall">Recall</SelectItem>
+                              </>
+                            )}
+                          </SelectContent>
+                        </Select>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Metric to optimize and rank models
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div>
+                        <Label>Outlier Threshold</Label>
+                        <Select 
+                          value={trainingConfig.outliers_threshold.toString()} 
+                          onValueChange={(value) => setTrainingConfig(prev => ({ ...prev, outliers_threshold: parseFloat(value) }))}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="0.01">1% (Very Strict)</SelectItem>
+                            <SelectItem value="0.05">5% (Recommended)</SelectItem>
+                            <SelectItem value="0.1">10% (Lenient)</SelectItem>
+                            <SelectItem value="0.15">15% (Very Lenient)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Percentage of data to consider as outliers
+                        </p>
+                      </div>
+
+                      <div className="flex items-center justify-between p-3 border rounded-lg">
+                        <div>
+                          <Label className="cursor-pointer">Data Normalization</Label>
+                          <p className="text-xs text-muted-foreground">Scale features to 0-1 range</p>
+                        </div>
+                        <Checkbox
+                          checked={trainingConfig.normalize}
+                          onCheckedChange={(checked) => setTrainingConfig(prev => ({ ...prev, normalize: !!checked }))}
+                        />
+                      </div>
+                      
+                      <div className="flex items-center justify-between p-3 border rounded-lg">
+                        <div>
+                          <Label className="cursor-pointer">Feature Transformation</Label>
+                          <p className="text-xs text-muted-foreground">Apply power transforms</p>
+                        </div>
+                        <Checkbox
+                          checked={trainingConfig.transformation}
+                          onCheckedChange={(checked) => setTrainingConfig(prev => ({ ...prev, transformation: !!checked }))}
+                        />
+                      </div>
+                      
+                      <div className="flex items-center justify-between p-3 border rounded-lg">
+                        <div>
+                          <Label className="cursor-pointer">Remove Outliers</Label>
+                          <p className="text-xs text-muted-foreground">Filter extreme values</p>
+                        </div>
+                        <Checkbox
+                          checked={trainingConfig.remove_outliers}
+                          onCheckedChange={(checked) => setTrainingConfig(prev => ({ ...prev, remove_outliers: !!checked }))}
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <Label>Data Normalization</Label>
-                    <Checkbox
-                      checked={trainingConfig.normalize}
-                      onCheckedChange={(checked) => setTrainingConfig(prev => ({ ...prev, normalize: !!checked }))}
-                    />
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <Label>Feature Transformation</Label>
-                    <Checkbox
-                      checked={trainingConfig.transformation}
-                      onCheckedChange={(checked) => setTrainingConfig(prev => ({ ...prev, transformation: !!checked }))}
-                    />
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <Label>Remove Outliers</Label>
-                    <Checkbox
-                      checked={trainingConfig.remove_outliers}
-                      onCheckedChange={(checked) => setTrainingConfig(prev => ({ ...prev, remove_outliers: !!checked }))}
-                    />
+                {/* Advanced Parameters */}
+                <div>
+                  <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                    <Zap className="h-5 w-5 text-amber-600" />
+                    Advanced Options
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between p-3 border rounded-lg bg-gradient-to-r from-purple-50 to-pink-50">
+                        <div>
+                          <Label className="cursor-pointer font-semibold">Hyperparameter Tuning</Label>
+                          <p className="text-xs text-muted-foreground">Optimize model parameters (slower)</p>
+                        </div>
+                        <Checkbox
+                          checked={hyperparameterTuning}
+                          onCheckedChange={(checked) => setHyperparameterTuning(!!checked)}
+                        />
+                      </div>
+
+                      {hyperparameterTuning && (
+                        <div>
+                          <Label>Tuning Iterations</Label>
+                          <Select 
+                            value={tuningIterations.toString()} 
+                            onValueChange={(value) => setTuningIterations(parseInt(value))}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="5">5 iterations (Fast)</SelectItem>
+                              <SelectItem value="10">10 iterations (Balanced)</SelectItem>
+                              <SelectItem value="20">20 iterations (Thorough)</SelectItem>
+                              <SelectItem value="50">50 iterations (Exhaustive)</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Number of parameter combinations to try
+                          </p>
+                        </div>
+                      )}
+
+                      <div className="flex items-center justify-between p-3 border rounded-lg">
+                        <div>
+                          <Label className="cursor-pointer">Polynomial Features</Label>
+                          <p className="text-xs text-muted-foreground">Create interaction features</p>
+                        </div>
+                        <Checkbox
+                          checked={trainingConfig.polynomial_features}
+                          onCheckedChange={(checked) => setTrainingConfig(prev => ({ ...prev, polynomial_features: !!checked }))}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between p-3 border rounded-lg bg-gradient-to-r from-blue-50 to-cyan-50">
+                        <div>
+                          <Label className="cursor-pointer font-semibold">Ensemble Methods</Label>
+                          <p className="text-xs text-muted-foreground">Combine multiple models</p>
+                        </div>
+                        <Checkbox
+                          checked={ensembleMethods}
+                          onCheckedChange={(checked) => setEnsembleMethods(!!checked)}
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between p-3 border rounded-lg bg-gradient-to-r from-green-50 to-emerald-50">
+                        <div>
+                          <Label className="cursor-pointer font-semibold">Model Stacking</Label>
+                          <p className="text-xs text-muted-foreground">Stack best models for better accuracy</p>
+                        </div>
+                        <Checkbox
+                          checked={stackingEnabled}
+                          onCheckedChange={(checked) => setStackingEnabled(!!checked)}
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between p-3 border rounded-lg">
+                        <div>
+                          <Label className="cursor-pointer">Feature Selection</Label>
+                          <p className="text-xs text-muted-foreground">Auto-select best features</p>
+                        </div>
+                        <Checkbox
+                          checked={trainingConfig.feature_selection}
+                          onCheckedChange={(checked) => setTrainingConfig(prev => ({ ...prev, feature_selection: !!checked }))}
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Configuration Summary */}
-              <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-                <h4 className="font-medium mb-2">Configuration Summary</h4>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>Target: <span className="font-medium">{targetColumn}</span></div>
-                  <div>Task: <span className="font-medium">{taskType}</span></div>
-                  <div>Features: <span className="font-medium">{selectedFeatures.length}</span></div>
-                  <div>Train Split: <span className="font-medium">{(trainingConfig.train_size * 100)}%</span></div>
+                {/* Information Alert */}
+                <Alert className="bg-gradient-to-r from-amber-50 to-orange-50 border-amber-200">
+                  <AlertCircle className="h-4 w-4 text-amber-600" />
+                  <AlertTitle className="text-amber-900">Training Performance Note</AlertTitle>
+                  <AlertDescription className="text-amber-800">
+                    <ul className="list-disc list-inside space-y-1 text-sm mt-2">
+                      <li>More CV folds = More accurate but slower (3 folds ≈ 1-2 min, 10 folds ≈ 3-5 min)</li>
+                      <li>Hyperparameter tuning can increase training time by 5-10x</li>
+                      <li>Ensemble methods and stacking train additional meta-models</li>
+                      <li>Recommended: Start with default settings, then experiment</li>
+                    </ul>
+                  </AlertDescription>
+                </Alert>
+
+                {/* Configuration Summary */}
+                <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border-2 border-blue-200">
+                  <h4 className="font-semibold mb-3 text-blue-900">Configuration Summary</h4>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="bg-white">Target</Badge>
+                      <span className="font-medium">{targetColumn}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="bg-white">Task</Badge>
+                      <span className="font-medium capitalize">{taskType}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="bg-white">Features</Badge>
+                      <span className="font-medium">{selectedFeatures.length}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="bg-white">Train Split</Badge>
+                      <span className="font-medium">{(trainingConfig.train_size * 100)}%</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="bg-white">CV Folds</Badge>
+                      <span className="font-medium">{cvFolds}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="bg-white">Metric</Badge>
+                      <span className="font-medium">{sortMetric === 'auto' ? 'Auto' : sortMetric}</span>
+                    </div>
+                  </div>
+                  {(hyperparameterTuning || ensembleMethods || stackingEnabled) && (
+                    <div className="mt-3 pt-3 border-t border-blue-200">
+                      <div className="text-xs font-medium text-blue-900 mb-2">Advanced Features Enabled:</div>
+                      <div className="flex flex-wrap gap-2">
+                        {hyperparameterTuning && (
+                          <Badge className="bg-purple-500 text-white">Hyperparameter Tuning ({tuningIterations} iter)</Badge>
+                        )}
+                        {ensembleMethods && (
+                          <Badge className="bg-blue-500 text-white">Ensemble Methods</Badge>
+                        )}
+                        {stackingEnabled && (
+                          <Badge className="bg-green-500 text-white">Model Stacking</Badge>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </CardContent>
@@ -1391,20 +1768,97 @@ export default function MLTrainingPage() {
                 )}
 
                 {isTraining && (
-                  <div className="space-y-4">
+                  <div className="space-y-6">
+                    {/* Training Info Card */}
+                    <Card className="border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+                      <CardContent className="pt-6">
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                          <div>
+                            <div className="text-sm text-muted-foreground">Dataset Rows</div>
+                            <div className="text-2xl font-bold text-blue-700">
+                              {fileMetadata?.row_count?.toLocaleString() || 0}
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-sm text-muted-foreground">Features</div>
+                            <div className="text-2xl font-bold text-green-700">
+                              {selectedFeatures.length || fileMetadata?.column_names?.length || 0}
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-sm text-muted-foreground">CV Folds</div>
+                            <div className="text-2xl font-bold text-purple-700">3</div>
+                            <div className="text-xs text-muted-foreground">Cross-validation</div>
+                          </div>
+                          <div>
+                            <div className="text-sm text-muted-foreground">Train/Test</div>
+                            <div className="text-2xl font-bold text-amber-700">
+                              {Math.round((trainingConfig.train_size || 0.8) * 100)}%
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {Math.round(fileMetadata?.row_count * (trainingConfig.train_size || 0.8))} / {Math.round(fileMetadata?.row_count * (1 - (trainingConfig.train_size || 0.8)))} rows
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                    
                     <div className="text-center">
-                      <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-                      <h3 className="text-lg font-medium">Training Models...</h3>
+                      <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-600" />
+                      <h3 className="text-lg font-medium">Training Models in Real-Time...</h3>
                       <p className="text-muted-foreground">Status: {trainingStatus}</p>
+                      {trainingResults?.current_model && (
+                        <Badge className="mt-2 bg-blue-500">
+                          <Zap className="h-3 w-3 mr-1" />
+                          Currently: {trainingResults.current_model}
+                        </Badge>
+                      )}
                     </div>
                     
                     <div className="space-y-2">
                       <div className="flex justify-between text-sm">
-                        <span>Training Progress</span>
-                        <span>This may take 5-15 minutes</span>
+                        <span>Models Completed</span>
+                        <span>
+                          {trainingResults?.total_models_tested || 0} models trained
+                        </span>
                       </div>
-                      <Progress value={70} className="h-2" />
+                      <Progress 
+                        value={trainingResults?.total_models_tested ? (trainingResults.total_models_tested * 5) : 10} 
+                        className="h-2" 
+                      />
                     </div>
+
+                    {/* Live Leaderboard Preview */}
+                    {trainingResults?.leaderboard && trainingResults.leaderboard.length > 0 && (
+                      <Card className="border-blue-200 bg-blue-50/50">
+                        <CardHeader className="pb-3">
+                          <CardTitle className="text-sm flex items-center gap-2">
+                            <Sparkles className="h-4 w-4 text-blue-600" />
+                            Live Results (Top 5)
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="space-y-2">
+                            {trainingResults.leaderboard.slice(0, 5).map((model: any, index: number) => (
+                              <div 
+                                key={index} 
+                                className="flex items-center justify-between p-2 bg-white rounded border animate-in slide-in-from-top-2"
+                              >
+                                <div className="flex items-center gap-2">
+                                  <Badge variant="outline" className="w-6 h-6 flex items-center justify-center">
+                                    {index + 1}
+                                  </Badge>
+                                  <span className="font-medium text-sm">{model.Model}</span>
+                                </div>
+                                <div className="text-sm font-semibold text-blue-600">
+                                  {(model.R2 || model.Accuracy || 0).toFixed(4)}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )}
                   </div>
                 )}
               </div>
@@ -1602,6 +2056,192 @@ export default function MLTrainingPage() {
                               <div className="text-sm text-muted-foreground">Download detailed metrics CSV</div>
                             </div>
                           </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Model Testing Interface */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                          <Play className="h-5 w-5 text-blue-600" />
+                          Test Your Models
+                        </CardTitle>
+                        <CardDescription>
+                          Enter values to get predictions from trained models
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-6">
+                          {/* Model Selection */}
+                          <div>
+                            <label className="text-sm font-medium mb-2 block">Select Model to Test</label>
+                            <Select 
+                              value={selectedModelForTest || ''} 
+                              onValueChange={(value) => {
+                                setSelectedModelForTest(value)
+                                setTestPrediction(null)
+                                // Initialize inputs for all features
+                                const inputs: Record<string, string> = {}
+                                selectedFeatures.forEach(feature => {
+                                  inputs[feature] = ''
+                                })
+                                setTestInputs(inputs)
+                              }}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Choose a trained model..." />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {trainingResults.leaderboard?.map((model: any, index: number) => (
+                                  <SelectItem key={index} value={model.Model}>
+                                    <div className="flex items-center justify-between w-full">
+                                      <span>{model.Model}</span>
+                                      <Badge variant={index === 0 ? "default" : "outline"} className="ml-2">
+                                        {taskType === 'classification' 
+                                          ? `${(model.Accuracy * 100).toFixed(1)}%` 
+                                          : `R²: ${model.R2?.toFixed(3)}`}
+                                      </Badge>
+                                    </div>
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          {/* Input Fields */}
+                          {selectedModelForTest && (
+                            <div className="space-y-4">
+                              <div className="p-4 bg-blue-50 rounded-lg">
+                                <h4 className="font-medium mb-3 flex items-center gap-2">
+                                  <Target className="h-4 w-4" />
+                                  Enter Feature Values
+                                </h4>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                  {selectedFeatures.map((feature) => (
+                                    <div key={feature}>
+                                      <label className="text-sm font-medium mb-1 block">{feature}</label>
+                                      <Input
+                                        type="number"
+                                        step="any"
+                                        placeholder={`Enter ${feature}...`}
+                                        value={testInputs[feature] || ''}
+                                        onChange={(e) => setTestInputs(prev => ({
+                                          ...prev,
+                                          [feature]: e.target.value
+                                        }))}
+                                      />
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+
+                              {/* Test Button */}
+                              <Button 
+                                onClick={async () => {
+                                  setIsTesting(true)
+                                  setTestPrediction(null)
+                                  
+                                  try {
+                                    const configIdToUse = configId || localStorage.getItem('ml_config_id')
+                                    if (!configIdToUse) {
+                                      toast({
+                                        variant: "destructive",
+                                        title: "Error",
+                                        description: "Configuration ID not found"
+                                      })
+                                      return
+                                    }
+
+                                    // Prepare data
+                                    const formData = new FormData()
+                                    formData.append('config_id', configIdToUse)
+                                    formData.append('model_name', selectedModelForTest)
+                                    formData.append('input_data', JSON.stringify(testInputs))
+
+                                    const response = await fetch(
+                                      `${process.env.NEXT_PUBLIC_BACKEND_URL}/ml/predict/`,
+                                      {
+                                        method: 'POST',
+                                        body: formData
+                                      }
+                                    )
+
+                                    if (!response.ok) {
+                                      const errorData = await response.json()
+                                      throw new Error(errorData.detail || 'Prediction failed')
+                                    }
+
+                                    const result = await response.json()
+                                    setTestPrediction(result)
+                                    
+                                    toast({
+                                      title: "Prediction Complete",
+                                      description: "Model inference successful"
+                                    })
+                                  } catch (error: any) {
+                                    toast({
+                                      variant: "destructive",
+                                      title: "Prediction Failed",
+                                      description: error.message
+                                    })
+                                  } finally {
+                                    setIsTesting(false)
+                                  }
+                                }}
+                                disabled={isTesting || Object.values(testInputs).some(v => !v)}
+                                className="w-full"
+                                size="lg"
+                              >
+                                {isTesting ? (
+                                  <>
+                                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                                    Running Prediction...
+                                  </>
+                                ) : (
+                                  <>
+                                    <Zap className="h-4 w-4 mr-2" />
+                                    Get Prediction
+                                  </>
+                                )}
+                              </Button>
+
+                              {/* Prediction Result */}
+                              {testPrediction && (
+                                <div className="p-6 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border-2 border-green-200">
+                                  <div className="flex items-center gap-3 mb-4">
+                                    <CheckCircle className="h-6 w-6 text-green-600" />
+                                    <h4 className="font-semibold text-lg">Prediction Result</h4>
+                                  </div>
+                                  <div className="space-y-3">
+                                    <div className="flex items-center justify-between p-4 bg-white rounded-lg">
+                                      <span className="text-sm font-medium text-gray-600">Predicted {targetColumn}:</span>
+                                      <span className="text-2xl font-bold text-green-600">
+                                        {testPrediction.prediction?.toFixed(4) || testPrediction.prediction}
+                                      </span>
+                                    </div>
+                                    <div className="flex items-center justify-between p-3 bg-white rounded-lg">
+                                      <span className="text-sm text-gray-600">Model Used:</span>
+                                      <span className="text-sm font-medium">{selectedModelForTest}</span>
+                                    </div>
+                                    {testPrediction.confidence && (
+                                      <div className="flex items-center justify-between p-3 bg-white rounded-lg">
+                                        <span className="text-sm text-gray-600">Confidence:</span>
+                                        <Badge variant="outline">{(testPrediction.confidence * 100).toFixed(1)}%</Badge>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {!selectedModelForTest && (
+                            <div className="text-center p-8 border-2 border-dashed rounded-lg">
+                              <Zap className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                              <p className="text-gray-600">Select a model above to start testing</p>
+                            </div>
+                          )}
                         </div>
                       </CardContent>
                     </Card>
