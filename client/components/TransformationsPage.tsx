@@ -1,7 +1,7 @@
 // components/TransformationsPage.tsx
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/utils/supabase/client'
 import { useSearchParams } from 'next/navigation'
 import { 
@@ -41,10 +41,18 @@ import {
   CheckCircle2,
   ArrowUpDown,
   Binary,
-  Calendar
+  Calendar,
+  Database,
+  BarChart3,
+  FileText,
+  TrendingUp,
+  Info,
+  Sparkles,
+  Settings
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import type { FileMetadata } from '@/components/FilePreview'
+import { ScrollArea } from "@/components/ui/scroll-area"
 
 interface ColumnInfo {
   name: string;
@@ -71,6 +79,12 @@ interface PreviewData {
   };
 }
 
+interface DataPreview {
+  data: Record<string, any>[];
+  columns: string[];
+  total_rows: number;
+}
+
 export default function TransformationsPage() {
   const [files, setFiles] = useState<FileMetadata[]>([])
   const [selectedFile, setSelectedFile] = useState<FileMetadata | null>(null)
@@ -80,6 +94,10 @@ export default function TransformationsPage() {
   const [isProcessing, setIsProcessing] = useState(false)
   const [isPreviewLoading, setIsPreviewLoading] = useState(false)
   const [previewData, setPreviewData] = useState<PreviewData | null>(null)
+  const [dataPreview, setDataPreview] = useState<DataPreview | null>(null)
+  const [livePreview, setLivePreview] = useState<PreviewData | null>(null)
+  const [isLivePreviewLoading, setIsLivePreviewLoading] = useState(false)
+  const [currentStep, setCurrentStep] = useState<'selection' | 'configuration'>('selection')
   const [transformationConfig, setTransformationConfig] = useState<TransformationConfig>({
     log_transform: [],
     sqrt_transform: [],
@@ -137,9 +155,12 @@ export default function TransformationsPage() {
 
   const handleSelectFile = async (file: FileMetadata) => {
     setSelectedFile(file)
+    setCurrentStep('configuration')
     setIsAnalyzing(true)
     setColumns([])
     setPreviewData(null)
+    setDataPreview(null)
+    setLivePreview(null)
     setDownloadUrl(null)
     
     try {
@@ -156,6 +177,7 @@ export default function TransformationsPage() {
       const formData = new FormData()
       formData.append('file', fileBlob, file.original_filename)
       
+      // Analyze columns
       const analysisResponse = await fetch('http://localhost:8000/transformations/analyze-columns/', {
         method: 'POST',
         body: formData
@@ -167,6 +189,25 @@ export default function TransformationsPage() {
       
       const analysisResult = await analysisResponse.json()
       setColumns(analysisResult.columns)
+      
+      // Get data preview (first 10 rows)
+      const previewFormData = new FormData()
+      previewFormData.append('file', fileBlob, file.original_filename)
+      previewFormData.append('rows', '10')
+      
+      const previewResponse = await fetch('http://localhost:8000/files/preview/', {
+        method: 'POST',
+        body: previewFormData
+      })
+      
+      if (previewResponse.ok) {
+        const previewResult = await previewResponse.json()
+        setDataPreview({
+          data: previewResult.preview || [],
+          columns: previewResult.columns || [],
+          total_rows: file.row_count
+        })
+      }
       
       toast({
         title: "File loaded",
@@ -237,12 +278,106 @@ export default function TransformationsPage() {
       toast({
         variant: "destructive",
         title: "Error",
-        description: `Preview failed: ${error.message}`
+        description: `Preview failed: ${error instanceof Error ? error.message : 'Unknown error'}`
       })
     } finally {
       setIsPreviewLoading(false)
     }
   }
+
+  // Generate live preview automatically when transformations change
+  const generateLivePreview = useCallback(async () => {
+    console.log('=== generateLivePreview called ===')
+    console.log('Selected file:', selectedFile?.original_filename)
+    console.log('Total transformations:', getTotalTransformations())
+    console.log('Transformation config:', transformationConfig)
+    
+    if (!selectedFile || getTotalTransformations() === 0) {
+      console.log('Skipping preview - no file or no transformations')
+      setLivePreview(null)
+      setIsLivePreviewLoading(false)
+      return
+    }
+    
+    console.log('Fetching file and generating preview...')
+    setIsLivePreviewLoading(true)
+    
+    try {
+      const { data: { publicUrl } } = supabase.storage
+        .from('data-files')
+        .getPublicUrl(`${selectedFile.user_id}/${selectedFile.filename}`)
+      
+      console.log('File URL:', publicUrl)
+      
+      const response = await fetch(publicUrl)
+      const fileBlob = await response.blob()
+      
+      const formData = new FormData()
+      formData.append('file', fileBlob, selectedFile.original_filename)
+      formData.append('transformations', JSON.stringify(transformationConfig))
+      
+      console.log('Sending request to preview-transformation endpoint...')
+      
+      const previewResponse = await fetch('http://localhost:8000/custom-preprocessing/preview-transformation/', {
+        method: 'POST',
+        body: formData
+      })
+      
+      console.log('Preview response status:', previewResponse.status)
+      
+      if (!previewResponse.ok) {
+        const errorText = await previewResponse.text()
+        console.error('Preview error response:', errorText)
+        throw new Error('Failed to generate live preview')
+      }
+      
+      const previewResult = await previewResponse.json()
+      console.log('Preview result:', previewResult)
+      
+      if (previewResult.success && previewResult.preview) {
+        console.log('Setting live preview with data:', {
+          originalRows: previewResult.preview.original.length,
+          transformedRows: previewResult.preview.transformed.length,
+          originalCols: previewResult.preview.columns.original.length,
+          transformedCols: previewResult.preview.columns.transformed.length
+        })
+        setLivePreview({
+          original: previewResult.preview.original,
+          transformed: previewResult.preview.transformed,
+          columns: previewResult.preview.columns
+        })
+        console.log('Live preview state updated successfully!')
+      } else {
+        console.error('Invalid preview result format:', previewResult)
+      }
+      
+    } catch (error) {
+      console.error('Error generating live preview:', error)
+      toast({
+        variant: "destructive",
+        title: "Preview Error",
+        description: "Failed to generate live preview. Check console for details."
+      })
+    } finally {
+      setIsLivePreviewLoading(false)
+    }
+  }, [selectedFile, transformationConfig])
+
+  // Debounce live preview generation
+  useEffect(() => {
+    console.log('useEffect triggered - transformationConfig changed:', transformationConfig)
+    console.log('Current step:', currentStep, 'Selected file:', selectedFile?.original_filename)
+    
+    // Reduce delay to 300ms for faster feedback
+    const timeoutId = setTimeout(() => {
+      if (currentStep === 'configuration' && selectedFile) {
+        console.log('Generating live preview after 300ms delay...')
+        generateLivePreview()
+      }
+    }, 300) // Wait only 300ms for faster response
+
+    return () => clearTimeout(timeoutId)
+  }, [transformationConfig, selectedFile, currentStep, generateLivePreview])
 
   const applyTransformations = async () => {
     if (!selectedFile) return
@@ -295,44 +430,56 @@ export default function TransformationsPage() {
       if (type === 'binning') {
         const exists = prev.binning.some(item => item.column === column)
         if (exists) {
-          return {
+          const newConfig = {
             ...prev,
             binning: prev.binning.filter(item => item.column !== column)
           }
+          console.log('Transformation updated (binning removed):', newConfig)
+          return newConfig
         } else {
-          return {
+          const newConfig = {
             ...prev,
             binning: [...prev.binning, { column, bins: 4 }]
           }
+          console.log('Transformation updated (binning added):', newConfig)
+          return newConfig
         }
       } else if (type === 'datetime_features') {
         const exists = prev.datetime_features.some(item => item.column === column)
         if (exists) {
-          return {
+          const newConfig = {
             ...prev,
             datetime_features: prev.datetime_features.filter(item => item.column !== column)
           }
+          console.log('Transformation updated (datetime removed):', newConfig)
+          return newConfig
         } else {
-          return {
+          const newConfig = {
             ...prev,
             datetime_features: [...prev.datetime_features, { 
               column, 
               features: ['year', 'month', 'day', 'dayofweek'] 
             }]
           }
+          console.log('Transformation updated (datetime added):', newConfig)
+          return newConfig
         }
       } else {
         const array = prev[type] as string[]
         if (array.includes(column)) {
-          return {
+          const newConfig = {
             ...prev,
             [type]: array.filter(col => col !== column)
           }
+          console.log(`Transformation updated (${type} removed):`, newConfig)
+          return newConfig
         } else {
-          return {
+          const newConfig = {
             ...prev,
             [type]: [...array, column]
           }
+          console.log(`Transformation updated (${type} added):`, newConfig)
+          return newConfig
         }
       }
     })
@@ -383,378 +530,618 @@ export default function TransformationsPage() {
     )
   }
 
+  // STEP 1: File Selection View
+  if (currentStep === 'selection') {
+    return (
+      <section className="h-screen w-full px-6 md:px-10 py-10 overflow-y-auto">
+        <div className="max-w-6xl mx-auto">
+          {/* Header */}
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold mb-2">Data Transformations</h1>
+            <p className="text-muted-foreground">
+              Select a dataset to apply mathematical and encoding transformations
+            </p>
+          </div>
+
+          {/* File Selection List */}
+          {files.length === 0 ? (
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center p-12">
+                <Database className="h-16 w-16 text-gray-400 mb-4" />
+                <h3 className="text-xl font-semibold mb-2">No Files Available</h3>
+                <p className="text-muted-foreground text-center mb-4">
+                  Upload a dataset first to start transforming data
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card>
+              <CardHeader>
+                <CardTitle>Available Datasets</CardTitle>
+                <CardDescription>Select a file to configure transformations</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {files.map((file) => (
+                    <div
+                      key={file.id}
+                      className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors hover:border-gray-400 dark:hover:border-gray-600"
+                      onClick={() => handleSelectFile(file)}
+                    >
+                      <div className="flex items-center gap-4 flex-1">
+                        <FileText className="h-5 w-5 text-gray-600" />
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium truncate">{file.original_filename}</div>
+                          <div className="text-sm text-muted-foreground">
+                            Uploaded {new Date(file.upload_date).toLocaleDateString()}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-6 text-sm text-muted-foreground">
+                        <div className="flex items-center gap-2">
+                          <BarChart3 className="h-4 w-4" />
+                          <span>{file.row_count.toLocaleString()} rows</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Database className="h-4 w-4" />
+                          <span>{file.column_names.length} columns</span>
+                        </div>
+                        <div className="text-gray-400">
+                          {file.file_size ? `${(file.file_size / 1024 / 1024).toFixed(2)} MB` : 'N/A'}
+                        </div>
+                        <Button variant="outline" size="sm">
+                          Configure
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      </section>
+    )
+  }
+
+  // STEP 2: Configuration View with Live Preview
   return (
     <section className="h-screen w-full px-6 md:px-10 py-10 overflow-y-auto">
-      <div className="text-4xl font-bold mb-6">
-        Data Transformations
-      </div>
-
-      {/* File Selection */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Select File</CardTitle>
-          <CardDescription>Choose a dataset to transform</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {files.length === 0 ? (
-            <p className="text-center text-muted-foreground">No files found</p>
-          ) : (
-            <div className="space-y-2">
-              {files.map((file) => (
-                <div
-                  key={file.id}
-                  className={`p-3 border rounded cursor-pointer ${
-                    selectedFile?.id === file.id ? 'border-primary bg-primary/5' : 'hover:border-primary/50'
-                  }`}
-                  onClick={() => handleSelectFile(file)}
-                >
-                  <div className="font-medium">{file.original_filename}</div>
-                  <div className="text-sm text-muted-foreground">
-                    {file.row_count.toLocaleString()} rows × {file.column_names.length} columns
-                  </div>
-                </div>
-              ))}
+      <div className="max-w-7xl mx-auto">
+        {/* Header with Back Button */}
+        <div className="mb-6 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setCurrentStep('selection')
+                setSelectedFile(null)
+                setTransformationConfig({
+                  log_transform: [],
+                  sqrt_transform: [],
+                  squared_transform: [],
+                  reciprocal_transform: [],
+                  binning: [],
+                  one_hot_encoding: [],
+                  datetime_features: []
+                })
+                setLivePreview(null)
+              }}
+            >
+              <ArrowUpDown className="h-4 w-4 mr-2 rotate-90" />
+              Back to Files
+            </Button>
+            <div>
+              <h1 className="text-2xl font-bold">Transform: {selectedFile?.original_filename}</h1>
+              <p className="text-sm text-muted-foreground mt-1">
+                Select transformations to apply to your dataset
+              </p>
             </div>
+          </div>
+
+          {getTotalTransformations() > 0 && (
+            <Button 
+              onClick={applyTransformations} 
+              disabled={isProcessing}
+              size="lg"
+            >
+              {isProcessing ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Applying...
+                </>
+              ) : (
+                <>
+                  <CheckCircle2 className="w-4 h-4 mr-2" />
+                  Apply {getTotalTransformations()} Transformation{getTotalTransformations() !== 1 ? 's' : ''}
+                </>
+              )}
+            </Button>
           )}
-        </CardContent>
-      </Card>
+        </div>
 
-      {/* Loading State */}
-      {isAnalyzing && (
-        <Card>
-          <CardContent className="flex items-center justify-center p-8">
-            <div className="text-center">
-              <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-              <p>Analyzing file structure...</p>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+        {/* Loading State */}
+        {isAnalyzing && (
+          <Card className="mb-6">
+            <CardContent className="flex items-center justify-center p-12">
+              <div className="text-center">
+                <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
+                <p className="font-medium">Loading file data...</p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
-      {/* Transformation Configuration */}
-      {selectedFile && !isAnalyzing && columns.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Configure Transformations</CardTitle>
-            <CardDescription>
-              Select which transformations to apply to your columns
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Tabs defaultValue="numeric" className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="numeric">
-                  <ArrowUpDown className="w-4 h-4 mr-2" />
-                  Numeric ({numericColumns.length})
-                </TabsTrigger>
-                <TabsTrigger value="categorical">
-                  <Binary className="w-4 h-4 mr-2" />
-                  Categorical ({categoricalColumns.length})
-                </TabsTrigger>
-                <TabsTrigger value="datetime">
-                  <Calendar className="w-4 h-4 mr-2" />
-                  DateTime ({dateColumns.length})
-                </TabsTrigger>
-              </TabsList>
+        {/* Main Content: Transformation Configuration */}
+        {!isAnalyzing && selectedFile && (
+          <div className="space-y-6">
+            {/* Transformation Configuration */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Settings className="h-5 w-5" />
+                  Configure Transformations
+                </CardTitle>
+                <CardDescription>
+                  Select transformations to apply to your dataset
+                  {getTotalTransformations() > 0 && (
+                    <Badge className="ml-2" variant="secondary">
+                      {getTotalTransformations()} selected
+                    </Badge>
+                  )}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Tabs defaultValue="numeric" className="w-full">
+                  <TabsList className="grid w-full grid-cols-3 mb-6">
+                    <TabsTrigger value="numeric">
+                      <ArrowUpDown className="w-4 h-4 mr-2" />
+                      Numeric ({numericColumns.length})
+                    </TabsTrigger>
+                    <TabsTrigger value="categorical">
+                      <Binary className="w-4 h-4 mr-2" />
+                      Categorical ({categoricalColumns.length})
+                    </TabsTrigger>
+                    <TabsTrigger value="datetime">
+                      <Calendar className="w-4 h-4 mr-2" />
+                      DateTime ({dateColumns.length})
+                    </TabsTrigger>
+                  </TabsList>
               
-              <TabsContent value="numeric" className="space-y-4">
-                {/* Log Transform */}
-                <div>
-                  <h3 className="font-medium mb-2">Log Transform</h3>
-                  <p className="text-sm text-muted-foreground mb-3">
-                    Apply log(x+1) to reduce positive skewness
-                  </p>
-                  <div className="space-y-2">
-                    {numericColumns.map(column => (
-                      <div key={column.name} className="flex items-center space-x-2">
-                        <Checkbox
-                          checked={isTransformationSelected('log_transform', column.name)}
-                          onCheckedChange={() => toggleTransformation('log_transform', column.name)}
-                        />
-                        <span className="text-sm">{column.name}</span>
-                        <span className="text-xs text-muted-foreground">
-                          ({column.sample_values.slice(0, 3).join(', ')})
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Square Root Transform */}
-                <div>
-                  <h3 className="font-medium mb-2">Square Root Transform</h3>
-                  <p className="text-sm text-muted-foreground mb-3">
-                    Apply sqrt(x) for moderate skewness reduction
-                  </p>
-                  <div className="space-y-2">
-                    {numericColumns.map(column => (
-                      <div key={column.name} className="flex items-center space-x-2">
-                        <Checkbox
-                          checked={isTransformationSelected('sqrt_transform', column.name)}
-                          onCheckedChange={() => toggleTransformation('sqrt_transform', column.name)}
-                        />
-                        <span className="text-sm">{column.name}</span>
-                        <span className="text-xs text-muted-foreground">
-                          ({column.sample_values.slice(0, 3).join(', ')})
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Binning */}
-                <div>
-                  <h3 className="font-medium mb-2">Binning</h3>
-                  <p className="text-sm text-muted-foreground mb-3">
-                    Convert continuous variables to categories
-                  </p>
-                  <div className="space-y-3">
-                    {numericColumns.map(column => (
-                      <div key={column.name} className="space-y-2">
-                        <div className="flex items-center space-x-2">
-                          <Checkbox
-                            checked={isTransformationSelected('binning', column.name)}
-                            onCheckedChange={() => toggleTransformation('binning', column.name)}
-                          />
-                          <span className="text-sm">{column.name}</span>
+              <TabsContent value="numeric" className="space-y-6">
+                {numericColumns.length === 0 ? (
+                  <Alert>
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>No numeric columns found in this dataset</AlertDescription>
+                  </Alert>
+                ) : (
+                  <>
+                    {/* Log Transform */}
+                    <div className="p-4 border rounded-lg bg-gray-50 dark:bg-gray-900">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="h-8 w-8 rounded-full bg-gray-700 dark:bg-gray-600 text-white flex items-center justify-center text-sm font-bold">
+                          log
                         </div>
-                        {isTransformationSelected('binning', column.name) && (
-                          <div className="ml-6">
-                            <Select
-                              value={transformationConfig.binning.find(b => b.column === column.name)?.bins.toString() || '4'}
-                              onValueChange={(value) => {
-                                setTransformationConfig(prev => ({
-                                  ...prev,
-                                  binning: prev.binning.map(b => 
-                                    b.column === column.name 
-                                      ? { ...b, bins: parseInt(value) }
-                                      : b
-                                  )
-                                }))
-                              }}
-                            >
-                              <SelectTrigger className="w-32">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="2">2 bins</SelectItem>
-                                <SelectItem value="3">3 bins</SelectItem>
-                                <SelectItem value="4">4 bins</SelectItem>
-                                <SelectItem value="5">5 bins</SelectItem>
-                                <SelectItem value="10">10 bins</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        )}
+                        <div>
+                          <h3 className="font-semibold">Log Transform</h3>
+                          <p className="text-sm text-muted-foreground">
+                            Apply log(x+1) to reduce positive skewness
+                          </p>
+                        </div>
                       </div>
-                    ))}
-                  </div>
-                </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
+                        {numericColumns.map(column => (
+                          <div 
+                            key={column.name} 
+                            className={`flex items-center space-x-3 p-3 rounded-md border transition-colors ${
+                              isTransformationSelected('log_transform', column.name)
+                                ? 'bg-gray-100 dark:bg-gray-800 border-gray-400 dark:border-gray-600'
+                                : 'bg-white dark:bg-gray-950 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                            }`}
+                          >
+                            <Checkbox
+                              checked={isTransformationSelected('log_transform', column.name)}
+                              onCheckedChange={() => toggleTransformation('log_transform', column.name)}
+                            />
+                            <div className="flex-1">
+                              <span className="text-sm font-medium">{column.name}</span>
+                              <div className="text-xs text-muted-foreground">
+                                Sample: {column.sample_values.slice(0, 2).join(', ')}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Square Root Transform */}
+                    <div className="p-4 border rounded-lg bg-gray-50 dark:bg-gray-900">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="h-8 w-8 rounded-full bg-gray-700 dark:bg-gray-600 text-white flex items-center justify-center text-sm font-bold">
+                          √
+                        </div>
+                        <div>
+                          <h3 className="font-semibold">Square Root Transform</h3>
+                          <p className="text-sm text-muted-foreground">
+                            Apply sqrt(x) for moderate skewness reduction
+                          </p>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
+                        {numericColumns.map(column => (
+                          <div 
+                            key={column.name}
+                            className={`flex items-center space-x-3 p-3 rounded-md border transition-colors ${
+                              isTransformationSelected('sqrt_transform', column.name)
+                                ? 'bg-gray-100 dark:bg-gray-800 border-gray-400 dark:border-gray-600'
+                                : 'bg-white dark:bg-gray-950 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                            }`}
+                          >
+                            <Checkbox
+                              checked={isTransformationSelected('sqrt_transform', column.name)}
+                              onCheckedChange={() => toggleTransformation('sqrt_transform', column.name)}
+                            />
+                            <div className="flex-1">
+                              <span className="text-sm font-medium">{column.name}</span>
+                              <div className="text-xs text-muted-foreground">
+                                Sample: {column.sample_values.slice(0, 2).join(', ')}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Binning */}
+                    <div className="p-4 border rounded-lg bg-gray-50 dark:bg-gray-900">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="h-8 w-8 rounded-full bg-gray-700 dark:bg-gray-600 text-white flex items-center justify-center">
+                          <BarChart3 className="h-4 w-4" />
+                        </div>
+                        <div>
+                          <h3 className="font-semibold">Binning</h3>
+                          <p className="text-sm text-muted-foreground">
+                            Convert continuous variables to categories
+                          </p>
+                        </div>
+                      </div>
+                      <div className="space-y-3 mt-3">
+                        {numericColumns.map(column => (
+                          <div key={column.name} className="space-y-2">
+                            <div 
+                              className={`flex items-center space-x-3 p-3 rounded-md border transition-colors ${
+                                isTransformationSelected('binning', column.name)
+                                  ? 'bg-gray-100 dark:bg-gray-800 border-gray-400 dark:border-gray-600'
+                                  : 'bg-white dark:bg-gray-950 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                              }`}
+                            >
+                              <Checkbox
+                                checked={isTransformationSelected('binning', column.name)}
+                                onCheckedChange={() => toggleTransformation('binning', column.name)}
+                              />
+                              <div className="flex-1">
+                                <span className="text-sm font-medium">{column.name}</span>
+                              </div>
+                              {isTransformationSelected('binning', column.name) && (
+                                <Select
+                                  value={(transformationConfig.binning.find(b => b.column === column.name)?.bins || 4).toString()}
+                                  onValueChange={(value) => {
+                                    setTransformationConfig(prev => ({
+                                      ...prev,
+                                      binning: prev.binning.map(b => 
+                                        b.column === column.name 
+                                          ? { ...b, bins: parseInt(value) }
+                                          : b
+                                      )
+                                    }))
+                                  }}
+                                >
+                                  <SelectTrigger className="w-32">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="2">2 bins</SelectItem>
+                                    <SelectItem value="3">3 bins</SelectItem>
+                                    <SelectItem value="4">4 bins</SelectItem>
+                                    <SelectItem value="5">5 bins</SelectItem>
+                                    <SelectItem value="10">10 bins</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
               </TabsContent>
 
               <TabsContent value="categorical" className="space-y-4">
-                <div>
-                  <h3 className="font-medium mb-2">One-Hot Encoding</h3>
-                  <p className="text-sm text-muted-foreground mb-3">
-                    Convert categorical variables to binary columns
-                  </p>
-                  {categoricalColumns.length > 0 ? (
-                    <div className="space-y-2">
+                {categoricalColumns.length === 0 ? (
+                  <Alert>
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>No categorical columns found in this dataset</AlertDescription>
+                  </Alert>
+                ) : (
+                  <div className="p-4 border rounded-lg bg-gray-50 dark:bg-gray-900">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="h-8 w-8 rounded-full bg-gray-700 dark:bg-gray-600 text-white flex items-center justify-center">
+                        <Binary className="h-4 w-4" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold">One-Hot Encoding</h3>
+                        <p className="text-sm text-muted-foreground">
+                          Convert categorical variables to binary columns
+                        </p>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
                       {categoricalColumns.map(column => (
-                        <div key={column.name} className="flex items-center space-x-2">
+                        <div 
+                          key={column.name}
+                          className={`flex items-center space-x-3 p-3 rounded-md border transition-colors ${
+                            isTransformationSelected('one_hot_encoding', column.name)
+                              ? 'bg-gray-100 dark:bg-gray-800 border-gray-400 dark:border-gray-600'
+                              : 'bg-white dark:bg-gray-950 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                          }`}
+                        >
                           <Checkbox
                             checked={isTransformationSelected('one_hot_encoding', column.name)}
                             onCheckedChange={() => toggleTransformation('one_hot_encoding', column.name)}
                           />
-                          <span className="text-sm">{column.name}</span>
-                          <span className="text-xs text-muted-foreground">
-                            ({column.sample_values.slice(0, 3).join(', ')})
-                          </span>
+                          <div className="flex-1">
+                            <span className="text-sm font-medium">{column.name}</span>
+                            <div className="text-xs text-muted-foreground">
+                              Sample: {column.sample_values.slice(0, 2).join(', ')}
+                            </div>
+                          </div>
                         </div>
                       ))}
                     </div>
-                  ) : (
-                    <p className="text-sm text-muted-foreground">No categorical columns found</p>
-                  )}
-                </div>
+                  </div>
+                )}
               </TabsContent>
 
               <TabsContent value="datetime" className="space-y-4">
-                <div>
-                  <h3 className="font-medium mb-2">DateTime Feature Extraction</h3>
-                  <p className="text-sm text-muted-foreground mb-3">
-                    Extract year, month, day components from date columns
-                  </p>
-                  {dateColumns.length > 0 ? (
-                    <div className="space-y-2">
+                {dateColumns.length === 0 ? (
+                  <Alert>
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>No datetime columns found in this dataset</AlertDescription>
+                  </Alert>
+                ) : (
+                  <div className="p-4 border rounded-lg bg-gray-50 dark:bg-gray-900">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="h-8 w-8 rounded-full bg-gray-700 dark:bg-gray-600 text-white flex items-center justify-center">
+                        <Calendar className="h-4 w-4" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold">DateTime Feature Extraction</h3>
+                        <p className="text-sm text-muted-foreground">
+                          Extract year, month, day, and day of week from date columns
+                        </p>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
                       {dateColumns.map(column => (
-                        <div key={column.name} className="flex items-center space-x-2">
+                        <div 
+                          key={column.name}
+                          className={`flex items-center space-x-3 p-3 rounded-md border transition-colors ${
+                            isTransformationSelected('datetime_features', column.name)
+                              ? 'bg-gray-100 dark:bg-gray-800 border-gray-400 dark:border-gray-600'
+                              : 'bg-white dark:bg-gray-950 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                          }`}
+                        >
                           <Checkbox
                             checked={isTransformationSelected('datetime_features', column.name)}
                             onCheckedChange={() => toggleTransformation('datetime_features', column.name)}
                           />
-                          <span className="text-sm">{column.name}</span>
-                          <span className="text-xs text-muted-foreground">
-                            (extracts: year, month, day, day_of_week)
-                          </span>
+                          <div className="flex-1">
+                            <span className="text-sm font-medium">{column.name}</span>
+                            <div className="text-xs text-muted-foreground">
+                              Extracts: year, month, day, day_of_week
+                            </div>
+                          </div>
                         </div>
                       ))}
                     </div>
-                  ) : (
-                    <p className="text-sm text-muted-foreground">No datetime columns found</p>
-                  )}
-                </div>
+                  </div>
+                )}
               </TabsContent>
             </Tabs>
+        </CardContent>
+      </Card>
 
-            {/* Action Buttons */}
-            <div className="flex gap-4 mt-6">
-              <Button 
-                variant="outline" 
-                onClick={generatePreview} 
-                disabled={isPreviewLoading || getTotalTransformations() === 0}
-              >
-                {isPreviewLoading ? (
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                ) : (
-                  <Eye className="w-4 h-4 mr-2" />
-                )}
-                Preview
-              </Button>
-              <Button 
-                onClick={applyTransformations} 
-                disabled={isProcessing || getTotalTransformations() === 0}
-              >
-                {isProcessing ? (
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                ) : (
-                  <Play className="w-4 h-4 mr-2" />
-                )}
-                Apply Transformations
-              </Button>
-            </div>
-
+      {/* Live Data Preview at Bottom - Always Visible */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Eye className="h-5 w-5" />
+            Live Preview
             {getTotalTransformations() > 0 && (
-              <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded">
-                <p className="text-sm text-blue-800">
-                  <strong>{getTotalTransformations()}</strong> transformations selected
+              <Badge variant="secondary" className="ml-2">
+                {getTotalTransformations()} transformation{getTotalTransformations() !== 1 ? 's' : ''} applied
+              </Badge>
+            )}
+          </CardTitle>
+          <CardDescription>
+            {getTotalTransformations() === 0 
+              ? 'Select transformations above to see a live preview'
+              : isLivePreviewLoading
+                ? 'Generating preview...'
+                : livePreview 
+                  ? `Preview updates automatically as you select transformations`
+                  : 'Generating preview...'}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {getTotalTransformations() === 0 ? (
+            <Alert>
+              <Info className="h-4 w-4" />
+              <AlertDescription>
+                Check the boxes above to select transformations and see a live preview of your transformed data
+              </AlertDescription>
+            </Alert>
+          ) : isLivePreviewLoading ? (
+            <div className="flex items-center justify-center p-12">
+              <div className="text-center">
+                <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+                <p className="text-sm text-muted-foreground">Generating preview...</p>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Processing {getTotalTransformations()} transformation{getTotalTransformations() !== 1 ? 's' : ''}...
                 </p>
-                <details className="mt-2">
-                  <summary className="text-xs cursor-pointer">Debug: Show config</summary>
-                  <pre className="text-xs mt-1 bg-white p-2 rounded border overflow-x-auto">
-                    {JSON.stringify(transformationConfig, null, 2)}
-                  </pre>
-                </details>
               </div>
+            </div>
+          ) : livePreview ? (
+              <div className="space-y-4">
+                {/* Stats */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="p-3 bg-gray-50 dark:bg-gray-900 rounded-lg border">
+                    <div className="text-sm text-muted-foreground">Original Columns</div>
+                    <div className="text-2xl font-bold">
+                      {livePreview.columns.original.length}
+                    </div>
+                  </div>
+                  <div className="p-3 bg-gray-50 dark:bg-gray-900 rounded-lg border">
+                    <div className="text-sm text-muted-foreground">After Transform</div>
+                    <div className="text-2xl font-bold">
+                      {livePreview.columns.transformed.length}
+                      {livePreview.columns.transformed.length > livePreview.columns.original.length && (
+                        <span className="text-sm ml-1">
+                          (+{livePreview.columns.transformed.length - livePreview.columns.original.length})
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Transformed Data Table with Scroll */}
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="text-sm font-semibold">Transformed Data</h4>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground">
+                        {livePreview.columns.transformed.length} columns • Scroll to view all →
+                      </span>
+                      <Badge variant="outline">
+                        {livePreview.transformed.length} rows
+                      </Badge>
+                    </div>
+                  </div>
+                  <div className="border rounded-lg overflow-auto max-h-[400px]">
+                    <Table>
+                      <TableHeader className="bg-gray-50 dark:bg-gray-900 sticky top-0">
+                        <TableRow>
+                          {livePreview.columns.transformed.map((col, index) => (
+                            <TableHead key={index} className="font-semibold text-xs whitespace-nowrap">
+                              {col}
+                              {!livePreview.columns.original.includes(col) && (
+                                <Badge variant="secondary" className="ml-1 text-xs">
+                                  NEW
+                                </Badge>
+                              )}
+                            </TableHead>
+                          ))}
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {livePreview.transformed.map((row, rowIndex) => (
+                          <TableRow key={rowIndex}>
+                            {livePreview.columns.transformed.map((col, colIndex) => (
+                              <TableCell key={colIndex} className="text-xs whitespace-nowrap">
+                                {row[col] !== null && row[col] !== undefined 
+                                  ? String(row[col]).length > 50 
+                                    ? String(row[col]).substring(0, 50) + '...'
+                                    : String(row[col])
+                                  : <span className="text-gray-400">null</span>
+                                }
+                              </TableCell>
+                            ))}
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+
+                <Alert className="bg-gray-50 dark:bg-gray-900">
+                  <CheckCircle2 className="h-4 w-4" />
+                  <AlertDescription>
+                    Preview updates automatically. Click "Apply" button at the top to save these transformations.
+                  </AlertDescription>
+                </Alert>
+              </div>
+            ) : (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  Failed to generate preview. Please check your transformations and try again.
+                </AlertDescription>
+              </Alert>
             )}
           </CardContent>
         </Card>
-      )}
+    </div>
+        )}
 
-      {/* Preview */}
-      {previewData && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Transformation Preview</CardTitle>
-            <CardDescription>
-              Preview of transformed data (first 5 rows)
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="mb-4">
-              <h3 className="font-medium mb-3 flex items-center gap-2">
-                Transformed Data 
-                <Badge variant="outline">
-                  {previewData.columns.transformed.length} columns
-                </Badge>
-                {previewData.columns.transformed.length > previewData.columns.original.length && (
-                  <Badge variant="secondary" className="bg-green-50 text-green-700">
-                    +{previewData.columns.transformed.length - previewData.columns.original.length} new columns
-                  </Badge>
-                )}
-              </h3>
-              <div className="overflow-x-auto border rounded">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      {previewData.columns.transformed.map((col, index) => (
-                        <TableHead key={index}>
-                          {col}
-                          {!previewData.columns.original.includes(col) && (
-                            <Badge variant="secondary" className="ml-1 text-xs bg-green-50 text-green-700">
-                              new
-                            </Badge>
-                          )}
-                        </TableHead>
-                      ))}
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {previewData.transformed.map((row, rowIndex) => (
-                      <TableRow key={rowIndex}>
-                        {previewData.columns.transformed.map((col, colIndex) => (
-                          <TableCell key={colIndex}>
-                            {row[col] !== null && row[col] !== undefined ? String(row[col]) : 'null'}
-                          </TableCell>
-                        ))}
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+        {/* Download Success */}
+        {downloadUrl && (
+          <Card className="mt-6 border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <CheckCircle2 className="w-6 h-6" />
+                Transformation Complete!
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium">Your transformed file is ready!</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Applied {getTotalTransformations()} transformations to {selectedFile?.original_filename}
+                  </p>
+                </div>
+                <div className="flex gap-3">
+                  <Button asChild>
+                    <a href={downloadUrl} download>
+                      <Download className="w-4 h-4 mr-2" />
+                      Download
+                    </a>
+                  </Button>
+                  <Button 
+                    variant="outline"
+                    onClick={() => {
+                      setDownloadUrl(null)
+                      setLivePreview(null)
+                      setTransformationConfig({
+                        log_transform: [],
+                        sqrt_transform: [],
+                        squared_transform: [],
+                        reciprocal_transform: [],
+                        binning: [],
+                        one_hot_encoding: [],
+                        datetime_features: []
+                      })
+                    }}
+                  >
+                    New Transformation
+                  </Button>
+                </div>
               </div>
-            </div>
-            
-            <Alert>
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Preview Notice</AlertTitle>
-              <AlertDescription>
-                This preview shows only the first 5 rows. The full transformation will be applied to your entire dataset.
-              </AlertDescription>
-            </Alert>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Download */}
-      {downloadUrl && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <CheckCircle2 className="w-5 h-5 text-green-500" />
-              Transformation Complete
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between p-4 bg-green-50 border border-green-200 rounded">
-              <div>
-                <p className="font-medium">Your transformed file is ready!</p>
-                <p className="text-sm text-muted-foreground">
-                  Applied {getTotalTransformations()} transformations to {selectedFile?.original_filename}
-                </p>
-              </div>
-              <Button asChild>
-                <a href={downloadUrl} download>
-                  <Download className="w-4 h-4 mr-2" />
-                  Download
-                </a>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+            </CardContent>
+          </Card>
+        )}
+      </div>
 
       {/* Processing Overlay */}
-      {(isProcessing || isPreviewLoading) && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full mx-4">
+      {isProcessing && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 backdrop-blur-sm">
+          <div className="bg-white dark:bg-gray-900 p-8 rounded-xl shadow-2xl max-w-md w-full mx-4">
             <div className="text-center">
-              <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" />
-              <h3 className="font-medium mb-2">
-                {isProcessing ? 'Applying Transformations' : 'Generating Preview'}
-              </h3>
-              <Progress value={isProcessing ? 70 : 50} className="mb-2" />
+              <Loader2 className="w-12 h-12 animate-spin mx-auto mb-4" />
+              <h3 className="text-xl font-semibold mb-2">Applying Transformations</h3>
               <p className="text-sm text-muted-foreground">
-                Please wait...
+                Processing {getTotalTransformations()} transformation{getTotalTransformations() !== 1 ? 's' : ''}...
               </p>
             </div>
           </div>

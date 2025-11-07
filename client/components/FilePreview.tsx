@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose, DialogDescription } from "@/components/ui/dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { X, BarChart, ArrowLeft, ArrowRight, Maximize2, Minimize2 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
@@ -102,6 +102,9 @@ export default function FilePreview({ fileMetadata, isOpen, onClose }: FilePrevi
                   </Badge>
                 )}
               </DialogTitle>
+              <DialogDescription className="sr-only">
+                Preview and analyze your data file with statistics and visualizations
+              </DialogDescription>
             </div>
             <div className="flex items-center gap-2">
               <Button

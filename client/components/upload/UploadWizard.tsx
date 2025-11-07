@@ -379,10 +379,29 @@ export default function UploadWizard({ isDragActive }: UploadWizardProps) {
   const areAllFilesReviewed = files.length > 0 && 
     files.every(file => reviewedFiles.has(file.name))
   
-  const handleFinish = (destination: 'dashboard' | 'feature-engineering') => {
-    window.location.href = destination === 'dashboard' 
-      ? '/dashboard' 
-      : '/dashboard/feature-engineering'
+  const handleFinish = (destination: 'dashboard' | 'feature-engineering' | 'transformations' | 'blueprints') => {
+    // Get the latest uploaded file for context
+    const latestFile = uploadSummary.filesProcessed[uploadSummary.filesProcessed.length - 1]?.name
+    
+    switch (destination) {
+      case 'transformations':
+        window.location.href = latestFile 
+          ? `/dashboard/transformations?file=${encodeURIComponent(latestFile)}`
+          : '/dashboard/transformations'
+        break
+      case 'blueprints':
+        window.location.href = latestFile
+          ? `/dashboard/blueprints/train?file=${encodeURIComponent(latestFile)}`
+          : '/dashboard/blueprints/train'
+        break
+      case 'feature-engineering':
+        window.location.href = '/dashboard/feature-engineering'
+        break
+      case 'dashboard':
+      default:
+        window.location.href = '/dashboard'
+        break
+    }
   }
 
   // Determine which files to use for final upload and what results to include

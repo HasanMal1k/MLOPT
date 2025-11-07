@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { AlertCircle, Download, FileText, RefreshCw, BarChart3 } from "lucide-react"
 import { Progress } from "@/components/ui/progress"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose, DialogFooter } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose, DialogFooter, DialogDescription } from "@/components/ui/dialog"
 import { X } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import ChartViewer from '@/components/ChartViewer'
@@ -121,6 +121,9 @@ export default function EdaReportViewer({ fileMetadata, onClose, isOpen, origina
             <DialogTitle>
               Data Analysis: {fileMetadata?.original_filename}
             </DialogTitle>
+            <DialogDescription className="sr-only">
+              Exploratory data analysis report with statistics and visualizations
+            </DialogDescription>
             <DialogClose className="hover:bg-gray-100 p-2 rounded-full transition-colors">
               <X className="h-4 w-4" />
             </DialogClose>

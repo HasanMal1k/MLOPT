@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 import { BarChart3, LineChart, ScatterChart, PieChart, Activity, AlertCircle, Download, RefreshCw, X } from "lucide-react"
 import { Progress } from "@/components/ui/progress"
@@ -498,6 +498,9 @@ export default function ChartViewer({ fileMetadata, originalFile, isOpen, onClos
             <BarChart3 className="h-5 w-5" />
             Custom Charts: {fileMetadata?.original_filename || originalFile?.name}
           </DialogTitle>
+          <DialogDescription className="sr-only">
+            View and analyze custom charts generated from your data
+          </DialogDescription>
           <Button variant="ghost" size="sm" onClick={handleClose}>
             <X className="h-4 w-4" />
           </Button>

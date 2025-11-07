@@ -45,9 +45,11 @@ const Navbar = () => {
             <Link href="#about" className="text-gray-300 hover:text-white transition-colors">
               About
             </Link>
-            <Button size="sm" className="bg-white text-black hover:bg-gray-200">
-              <Link href="/dashboard">Get Started</Link>
-            </Button>
+            <Link href="/login">
+              <Button size="sm" className="bg-white text-black hover:bg-gray-200">
+                Get Started
+              </Button>
+            </Link>
           </div>
 
           <button
@@ -69,9 +71,11 @@ const Navbar = () => {
             <Link href="#about" className="block text-gray-300 hover:text-white transition-colors">
               About
             </Link>
-            <Button size="sm" className="w-full bg-white text-black hover:bg-gray-200">
-              <Link href="/dashboard">Get Started</Link>
-            </Button>
+            <Link href="/login" className="block">
+              <Button size="sm" className="w-full bg-white text-black hover:bg-gray-200">
+                Get Started
+              </Button>
+            </Link>
           </div>
         )}
       </div>
@@ -107,16 +111,20 @@ export default function Home() {
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-8">
-              <Button size="lg" className="bg-white text-black hover:bg-gray-200 text-lg px-8 py-4">
-                <Link href="/dashboard" className="flex items-center gap-2">
-                  Start Building
-                  <ArrowRight className="h-5 w-5" />
-                </Link>
-              </Button>
+              <Link href="/login">
+                <Button size="lg" className="bg-white text-black hover:bg-gray-200 text-lg px-8 py-4">
+                  <span className="flex items-center gap-2">
+                    Start Building
+                    <ArrowRight className="h-5 w-5" />
+                  </span>
+                </Button>
+              </Link>
               
-              <Button size="lg" variant="outline" className="border-white/30 text-white hover:bg-white/10 text-lg px-8 py-4 text-black">
-                Watch Demo
-              </Button>
+              <Link href="#how-it-works">
+                <Button size="lg" variant="outline" className="border-white/30 text-white hover:bg-white/10 text-lg px-8 py-4">
+                  Watch Demo
+                </Button>
+              </Link>
             </div>
           </div>
         </div>
@@ -291,12 +299,14 @@ export default function Home() {
             Join the future of machine learning automation. Start building your models today.
           </p>
           
-          <Button size="lg" className="bg-white text-black hover:bg-gray-200 text-lg px-12 py-4">
-            <Link href="/dashboard" className="flex items-center gap-2">
-              Get Started Now
-              <ArrowRight className="h-5 w-5" />
-            </Link>
-          </Button>
+          <Link href="/login">
+            <Button size="lg" className="bg-white text-black hover:bg-gray-200 text-lg px-12 py-4">
+              <span className="flex items-center gap-2">
+                Get Started Now
+                <ArrowRight className="h-5 w-5" />
+              </span>
+            </Button>
+          </Link>
         </div>
       </section>
 

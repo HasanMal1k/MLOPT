@@ -77,6 +77,7 @@ export function Stepper({
 export function Step({ 
   isCompleted = false,
   isCurrent = false,
+  isLast = false,
   stepNumber = 1,
   className, 
   children,
@@ -84,6 +85,7 @@ export function Step({
 }: StepProps & {
   isCompleted?: boolean
   isCurrent?: boolean
+  isLast?: boolean
   stepNumber?: number
 }) {
   // Extract the StepLabel, StepTitle, and StepDescription from children

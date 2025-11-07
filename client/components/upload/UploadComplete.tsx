@@ -1,7 +1,7 @@
 // components/upload/UploadComplete.tsx
 'use client'
 
-import { CheckCircle2, X, ChevronRight } from "lucide-react"
+import { CheckCircle2, X, ChevronRight, Sparkles, Brain, Zap } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -20,7 +20,7 @@ interface UploadCompleteProps {
   }
   filePreprocessingResults: Record<string, any>
   customCleaningResults: any[]
-  onFinish: (destination: 'dashboard' | 'feature-engineering') => void
+  onFinish: (destination: 'dashboard' | 'feature-engineering' | 'transformations' | 'blueprints') => void
   transformPreprocessingResults: (results: any) => any
 }
 
@@ -170,34 +170,124 @@ export default function UploadComplete({
           </div>
         )}
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card>
+        {/* Next Steps - Complete Pipeline */}
+        <div className="mb-4">
+          <h3 className="text-xl font-bold mb-2">What's Next?</h3>
+          <p className="text-sm text-muted-foreground mb-6">
+            Continue your data science pipeline with transformations and model training
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          {/* Step 1: Transformations */}
+          <Card className="border-2 hover:border-primary transition-colors">
             <CardContent className="pt-6">
-              <h3 className="text-base font-medium mb-2">Feature Engineering</h3>
-              <p className="text-sm text-muted-foreground mb-4">Create new features for ML</p>
-              <p className="text-xs text-muted-foreground mb-4">
-                Transform your data and create new features to improve machine learning model performance
+              <div className="flex items-center gap-3 mb-3">
+                <div className="h-10 w-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
+                  <Zap className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                </div>
+                <div>
+                  <h3 className="text-base font-semibold">Transformations</h3>
+                  <Badge variant="outline" className="text-xs">Step 1</Badge>
+                </div>
+              </div>
+              <p className="text-sm text-muted-foreground mb-4">
+                Apply mathematical and encoding transformations to engineer better features
               </p>
-              <Button variant="outline" onClick={() => onFinish('feature-engineering')} className="w-full gap-2">
-                <ChevronRight className="h-4 w-4" />
-                <span>Go to Feature Engineering</span>
+              <Button 
+                variant="outline" 
+                onClick={() => onFinish('transformations')} 
+                className="w-full gap-2"
+              >
+                <Sparkles className="h-4 w-4" />
+                <span>Transform Data</span>
               </Button>
             </CardContent>
           </Card>
           
-          <Card>
+          {/* Step 2: Model Training */}
+          <Card className="border-2 hover:border-primary transition-colors">
             <CardContent className="pt-6">
-              <h3 className="text-base font-medium mb-2">Dashboard</h3>
-              <p className="text-sm text-muted-foreground mb-4">Return to dashboard</p>
-              <p className="text-xs text-muted-foreground mb-4">
-                Go back to the dashboard to view all your uploaded files and explore other options
+              <div className="flex items-center gap-3 mb-3">
+                <div className="h-10 w-10 rounded-full bg-purple-100 dark:bg-purple-900 flex items-center justify-center">
+                  <Brain className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                </div>
+                <div>
+                  <h3 className="text-base font-semibold">Train Models</h3>
+                  <Badge variant="outline" className="text-xs">Step 2</Badge>
+                </div>
+              </div>
+              <p className="text-sm text-muted-foreground mb-4">
+                Train ML models with automated hyperparameter tuning and comparison
               </p>
-              <Button onClick={() => onFinish('dashboard')} className="w-full gap-2">
-                <ChevronRight className="h-4 w-4" />
-                <span>Return to Dashboard</span>
+              <Button 
+                onClick={() => onFinish('blueprints')} 
+                className="w-full gap-2"
+              >
+                <Brain className="h-4 w-4" />
+                <span>Start Training</span>
               </Button>
             </CardContent>
           </Card>
+
+          {/* Dashboard Option */}
+          <Card className="border-2 hover:border-primary transition-colors">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="h-10 w-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                  <ChevronRight className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-semibold">Dashboard</h3>
+                  <Badge variant="secondary" className="text-xs">Or Later</Badge>
+                </div>
+              </div>
+              <p className="text-sm text-muted-foreground mb-4">
+                Return to dashboard to manage files and explore other options
+              </p>
+              <Button 
+                variant="ghost" 
+                onClick={() => onFinish('dashboard')} 
+                className="w-full gap-2"
+              >
+                <ChevronRight className="h-4 w-4" />
+                <span>Go to Dashboard</span>
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Pipeline Flow Visualization */}
+        <div className="bg-muted/50 rounded-lg p-4 border">
+          <div className="flex items-center justify-center gap-2 text-sm">
+            <div className="flex items-center gap-2">
+              <div className="h-8 w-8 rounded-full bg-green-500 flex items-center justify-center text-white font-bold text-xs">
+                ✓
+              </div>
+              <span className="font-medium">Upload</span>
+            </div>
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            <div className="flex items-center gap-2">
+              <div className="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold text-xs">
+                1
+              </div>
+              <span className="font-medium">Transform</span>
+            </div>
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            <div className="flex items-center gap-2">
+              <div className="h-8 w-8 rounded-full bg-purple-500 flex items-center justify-center text-white font-bold text-xs">
+                2
+              </div>
+              <span className="font-medium">Train</span>
+            </div>
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            <div className="flex items-center gap-2">
+              <div className="h-8 w-8 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center text-white font-bold text-xs">
+                3
+              </div>
+              <span className="font-medium text-muted-foreground">Deploy</span>
+            </div>
+          </div>
         </div>
       </CardContent>
     </Card>

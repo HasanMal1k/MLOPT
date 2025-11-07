@@ -1,0 +1,37 @@
+{
+  "data_types": {
+    "Id": {
+      "original": "int64",
+      "converted_to": "int"
+    },
+    "SepalLengthCm": {
+      "original": "float64",
+      "converted_to": "float"
+    },
+    "SepalWidthCm": {
+      "original": "float64",
+      "converted_to": "float"
+    },
+    "PetalLengthCm": {
+      "original": "float64",
+      "converted_to": "float"
+    },
+    "PetalWidthCm": {
+      "original": "float64",
+      "converted_to": "float"
+    },
+    "Species": {
+      "original": "object",
+      "converted_to": "string"
+    }
+  },
+  "columns_dropped": [],
+  "transformations_applied": [
+    "Converted Id to int",
+    "Converted SepalLengthCm to float",
+    "Converted SepalWidthCm to float",
+    "Converted PetalLengthCm to float",
+    "Converted PetalWidthCm to float",
+    "Converted Species to string"
+  ]
+}

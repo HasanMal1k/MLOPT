@@ -9,6 +9,9 @@ import os
 from typing import List, Optional
 import math
 
+# Import the proper apply_transformations function from transformations module
+from transformations import apply_transformations as apply_specific_transformations
+
 # Create router for custom preprocessing
 router = APIRouter(prefix="/custom-preprocessing")
 
@@ -53,11 +56,15 @@ def clean_for_json(obj):
 def apply_transformations(df: pd.DataFrame, transform_config: dict) -> tuple[pd.DataFrame, list]:
     """
     Apply transformations to a dataframe and return the result plus applied transforms
+    This function now uses the transformations module for all transformation types
     """
-    df_transformed = df.copy()
-    applied_transforms = []
+    # Use the proper function from transformations.py that handles all transformation types
+    df_transformed, applied_transforms = apply_specific_transformations(df, transform_config)
     
-    # Drop columns first
+    # Additionally handle columns_to_drop and data_types if present
+    # (these are custom preprocessing specific, not in transformations.py)
+    
+    # Drop columns if specified
     if "columns_to_drop" in transform_config:
         columns_to_drop = transform_config["columns_to_drop"]
         if columns_to_drop:

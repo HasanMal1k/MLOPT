@@ -398,7 +398,7 @@ export default function TimeSeriesProcessing({
                           </SelectItem>
                         ))
                       ) : (
-                        <SelectItem value="" disabled>
+                        <SelectItem value="no-columns" disabled>
                           No date columns detected
                         </SelectItem>
                       )}

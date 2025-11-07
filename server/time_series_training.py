@@ -159,6 +159,20 @@ def prepare_darts_series(df: pd.DataFrame, date_col: str, value_cols: List[str])
         df = df.dropna(subset=[date_col])
         df = df.sort_values(date_col)
         
+        # Check for duplicate timestamps and aggregate them
+        duplicate_count = df[date_col].duplicated().sum()
+        if duplicate_count > 0:
+            logger.warning(f"Found {duplicate_count} duplicate timestamps in analysis. Aggregating by mean...")
+            # Group by date column and aggregate numeric columns by mean
+            numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
+            
+            # Create aggregation dict - keep all value columns
+            agg_dict = {col: 'mean' for col in value_cols if col in df.columns}
+            
+            # Group and aggregate
+            df = df.groupby(date_col, as_index=False).agg(agg_dict)
+            logger.info(f"After aggregation: {len(df)} unique timestamps")
+        
         # Set date as index
         df_indexed = df.set_index(date_col)
         
@@ -306,6 +320,23 @@ async def run_time_series_training(config_id: str, config: dict):
             raise Exception(f"No valid target values found in column {target_column}")
         
         df = df.sort_values(date_column).reset_index(drop=True)
+        
+        # Check for duplicate timestamps and aggregate them
+        duplicate_count = df[date_column].duplicated().sum()
+        if duplicate_count > 0:
+            logger.warning(f"Found {duplicate_count} duplicate timestamps. Aggregating by mean...")
+            # Group by date column and aggregate numeric columns by mean
+            numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
+            
+            # Create aggregation dict
+            agg_dict = {col: 'mean' for col in numeric_cols if col in df.columns}
+            
+            # Group and aggregate - keep date_column for setting index later
+            df = df.groupby(date_column, as_index=False).agg(agg_dict)
+            logger.info(f"After aggregation: {len(df)} unique timestamps")
+        
+        # Sort again after aggregation
+        df = df.sort_values(date_column).reset_index(drop=True)
         df_indexed = df.set_index(date_column)
         
         # Detect and set frequency - with robust handling for irregular data
@@ -378,21 +409,94 @@ async def run_time_series_training(config_id: str, config: dict):
                     fill_missing_dates=False  # Don't fill missing dates if irregular
                 )
             except Exception as e:
-                logger.warning(f"Failed without frequency: {e}, resampling to daily")
+                logger.warning(f"Failed without frequency: {e}, trying with fill_missing_dates=True and freq=None")
+            
+            # Try with fill_missing_dates=True and freq=None (as suggested in error)
+            try:
+                return TimeSeries.from_series(
+                    data[column_name] if isinstance(data, pd.DataFrame) else data,
+                    fill_missing_dates=True,
+                    freq=None
+                )
+            except Exception as e:
+                logger.warning(f"Failed with fill_missing_dates=True: {e}, resampling to daily")
             
             # Last resort: resample to daily frequency
             try:
                 series_data = data[column_name] if isinstance(data, pd.DataFrame) else data
+                
+                # Ensure we have a datetime index
+                if not isinstance(series_data.index, pd.DatetimeIndex):
+                    logger.warning(f"Index is not DatetimeIndex, cannot resample")
+                    raise Exception(f"Cannot resample: index is not DatetimeIndex")
+                
+                # Check for duplicates in the resampled data
+                if series_data.index.duplicated().any():
+                    logger.warning(f"Found duplicates even after aggregation, using first occurrence")
+                    series_data = series_data[~series_data.index.duplicated(keep='first')]
+                
                 # Resample to daily and forward fill
                 resampled = series_data.resample('D').ffill()
                 return TimeSeries.from_series(resampled, freq='D')
             except Exception as e:
                 raise Exception(f"Could not create TimeSeries for {column_name}: {e}")
         
+        # Helper function to safely create multivariate TimeSeries from DataFrame
+        def safe_create_multivariate_timeseries(data, value_cols, freq):
+            """Safely create multivariate TimeSeries for exogenous variables"""
+            try:
+                # First try with detected frequency
+                if freq is not None:
+                    return TimeSeries.from_dataframe(
+                        data, 
+                        value_cols=value_cols, 
+                        fill_missing_dates=True, 
+                        freq=freq
+                    )
+            except Exception as e:
+                logger.warning(f"Multivariate creation failed with frequency {freq}: {e}, trying without frequency")
+            
+            try:
+                # Try without frequency
+                return TimeSeries.from_dataframe(
+                    data, 
+                    value_cols=value_cols, 
+                    fill_missing_dates=False
+                )
+            except Exception as e:
+                logger.warning(f"Multivariate creation failed without frequency: {e}, trying fill_missing_dates=True with freq=None")
+            
+            # Try with fill_missing_dates=True and freq=None
+            try:
+                return TimeSeries.from_dataframe(
+                    data, 
+                    value_cols=value_cols, 
+                    fill_missing_dates=True, 
+                    freq=None
+                )
+            except Exception as e:
+                logger.warning(f"Multivariate creation failed: {e}, resampling to daily")
+            
+            # Last resort: resample each column and create TimeSeries
+            try:
+                resampled_data = data[value_cols].resample('D').ffill()
+                return TimeSeries.from_dataframe(resampled_data, value_cols=value_cols, freq='D')
+            except Exception as e:
+                raise Exception(f"Could not create multivariate TimeSeries: {e}")
+        
         # Prepare series based on forecasting type
         if forecasting_type == "univariate":
             target_series = safe_create_timeseries(df_indexed, target_column, detected_freq)
             train_target, val_target = target_series.split_after(train_split)
+            
+            # Validate we have enough data
+            if len(train_target) < 10:
+                raise Exception(f"Insufficient training data: only {len(train_target)} points. Need at least 10.")
+            
+            if len(val_target) < 1:
+                raise Exception(f"Insufficient validation data: only {len(val_target)} points. Need at least 1. Try adjusting train_split or using more data.")
+            
+            logger.info(f"Univariate split: {len(train_target)} training points, {len(val_target)} validation points")
             
             series_info = {
                 "type": "univariate",
@@ -430,20 +534,7 @@ async def run_time_series_training(config_id: str, config: dict):
             exo_series = None
             if exogenous_columns and len(exogenous_columns) > 0:
                 try:
-                    # Try to create multivariate series for exogenous variables
-                    if detected_freq is not None:
-                        exo_series = TimeSeries.from_dataframe(
-                            df_indexed, 
-                            value_cols=exogenous_columns, 
-                            fill_missing_dates=True, 
-                            freq=detected_freq
-                        )
-                    else:
-                        exo_series = TimeSeries.from_dataframe(
-                            df_indexed, 
-                            value_cols=exogenous_columns, 
-                            fill_missing_dates=False
-                        )
+                    exo_series = safe_create_multivariate_timeseries(df_indexed, exogenous_columns, detected_freq)
                 except Exception as e:
                     logger.warning(f"Could not create exogenous series: {e}")
                     exo_series = None
@@ -454,24 +545,21 @@ async def run_time_series_training(config_id: str, config: dict):
                               and col in df.select_dtypes(include=[np.number]).columns]
                 if numeric_cols:
                     try:
-                        if detected_freq is not None:
-                            exo_series = TimeSeries.from_dataframe(
-                                df_indexed, 
-                                value_cols=numeric_cols, 
-                                fill_missing_dates=True, 
-                                freq=detected_freq
-                            )
-                        else:
-                            exo_series = TimeSeries.from_dataframe(
-                                df_indexed, 
-                                value_cols=numeric_cols, 
-                                fill_missing_dates=False
-                            )
+                        exo_series = safe_create_multivariate_timeseries(df_indexed, numeric_cols, detected_freq)
                     except Exception as e:
                         logger.warning(f"Could not create auto-selected exogenous series: {e}")
                         exo_series = None
             
             train_target, val_target = target_series.split_after(train_split)
+            
+            # Validate we have enough data
+            if len(train_target) < 10:
+                raise Exception(f"Insufficient training data: only {len(train_target)} points. Need at least 10.")
+            
+            if len(val_target) < 1:
+                raise Exception(f"Insufficient validation data: only {len(val_target)} points. Need at least 1. Try adjusting train_split or using more data.")
+            
+            logger.info(f"Data split: {len(train_target)} training points, {len(val_target)} validation points")
             
             if exo_series is not None:
                 train_exo, val_exo = exo_series.split_after(train_split)
@@ -572,6 +660,9 @@ async def train_univariate_models(series_info: Dict, config: Dict, max_epochs: i
     results = []
     train_target = series_info["train_target"]
     val_target = series_info["val_target"]
+    
+    logger.info(f"Training univariate models with {len(train_target)} training points, {len(val_target)} validation points")
+    logger.info(f"Configuration: include_statistical={config.get('include_statistical', True)}, include_ml={config.get('include_ml', True)}, include_deep_learning={config.get('include_deep_learning', True)}")
     
     # Define model candidates
     candidates = {}
@@ -945,6 +1036,12 @@ async def train_univariate_models(series_info: Dict, config: Dict, max_epochs: i
         else:
             logger.info(f"Skipping deep learning: need {min_data_points}+ points, have {len(train_target)}")
     
+    # Log how many models we have before training
+    logger.info(f"Total models to train: {len(candidates)}")
+    if len(candidates) == 0:
+        logger.error("No models available to train! Check configuration and dependencies.")
+        return results
+    
     # Train each model
     for name, model in candidates.items():
         try:
@@ -1238,12 +1335,23 @@ async def train_exogenous_models(series_info: Dict, config: Dict, max_epochs: in
     train_exo = series_info["train_exo"]
     val_exo = series_info["val_exo"]
     
+    logger.info(f"Training exogenous models with {len(train_target)} training points, {len(val_target)} validation points")
+    logger.info(f"Exogenous variables available: {train_exo is not None}")
+    
+    # Validate data sizes
+    if len(val_target) < 1:
+        logger.error(f"Cannot train: validation set has {len(val_target)} points. Need at least 1.")
+        return results
+    
     # Define model candidates
     candidates = {}
     
-    # Calculate appropriate lags
+    # Calculate appropriate lags and output chunk length
     lags = min(24, len(train_target) // 3)
+    output_chunk = max(1, min(12, len(val_target)))  # Ensure at least 1
     lags_exo = [0, 1, 2, 3, 6, 12] if train_exo is not None else None
+    
+    logger.info(f"Model parameters: lags={lags}, output_chunk={output_chunk}, lags_exo={lags_exo}")
     
     # Statistical/ML models with exogenous support
     if config.get("include_statistical", True):
@@ -1252,7 +1360,7 @@ async def train_exogenous_models(series_info: Dict, config: Dict, max_epochs: in
                 "LinearRegression": LinearRegressionModel(
                     lags=lags,
                     lags_past_covariates=lags_exo,
-                    output_chunk_length=min(12, len(val_target))
+                    output_chunk_length=output_chunk
                 ),
             })
             
@@ -1263,13 +1371,13 @@ async def train_exogenous_models(series_info: Dict, config: Dict, max_epochs: in
                     "Ridge_Exo": LinearRegressionModel(
                         lags=lags,
                         lags_past_covariates=lags_exo,
-                        output_chunk_length=min(12, len(val_target)),
+                        output_chunk_length=output_chunk,
                         model=Ridge(alpha=1.0)
                     ),
                     "Lasso_Exo": LinearRegressionModel(
                         lags=lags,
                         lags_past_covariates=lags_exo,
-                        output_chunk_length=min(12, len(val_target)),
+                        output_chunk_length=output_chunk,
                         model=Lasso(alpha=0.1)
                     ),
                 })
@@ -1286,14 +1394,14 @@ async def train_exogenous_models(series_info: Dict, config: Dict, max_epochs: in
                 "RandomForest_Exo": RandomForest(
                     lags=lags,
                     lags_past_covariates=lags_exo if train_exo is not None else None,
-                    output_chunk_length=min(12, len(val_target)),
+                    output_chunk_length=output_chunk,
                     n_estimators=100,
                     random_state=42
                 ),
                 "LightGBM_Exo": LightGBMModel(
                     lags=lags,
                     lags_past_covariates=lags_exo if train_exo is not None else None,
-                    output_chunk_length=min(12, len(val_target)),
+                    output_chunk_length=output_chunk,
                     n_estimators=100,
                     random_state=42
                 )

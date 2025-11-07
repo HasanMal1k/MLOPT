@@ -1661,37 +1661,37 @@ export default function MLTrainingPage() {
                 </Alert>
 
                 {/* Configuration Summary */}
-                <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border-2 border-blue-200">
-                  <h4 className="font-semibold mb-3 text-blue-900">Configuration Summary</h4>
+                <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950 rounded-lg border-2 border-blue-200 dark:border-blue-800">
+                  <h4 className="font-semibold mb-3 text-blue-900 dark:text-blue-100">Configuration Summary</h4>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
                     <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="bg-white">Target</Badge>
+                      <Badge variant="outline" className="bg-white dark:bg-gray-900">Target</Badge>
                       <span className="font-medium">{targetColumn}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="bg-white">Task</Badge>
+                      <Badge variant="outline" className="bg-white dark:bg-gray-900">Task</Badge>
                       <span className="font-medium capitalize">{taskType}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="bg-white">Features</Badge>
+                      <Badge variant="outline" className="bg-white dark:bg-gray-900">Features</Badge>
                       <span className="font-medium">{selectedFeatures.length}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="bg-white">Train Split</Badge>
+                      <Badge variant="outline" className="bg-white dark:bg-gray-900">Train Split</Badge>
                       <span className="font-medium">{(trainingConfig.train_size * 100)}%</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="bg-white">CV Folds</Badge>
+                      <Badge variant="outline" className="bg-white dark:bg-gray-900">CV Folds</Badge>
                       <span className="font-medium">{cvFolds}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="bg-white">Metric</Badge>
+                      <Badge variant="outline" className="bg-white dark:bg-gray-900">Metric</Badge>
                       <span className="font-medium">{sortMetric === 'auto' ? 'Auto' : sortMetric}</span>
                     </div>
                   </div>
                   {(hyperparameterTuning || ensembleMethods || stackingEnabled) && (
-                    <div className="mt-3 pt-3 border-t border-blue-200">
-                      <div className="text-xs font-medium text-blue-900 mb-2">Advanced Features Enabled:</div>
+                    <div className="mt-3 pt-3 border-t border-blue-200 dark:border-blue-800">
+                      <div className="text-xs font-medium text-blue-900 dark:text-blue-100 mb-2">Advanced Features Enabled:</div>
                       <div className="flex flex-wrap gap-2">
                         {hyperparameterTuning && (
                           <Badge className="bg-purple-500 text-white">Hyperparameter Tuning ({tuningIterations} iter)</Badge>
@@ -1842,7 +1842,7 @@ export default function MLTrainingPage() {
                             {trainingResults.leaderboard.slice(0, 5).map((model: any, index: number) => (
                               <div 
                                 key={index} 
-                                className="flex items-center justify-between p-2 bg-white rounded border animate-in slide-in-from-top-2"
+                                className="flex items-center justify-between p-2 bg-white dark:bg-gray-900 rounded border animate-in slide-in-from-top-2"
                               >
                                 <div className="flex items-center gap-2">
                                   <Badge variant="outline" className="w-6 h-6 flex items-center justify-center">
@@ -2208,25 +2208,25 @@ export default function MLTrainingPage() {
 
                               {/* Prediction Result */}
                               {testPrediction && (
-                                <div className="p-6 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border-2 border-green-200">
+                                <div className="p-6 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950 dark:to-emerald-950 rounded-lg border-2 border-green-200 dark:border-green-800">
                                   <div className="flex items-center gap-3 mb-4">
-                                    <CheckCircle className="h-6 w-6 text-green-600" />
+                                    <CheckCircle className="h-6 w-6 text-green-600 dark:text-green-400" />
                                     <h4 className="font-semibold text-lg">Prediction Result</h4>
                                   </div>
                                   <div className="space-y-3">
-                                    <div className="flex items-center justify-between p-4 bg-white rounded-lg">
-                                      <span className="text-sm font-medium text-gray-600">Predicted {targetColumn}:</span>
-                                      <span className="text-2xl font-bold text-green-600">
+                                    <div className="flex items-center justify-between p-4 bg-white dark:bg-gray-900 rounded-lg">
+                                      <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Predicted {targetColumn}:</span>
+                                      <span className="text-2xl font-bold text-green-600 dark:text-green-400">
                                         {testPrediction.prediction?.toFixed(4) || testPrediction.prediction}
                                       </span>
                                     </div>
-                                    <div className="flex items-center justify-between p-3 bg-white rounded-lg">
-                                      <span className="text-sm text-gray-600">Model Used:</span>
+                                    <div className="flex items-center justify-between p-3 bg-white dark:bg-gray-900 rounded-lg">
+                                      <span className="text-sm text-gray-600 dark:text-gray-400">Model Used:</span>
                                       <span className="text-sm font-medium">{selectedModelForTest}</span>
                                     </div>
                                     {testPrediction.confidence && (
-                                      <div className="flex items-center justify-between p-3 bg-white rounded-lg">
-                                        <span className="text-sm text-gray-600">Confidence:</span>
+                                      <div className="flex items-center justify-between p-3 bg-white dark:bg-gray-900 rounded-lg">
+                                        <span className="text-sm text-gray-600 dark:text-gray-400">Confidence:</span>
                                         <Badge variant="outline">{(testPrediction.confidence * 100).toFixed(1)}%</Badge>
                                       </div>
                                     )}
