@@ -970,11 +970,6 @@ async def run_regular_ml_training(config_id: str, config: dict):
                         # 🚀 PUSH RESULT IMMEDIATELY
                         push_model_result(config_id, result)
                         logger.info(f"  📤 Result pushed to frontend stream")
-                        
-                        all_results.append(result)
-                        
-                        # 🚀 PUSH RESULT IMMEDIATELY
-                        push_model_result(config_id, result)
                         logger.info(f"✅ Completed {model_name} - Pushed to stream")
                     
                 except Exception as model_error:
@@ -1008,8 +1003,6 @@ async def run_regular_ml_training(config_id: str, config: dict):
                     )
                 else:
                     best_model = classification_module.create_model(best_model_id, fold=cv_folds, verbose=False)
-                best_model = classification_module.create_model(best_model_id, fold=3, verbose=False)
-                best_model = classification_module.create_model(best_model_name, fold=3, verbose=False)
             else:
                 raise Exception("No models completed successfully")
         
