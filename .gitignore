@@ -19,6 +19,7 @@ Thumbs.db
 # Environment variables
 client/.env
 server/.env
+server/deploy_model.py
 
 # Other ignored files
 .idea/
