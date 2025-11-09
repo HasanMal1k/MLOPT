@@ -30,6 +30,7 @@ from universal_file_handler import (
 from robust_csv_reader import read_csv_with_robust_handling, read_problematic_csv
 from data_visualization import router as visualization_router
 from model_management import router as model_management_router
+from azure_deployment import router as azure_deployment_router
 
 # Configure logging
 logging.basicConfig(
@@ -129,6 +130,7 @@ app.include_router(time_series_router)  # Register the time series preprocessing
 app.include_router(time_series_training_router)  # Register the time series training router
 app.include_router(visualization_router)
 app.include_router(model_management_router)  # Register the model management router
+app.include_router(azure_deployment_router)  # Register the Azure deployment router
 
 
 # Configure CORS

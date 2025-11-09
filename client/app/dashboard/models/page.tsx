@@ -15,10 +15,12 @@ import {
   Filter,
   Loader2,
   TrendingUp,
+  Cloud,
 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { createClient } from '@/utils/supabase/client'
 import { listModels, downloadModelFile, deleteModel, getModelStats, type TrainedModel, type ModelStats } from '@/lib/api/models'
+import DeploymentDialog from '@/components/DeploymentDialog'
 
 export default function SavedModelsPage() {
   const [models, setModels] = useState<TrainedModel[]>([])
@@ -27,6 +29,8 @@ export default function SavedModelsPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [filterStatus, setFilterStatus] = useState<string>('')
   const [userId, setUserId] = useState<string | null>(null)
+  const [showDeployDialog, setShowDeployDialog] = useState(false)
+  const [selectedModelToDeploy, setSelectedModelToDeploy] = useState<TrainedModel | null>(null)
   const { toast } = useToast()
   const supabase = createClient()
 
@@ -86,6 +90,11 @@ export default function SavedModelsPage() {
         variant: 'destructive',
       })
     }
+  }
+
+  const handleDeploy = (model: TrainedModel) => {
+    setSelectedModelToDeploy(model)
+    setShowDeployDialog(true)
   }
 
   const handleDelete = async (model: TrainedModel) => {
@@ -329,6 +338,15 @@ export default function SavedModelsPage() {
                   </Button>
                   <Button
                     size="sm"
+                    variant="secondary"
+                    onClick={() => handleDeploy(model)}
+                    className="flex-1"
+                  >
+                    <Cloud className="h-4 w-4 mr-2" />
+                    Deploy
+                  </Button>
+                  <Button
+                    size="sm"
                     variant="destructive"
                     onClick={() => handleDelete(model)}
                   >
@@ -339,6 +357,23 @@ export default function SavedModelsPage() {
             </Card>
           ))}
         </div>
+      )}
+
+      {/* Deployment Dialog */}
+      {selectedModelToDeploy && userId && (
+        <DeploymentDialog
+          open={showDeployDialog}
+          onOpenChange={setShowDeployDialog}
+          modelId={selectedModelToDeploy.id}
+          modelName={selectedModelToDeploy.model_name}
+          userId={userId}
+          onSuccess={() => {
+            toast({
+              title: 'Deployment started',
+              description: `${selectedModelToDeploy.model_name} is being deployed to Azure ML`,
+            })
+          }}
+        />
       )}
     </div>
   )

@@ -1,0 +1,10 @@
+mlflow==3.6.0
+cloudpickle==3.1.2
+jaraco-collections==5.1.0
+matplotlib==3.7.5
+numpy==1.26.4
+pandas==2.1.4
+pyarrow==22.0.0
+pycaret==3.3.2
+scikit-learn==1.4.2
+scipy==1.11.4

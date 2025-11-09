@@ -51,7 +51,8 @@ import {
   Sun,
   Moon,
   CreditCard,
-  FileCode2
+  FileCode2,
+  Cloud
 } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
 import { useToast } from "@/hooks/use-toast"
@@ -105,14 +106,25 @@ const navigation = [
         url: '/dashboard/blueprints',
         icon: Braces,
         badge: 'New'
-      }
+      },
+      {
+        title: 'Deployments',
+        url: '/dashboard/deployments',
+        icon: Cloud,
+        badge: 'New'
+      },
     ]
   }
 ]
 
 
 const accountItems = [
-  
+  {
+    title: 'My Models',
+    url: '/dashboard/models',
+    icon: FileCode2,
+    badge: 'New'
+  },
   {
     title: 'Subscription',
     url: '/dashboard/pricing',
