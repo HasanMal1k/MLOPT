@@ -1024,9 +1024,65 @@ async def run_regular_ml_training(config_id: str, config: dict):
         if config["task_type"] == "regression":
             regression_module.save_model(final_best_model, str(models_dir / 'best_model'))
             logger.info(f"Saved best model: {best_model_name}")
+            
+            # Save top 5 models as well
+            for idx, (_, row) in enumerate(leaderboard.head(5).iterrows()):
+                if idx == 0:
+                    continue  # Skip best model (already saved)
+                model_name = row['Model']
+                model_id = model_id_map.get(model_name)
+                if model_id:
+                    try:
+                        logger.info(f"Training and saving model {idx + 1}: {model_name}")
+                        # Create and finalize the model
+                        if hyperparameter_tuning:
+                            model = regression_module.tune_model(
+                                regression_module.create_model(model_id, fold=cv_folds, verbose=False),
+                                n_iter=tuning_iterations,
+                                optimize=sort_by,
+                                verbose=False
+                            )
+                        else:
+                            model = regression_module.create_model(model_id, fold=cv_folds, verbose=False)
+                        
+                        final_model = regression_module.finalize_model(model)
+                        safe_name = model_name.lower().replace(' ', '_').replace('(', '').replace(')', '')
+                        regression_module.save_model(final_model, str(models_dir / safe_name))
+                        saved_count += 1
+                        logger.info(f"✅ Saved model: {model_name}")
+                    except Exception as e:
+                        logger.error(f"Failed to save model {model_name}: {e}")
         else:
             classification_module.save_model(final_best_model, str(models_dir / 'best_model'))
             logger.info(f"Saved best model: {best_model_name}")
+            
+            # Save top 5 models as well
+            for idx, (_, row) in enumerate(leaderboard.head(5).iterrows()):
+                if idx == 0:
+                    continue  # Skip best model (already saved)
+                model_name = row['Model']
+                model_id = model_id_map.get(model_name)
+                if model_id:
+                    try:
+                        logger.info(f"Training and saving model {idx + 1}: {model_name}")
+                        # Create and finalize the model
+                        if hyperparameter_tuning:
+                            model = classification_module.tune_model(
+                                classification_module.create_model(model_id, fold=cv_folds, verbose=False),
+                                n_iter=tuning_iterations,
+                                optimize=sort_metric if sort_metric != 'auto' else 'Accuracy',
+                                verbose=False
+                            )
+                        else:
+                            model = classification_module.create_model(model_id, fold=cv_folds, verbose=False)
+                        
+                        final_model = classification_module.finalize_model(model)
+                        safe_name = model_name.lower().replace(' ', '_').replace('(', '').replace(')', '')
+                        classification_module.save_model(final_model, str(models_dir / safe_name))
+                        saved_count += 1
+                        logger.info(f"✅ Saved model: {model_name}")
+                    except Exception as e:
+                        logger.error(f"Failed to save model {model_name}: {e}")
         
         # Save leaderboard
         leaderboard.to_csv(models_dir / 'leaderboard.csv', index=False)
@@ -1330,6 +1386,46 @@ async def download_leaderboard(task_id: str):
         filename=f"leaderboard_{task_id}.csv",
         media_type="text/csv"
     )
+
+@router.get("/download-all-models/{task_id}")
+async def download_all_models(task_id: str):
+    """Download all models as a zip file"""
+    import zipfile
+    
+    if task_id not in training_tasks:
+        raise HTTPException(status_code=404, detail="Task not found")
+    
+    task = training_tasks[task_id]
+    if task["status"] != "completed":
+        raise HTTPException(status_code=400, detail="Training not completed")
+    
+    models_dir = Path("models") / task_id
+    if not models_dir.exists():
+        raise HTTPException(status_code=404, detail="Models directory not found")
+    
+    # Create a temporary zip file
+    zip_path = models_dir / f"all_models_{task_id}.zip"
+    
+    try:
+        with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+            # Add all .pkl files
+            for pkl_file in models_dir.glob("*.pkl"):
+                zipf.write(pkl_file, pkl_file.name)
+            
+            # Add leaderboard if exists
+            leaderboard_path = models_dir / "leaderboard.csv"
+            if leaderboard_path.exists():
+                zipf.write(leaderboard_path, "leaderboard.csv")
+        
+        return FileResponse(
+            path=zip_path,
+            filename=f"all_models_{task_id}.zip",
+            media_type="application/zip",
+            background=lambda: os.unlink(zip_path) if zip_path.exists() else None  # Clean up after sending
+        )
+    except Exception as e:
+        logger.error(f"Error creating zip file: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to create zip file: {str(e)}")
 
 @router.get("/available-models/")
 async def get_available_models():

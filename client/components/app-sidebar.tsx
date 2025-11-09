@@ -49,7 +49,9 @@ import {
   Brain,
   Zap,
   Sun,
-  Moon
+  Moon,
+  CreditCard,
+  FileCode2
 } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
 import { useToast } from "@/hooks/use-toast"
@@ -87,6 +89,12 @@ const navigation = [
     title: 'Blueprints',
     items: [
       {
+        title: 'My Models',
+        url: '/dashboard/models',
+        icon: FileCode2,
+        badge: 'New'
+      },
+      {
         title: 'Transformations',
         url: '/dashboard/transformations',
         icon: Sparkles,
@@ -105,6 +113,11 @@ const navigation = [
 
 const accountItems = [
   
+  {
+    title: 'Subscription',
+    url: '/dashboard/pricing',
+    icon: CreditCard
+  },
   {
     title: 'Account Settings',
     url: '/dashboard/account',

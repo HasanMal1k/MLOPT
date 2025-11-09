@@ -51,9 +51,14 @@ import {
   Database,
   Award,
   Layers,
-  RefreshCw
+  RefreshCw,
+  Download,
+  Save,
+  Package,
+  FileCode2
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import SaveModelDialog from '@/components/SaveModelDialog'
 
 interface FeatureImportance {
   feature: string
@@ -137,6 +142,11 @@ export default function MLTrainingPage() {
   const [testPrediction, setTestPrediction] = useState<any>(null)
   const [isTesting, setIsTesting] = useState(false)
 
+  // Save model state
+  const [showSaveDialog, setShowSaveDialog] = useState(false)
+  const [userId, setUserId] = useState<string>('')
+  const [selectedModelToSave, setSelectedModelToSave] = useState<any>(null)
+
   // Loading states
   const [isLoadingFile, setIsLoadingFile] = useState(true)
   const [isAnalyzingFeatures, setIsAnalyzingFeatures] = useState(false)
@@ -158,6 +168,15 @@ export default function MLTrainingPage() {
       fetchFileMetadata()
     }
   }, [fileId])
+
+  // Get user ID
+  useEffect(() => {
+    const fetchUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) setUserId(user.id)
+    }
+    fetchUser()
+  }, [])
 
   // Load stored configId on component mount
   useEffect(() => {
@@ -2017,14 +2036,14 @@ export default function MLTrainingPage() {
                       <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                           <Database className="h-5 w-5" />
-                          Download Results
+                          Download & Save Results
                         </CardTitle>
                         <CardDescription>
-                          Download trained models and performance reports
+                          Download trained models, save to database, or get performance reports
                         </CardDescription>
                       </CardHeader>
                       <CardContent>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                           <Button 
                             variant="outline" 
                             onClick={() => {
@@ -2033,11 +2052,12 @@ export default function MLTrainingPage() {
                                 window.open(`${process.env.NEXT_PUBLIC_BACKEND_URL}/ml/download-model/${configIdToUse}/best_model`, '_blank')
                               }
                             }}
-                            className="h-auto p-4"
+                            className="h-auto p-4 flex flex-col items-start gap-2"
                           >
+                            <Download className="h-5 w-5" />
                             <div className="text-left">
                               <div className="font-medium">Best Model</div>
-                              <div className="text-sm text-muted-foreground">Download the top performing model</div>
+                              <div className="text-sm text-muted-foreground">Download top performing model (.pkl)</div>
                             </div>
                           </Button>
                           
@@ -2049,13 +2069,118 @@ export default function MLTrainingPage() {
                                 window.open(`${process.env.NEXT_PUBLIC_BACKEND_URL}/ml/download-leaderboard/${configIdToUse}`, '_blank')
                               }
                             }}
-                            className="h-auto p-4"
+                            className="h-auto p-4 flex flex-col items-start gap-2"
                           >
+                            <Download className="h-5 w-5" />
                             <div className="text-left">
                               <div className="font-medium">Performance Report</div>
-                              <div className="text-sm text-muted-foreground">Download detailed metrics CSV</div>
+                              <div className="text-sm text-muted-foreground">Download metrics CSV</div>
                             </div>
                           </Button>
+
+                          <Button 
+                            variant="default"
+                            onClick={() => {
+                              setSelectedModelToSave(trainingResults?.leaderboard?.[0])
+                              setShowSaveDialog(true)
+                            }}
+                            className="h-auto p-4 flex flex-col items-start gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                          >
+                            <Save className="h-5 w-5" />
+                            <div className="text-left">
+                              <div className="font-medium">Save to Database</div>
+                              <div className="text-sm opacity-90">Store best model in Supabase</div>
+                            </div>
+                          </Button>
+                        </div>
+
+                        {/* Download All Models Section */}
+                        <div className="mt-6 pt-6 border-t">
+                          <div className="flex items-center justify-between mb-3">
+                            <h4 className="font-medium flex items-center gap-2">
+                              <Package className="h-4 w-4" />
+                              Available Models
+                            </h4>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => {
+                                const configIdToUse = configId || localStorage.getItem('ml_config_id')
+                                if (configIdToUse) {
+                                  window.open(`${process.env.NEXT_PUBLIC_BACKEND_URL}/ml/download-all-models/${configIdToUse}`, '_blank')
+                                }
+                              }}
+                              className="gap-2"
+                            >
+                              <Package className="h-4 w-4" />
+                              Download All as ZIP
+                            </Button>
+                          </div>
+                          <div className="space-y-2">
+                            {trainingResults.leaderboard?.slice(0, 5).map((model: any, index: number) => (
+                              <div key={index} className="flex items-center justify-between p-3 bg-muted rounded-lg hover:bg-muted/80 transition-colors">
+                                <div className="flex items-center gap-3">
+                                  {index === 0 && <Award className="h-4 w-4 text-yellow-500" />}
+                                  <div>
+                                    <div className="font-medium text-sm">{model.Model}</div>
+                                    <div className="text-xs text-muted-foreground">
+                                      {taskType === 'classification' 
+                                        ? `Accuracy: ${(model.Accuracy * 100).toFixed(2)}%` 
+                                        : `R²: ${model.R2?.toFixed(4)}`}
+                                    </div>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm"
+                                    onClick={() => {
+                                      setSelectedModelToSave({
+                                        ...model,
+                                        modelIndex: index
+                                      })
+                                      setShowSaveDialog(true)
+                                    }}
+                                  >
+                                    <Save className="h-4 w-4 mr-1" />
+                                    Save
+                                  </Button>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm"
+                                    onClick={() => {
+                                      const configIdToUse = configId || localStorage.getItem('ml_config_id')
+                                      if (configIdToUse) {
+                                        // Extract model ID from model name for download
+                                        const modelId = index === 0 ? 'best_model' : model.Model.toLowerCase().replace(/\s+/g, '_')
+                                        window.open(`${process.env.NEXT_PUBLIC_BACKEND_URL}/ml/download-model/${configIdToUse}/${modelId}`, '_blank')
+                                      }
+                                    }}
+                                  >
+                                    <Download className="h-4 w-4 mr-1" />
+                                    Download
+                                  </Button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                          {trainingResults.leaderboard && trainingResults.leaderboard.length > 5 && (
+                            <p className="text-xs text-muted-foreground mt-3">
+                              Showing top 5 models. Download best model to get the top performer.
+                            </p>
+                          )}
+                          
+                          {/* View Saved Models Link */}
+                          <div className="mt-4 pt-4 border-t">
+                            <Button 
+                              variant="link" 
+                              className="w-full justify-center gap-2 text-blue-600 hover:text-blue-700"
+                              onClick={() => router.push('/dashboard/models')}
+                            >
+                              <FileCode2 className="h-4 w-4" />
+                              View All Saved Models in Database
+                            </Button>
+                          </div>
                         </div>
                       </CardContent>
                     </Card>
@@ -2288,6 +2413,23 @@ export default function MLTrainingPage() {
           </div>
         )}
       </div>
+
+      {/* Save Model Dialog */}
+      <SaveModelDialog
+        open={showSaveDialog}
+        onOpenChange={(open) => {
+          setShowSaveDialog(open)
+          if (!open) setSelectedModelToSave(null)
+        }}
+        taskId={configId || ''}
+        modelInfo={{
+          algorithm: selectedModelToSave?.Model || trainingResults?.best_model_name || 'Best Model',
+          metrics: selectedModelToSave || trainingResults?.leaderboard?.[0] || {},
+          taskType: taskType || 'classification',
+          fileId: fileId
+        }}
+        userId={userId}
+      />
     </section>
   )
 }

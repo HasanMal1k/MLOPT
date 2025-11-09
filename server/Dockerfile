@@ -14,6 +14,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends curl build-esse
 # Add uv to PATH
 ENV PATH="/root/.local/bin:$PATH"
 
+# Set higher timeout for large downloads
+ENV UV_HTTP_TIMEOUT=300
+
 # ✅ Check uv version
 RUN uv --version
 
@@ -22,6 +25,12 @@ COPY requirements.txt .
 
 # Install dependencies using uv with unsafe-best-match strategy
 RUN uv pip install --system --index-strategy unsafe-best-match -r requirements.txt
+
+# Install Supabase separately with pip to ensure all dependencies are resolved
+RUN pip install --no-cache-dir supabase gotrue postgrest realtime storage3 supafunc
+
+# ✅ Verify supabase is installed
+RUN python -c "import supabase; from supabase import create_client; print('✅ Supabase installed successfully')"
 
 # Copy app source
 COPY . .
