@@ -575,7 +575,6 @@ export default function CustomCleaning({
           onClick={applyAllTransformations} 
           disabled={isApplyingTransformations}
           variant="default"
-          className="bg-gray-50 "
         >
           {isApplyingTransformations ? (
             <>

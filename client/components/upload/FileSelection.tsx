@@ -67,12 +67,12 @@ export default function FileSelection({
     const extension = file.name.split('.').pop()?.toLowerCase()
     switch (extension) {
       case 'csv':
-        return <Database className="h-4 w-4 text-green-600" />
+        return <Database className="h-4 w-4" />
       case 'xlsx':
       case 'xls':
-        return <BarChart className="h-4 w-4 text-blue-600" />
+        return <BarChart className="h-4 w-4" />
       default:
-        return <Database className="h-4 w-4 text-gray-600" />
+        return <Database className="h-4 w-4" />
     }
   }
 
@@ -104,7 +104,7 @@ export default function FileSelection({
             <Database className="h-4 w-4" />
             Kaggle Import
             {displayKaggleCount > 0 && (
-              <Badge variant="secondary" className="ml-1 bg-green-100 text-green-700">
+              <Badge variant="secondary" className="ml-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800">
                 {displayKaggleCount}
               </Badge>
             )}
@@ -144,12 +144,12 @@ export default function FileSelection({
               >
                 <input {...getInputProps()} />
                 <div className="space-y-4">
-                  <FilePlus2 className="mx-auto h-12 w-12 text-gray-400" />
+                  <FilePlus2 className="mx-auto h-12 w-12 text-muted-foreground" />
                   <div>
                     <p className="text-lg font-medium">
                       {isDragActive ? "Drop files here..." : "Drag & drop files here"}
                     </p>
-                    <p className="text-sm text-gray-500 mt-1">
+                    <p className="text-sm text-muted-foreground mt-1">
                       or{" "}
                       <button 
                         onClick={open} 
@@ -159,7 +159,7 @@ export default function FileSelection({
                       </button>
                     </p>
                   </div>
-                  <div className="flex items-center justify-center gap-4 text-xs text-gray-500">
+                  <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground">
                     <span>• Supports CSV, Excel (.xlsx)</span>
                     <span>• Max 10MB per file</span>
                     <span>• Multiple files allowed</span>
@@ -194,9 +194,9 @@ export default function FileSelection({
                       // Create unique key to prevent React conflicts
                       const uniqueKey = `${file.name}_${file.size}_${file.lastModified}_${index}`;
                       return (
-                      <div key={uniqueKey} className="p-4 flex items-center justify-between hover:bg-gray-50/50">
+                      <div key={uniqueKey} className="p-4 flex items-center justify-between hover:bg-accent/50">
                         <div className="flex items-center gap-3">
-                          <div className="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center">
+                          <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
                             {getFileIcon(file)}
                           </div>
                           <div>
@@ -212,19 +212,18 @@ export default function FileSelection({
                         </div>
                         <div className="flex items-center gap-2">
                           <Button
-                            variant="ghost"
+                            variant="outline"
                             size="sm"
                             onClick={() => onPreviewFile(file)}
-                            className="text-blue-600 hover:text-blue-700"
                           >
                             <Eye className="h-4 w-4 mr-1" />
                             Preview
                           </Button>
                           <Button
-                            variant="ghost"
+                            variant="outline"
                             size="sm"
                             onClick={() => removeFile(index)}
-                            className="text-red-600 hover:text-red-700"
+                            className="border-destructive/50 text-destructive hover:bg-destructive hover:text-destructive-foreground"
                           >
                             <X className="h-4 w-4 mr-1" />
                             Remove
@@ -236,12 +235,12 @@ export default function FileSelection({
                   </div>
                   
                   {/* File Summary */}
-                  <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="p-3 bg-primary/10 border border-primary/20 rounded-lg">
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-blue-800 font-medium">
+                      <span className="font-medium">
                         Ready to process {files.length} file{files.length === 1 ? '' : 's'}
                       </span>
-                      <span className="text-blue-600">
+                      <span className="text-muted-foreground">
                         Total size: {formatFileSize(files.reduce((total, file) => total + file.size, 0))}
                       </span>
                     </div>
@@ -268,12 +267,12 @@ export default function FileSelection({
           
           {/* Show imported files count */}
           {displayKaggleCount > 0 && (
-            <Alert className="bg-green-50 border-green-200">
-              <Database className="h-4 w-4 text-green-600" />
-              <AlertTitle className="text-green-800">
+            <Alert className="bg-green-50 dark:bg-green-950/30 border-green-200 dark:border-green-800">
+              <Database className="h-4 w-4 text-green-600 dark:text-green-400" />
+              <AlertTitle className="text-green-800 dark:text-green-300">
                 Kaggle Import Summary
               </AlertTitle>
-              <AlertDescription className="text-green-700">
+              <AlertDescription className="text-green-700 dark:text-green-400">
                 Successfully imported {displayKaggleCount} file{displayKaggleCount === 1 ? '' : 's'} from Kaggle. 
                 Switch to the "Local Files" tab to see all your selected files.
               </AlertDescription>
@@ -297,24 +296,24 @@ export default function FileSelection({
               <div className="text-center py-12">
                 <div className="flex justify-center mb-6">
                   <div className="relative">
-                    <Cloud className="h-16 w-16 text-gray-300" />
-                    <div className="absolute -top-1 -right-1 h-6 w-6 bg-orange-100 rounded-full flex items-center justify-center">
-                      <span className="text-xs font-medium text-orange-600">Soon</span>
+                    <Cloud className="h-16 w-16 text-muted-foreground/50" />
+                    <div className="absolute -top-1 -right-1 h-6 w-6 bg-orange-100 dark:bg-orange-900/30 rounded-full flex items-center justify-center">
+                      <span className="text-xs font-medium text-orange-600 dark:text-orange-400">Soon</span>
                     </div>
                   </div>
                 </div>
-                <h3 className="text-lg font-medium text-gray-700 mb-2">
+                <h3 className="text-lg font-medium mb-2">
                   Cloud Storage Integration Coming Soon
                 </h3>
-                <p className="text-sm text-gray-500 max-w-md mx-auto mb-6">
+                <p className="text-sm text-muted-foreground max-w-md mx-auto mb-6">
                   We're building integrations with popular cloud storage services. 
                   You'll be able to import files directly from:
                 </p>
                 <div className="grid grid-cols-2 gap-3 max-w-xs mx-auto mb-6">
-                  <div className="p-2 border rounded text-sm text-gray-600">Google Drive</div>
-                  <div className="p-2 border rounded text-sm text-gray-600">Dropbox</div>
-                  <div className="p-2 border rounded text-sm text-gray-600">OneDrive</div>
-                  <div className="p-2 border rounded text-sm text-gray-600">AWS S3</div>
+                  <div className="p-2 border rounded text-sm">Google Drive</div>
+                  <div className="p-2 border rounded text-sm">Dropbox</div>
+                  <div className="p-2 border rounded text-sm">OneDrive</div>
+                  <div className="p-2 border rounded text-sm">AWS S3</div>
                 </div>
                 <div className="flex gap-3 justify-center">
                   <Button variant="outline" size="sm" asChild>
@@ -342,7 +341,7 @@ export default function FileSelection({
             <div className="flex items-center gap-4">
               <span>{files.length} file{files.length === 1 ? '' : 's'} selected</span>
               {displayKaggleCount > 0 && (
-                <Badge variant="secondary" className="bg-green-100 text-green-700">
+                <Badge variant="secondary" className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800">
                   {displayKaggleCount} from Kaggle
                 </Badge>
               )}
@@ -357,7 +356,7 @@ export default function FileSelection({
         >
           Continue to Review
           {files.length > 0 && (
-            <Badge variant="secondary" className="ml-2 bg-black">
+            <Badge variant="secondary" className="ml-2">
               {files.length}
             </Badge>
           )}

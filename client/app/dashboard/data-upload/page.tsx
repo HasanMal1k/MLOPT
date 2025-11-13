@@ -30,9 +30,9 @@ export default function DataUpload() {
     <div {...getRootProps()} className="h-screen w-full px-6 md:px-10 py-10">
       {isDragActive && (
         <div className="absolute h-full w-full inset-0 bg-primary/10 flex items-center justify-center text-4xl backdrop-blur-sm z-50">
-          <div className="bg-white dark:bg-gray-900 shadow-lg rounded-xl p-8 border border-primary">
+          <div className="bg-background shadow-lg rounded-xl p-8 border border-primary">
             <FilePlus2 className="mx-auto h-16 w-16 text-primary mb-4" />
-            <p className="text-center text-2xl font-medium">Drop Your Files Here</p>
+            <p className="text-center text-2xl font-medium text-foreground">Drop Your Files Here</p>
           </div>
         </div>
       )}

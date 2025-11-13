@@ -537,7 +537,6 @@ export default function TimeSeriesProcessing({
         <Button 
           onClick={processTimeSeriesFiles}
           disabled={fileConfigs.some(config => !config.dateColumn)}
-          className="bg-gray-50"
         >
           Process Time Series Data
           <Clock className="ml-2 h-4 w-4" />

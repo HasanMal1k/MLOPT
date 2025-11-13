@@ -1,0 +1,47 @@
+{
+  "data_types": {
+    "Unnamed: 0": {
+      "original": "int64",
+      "converted_to": "int"
+    },
+    "sepal_length": {
+      "original": "float64",
+      "converted_to": "float"
+    },
+    "sepal_width": {
+      "original": "float64",
+      "converted_to": "float"
+    },
+    "petal_length": {
+      "original": "float64",
+      "converted_to": "float"
+    },
+    "petal_width": {
+      "original": "float64",
+      "converted_to": "float"
+    },
+    "species": {
+      "original": "object",
+      "converted_to": "string"
+    },
+    "species_versicolor": {
+      "original": "bool",
+      "converted_to": "string"
+    },
+    "species_virginica": {
+      "original": "bool",
+      "converted_to": "string"
+    }
+  },
+  "columns_dropped": [],
+  "transformations_applied": [
+    "Converted Unnamed: 0 to int",
+    "Converted sepal_length to float",
+    "Converted sepal_width to float",
+    "Converted petal_length to float",
+    "Converted petal_width to float",
+    "Converted species to string",
+    "Converted species_versicolor to string",
+    "Converted species_virginica to string"
+  ]
+}

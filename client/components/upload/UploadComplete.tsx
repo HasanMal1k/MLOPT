@@ -261,28 +261,28 @@ export default function UploadComplete({
         <div className="bg-muted/50 rounded-lg p-4 border">
           <div className="flex items-center justify-center gap-2 text-sm">
             <div className="flex items-center gap-2">
-              <div className="h-8 w-8 rounded-full bg-green-500 flex items-center justify-center text-white font-bold text-xs">
+              <div className="h-8 w-8 rounded-full bg-green-500 dark:bg-green-600 flex items-center justify-center text-white dark:text-white font-bold text-xs">
                 ✓
               </div>
               <span className="font-medium">Upload</span>
             </div>
             <ChevronRight className="h-4 w-4 text-muted-foreground" />
             <div className="flex items-center gap-2">
-              <div className="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold text-xs">
+              <div className="h-8 w-8 rounded-full bg-blue-500 dark:bg-blue-600 flex items-center justify-center text-white dark:text-white font-bold text-xs">
                 1
               </div>
               <span className="font-medium">Transform</span>
             </div>
             <ChevronRight className="h-4 w-4 text-muted-foreground" />
             <div className="flex items-center gap-2">
-              <div className="h-8 w-8 rounded-full bg-purple-500 flex items-center justify-center text-white font-bold text-xs">
+              <div className="h-8 w-8 rounded-full bg-purple-500 dark:bg-purple-600 flex items-center justify-center text-white dark:text-white font-bold text-xs">
                 2
               </div>
               <span className="font-medium">Train</span>
             </div>
             <ChevronRight className="h-4 w-4 text-muted-foreground" />
             <div className="flex items-center gap-2">
-              <div className="h-8 w-8 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center text-white font-bold text-xs">
+              <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center text-muted-foreground font-bold text-xs">
                 3
               </div>
               <span className="font-medium text-muted-foreground">Deploy</span>

@@ -268,11 +268,11 @@ export function AppSidebar() {
       {/* Header with Logo */}
       <SidebarHeader className="border-b border-border/40 p-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-transparent text-white">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
             <Brain className="h-5 w-5" />
           </div>
           <div className="flex flex-col">
-            <span className="text-lg font-bold text-gray-100">
+            <span className="text-lg font-bold text-sidebar-foreground">
               MLOpt
             </span>
             <span className="text-xs text-muted-foreground">

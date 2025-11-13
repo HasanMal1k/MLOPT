@@ -154,7 +154,7 @@ export default function Dashboard() {
             </CardContent>
             <CardFooter>
               <Button variant="outline" asChild className="w-full">
-                <Link href="/dashboard/my-files">
+                <Link href="/dashboard/datasets">
                   View All Files
                   <ChevronRight className="ml-2 h-4 w-4" />
                 </Link>

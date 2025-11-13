@@ -11,6 +11,7 @@ import json
 import uuid
 import tempfile
 import math
+import shutil
 import pandas as pd
 import numpy as np
 import chardet
@@ -173,9 +174,17 @@ async def root():
     return {"status": "online", "message": "MLOpt API is running"}
 
 @app.post("/upload/")
-async def upload_files(background_tasks: BackgroundTasks, files: list[UploadFile] = File(...)):
+async def upload_files(
+    background_tasks: BackgroundTasks, 
+    files: list[UploadFile] = File(...),
+    custom_cleaned: str = Form(None),
+    custom_cleaning_report: str = Form(None),
+    custom_cleaning_config: str = Form(None),
+    preprocessing_results: str = Form(None)
+):
     """
     Universal upload endpoint that handles CSV (with encoding detection) and Excel files
+    Accepts custom_cleaned flag to skip auto-preprocessing for already cleaned files
     """
     try:
         saved_files = []
@@ -260,16 +269,67 @@ async def upload_files(background_tasks: BackgroundTasks, files: list[UploadFile
                         "file_type": file_extension,
                         "conversion_message": conversion_message,
                         "file_info": file_info,
-                        "status": init_status
+                        "status": init_status,
+                        "custom_cleaned": custom_cleaned == "true" if custom_cleaned else False
                     })
                     
-                    # Add the background task for processing using normalized file
-                    background_tasks.add_task(
-                        process_data_file,
-                        normalized_path,  # Use the normalized file path
-                        PROCESSED_FOLDER,
-                        STATUS_FOLDER
-                    )
+                    # Only run auto-preprocessing if file hasn't been custom cleaned
+                    # If custom_cleaned is true, the file is already preprocessed and transformations applied
+                    if not custom_cleaned or custom_cleaned != "true":
+                        # Add the background task for processing using normalized file
+                        background_tasks.add_task(
+                            process_data_file,
+                            normalized_path,  # Use the normalized file path
+                            PROCESSED_FOLDER,
+                            STATUS_FOLDER
+                        )
+                    else:
+                        # File is already custom cleaned - copy directly to processed folder
+                        logger.info(f"Custom-cleaned file detected: {file.filename}")
+                        logger.info(f"Copying directly to processed folder, skipping auto-preprocessing")
+                        
+                        try:
+                            # Copy the custom-cleaned file to processed folder
+                            processed_file_path = PROCESSED_FOLDER / processed_filename
+                            shutil.copy2(normalized_path, processed_file_path)
+                            logger.info(f"Copied custom-cleaned file to: {processed_file_path}")
+                            
+                            # Parse the reports from frontend
+                            cleaning_report = json.loads(custom_cleaning_report) if custom_cleaning_report else {}
+                            preprocessing_res = json.loads(preprocessing_results) if preprocessing_results else {}
+                            
+                            # Create comprehensive status data
+                            final_status_data = {
+                                **initial_status_data,
+                                "custom_cleaned": True,
+                                "custom_cleaning_report": cleaning_report,
+                                "preprocessing_results": preprocessing_res,
+                                "processed_file_path": str(processed_file_path),
+                                "processing_skipped": True,
+                                "processing_skipped_reason": "File already has auto-preprocessing + custom transformations applied"
+                            }
+                            
+                            # Mark as complete
+                            update_status(
+                                normalized_path.name, 
+                                STATUS_FOLDER, 
+                                100, 
+                                "Custom cleaning complete - file ready for training",
+                                final_status_data
+                            )
+                            
+                            logger.info(f"Successfully processed custom-cleaned file: {file.filename}")
+                            
+                        except Exception as copy_error:
+                            error_msg = f"Error copying custom-cleaned file: {str(copy_error)}"
+                            logger.error(error_msg)
+                            update_status(
+                                normalized_path.name,
+                                STATUS_FOLDER,
+                                -1,
+                                error_msg,
+                                {**initial_status_data, "error": error_msg}
+                            )
                     
                 except Exception as status_error:
                     logger.error(f"Error setting up processing for {file.filename}: {status_error}")
@@ -421,6 +481,36 @@ async def download_processed_file(filename: str):
         logger.error(f"Error downloading file {filename}: {e}")
         raise HTTPException(status_code=500, detail=f"Error downloading file: {str(e)}")
 
+@app.get("/preprocessing_results/{filename}")
+async def serve_preprocessing_result(filename: str):
+    """
+    Serve files from the preprocessing_results directory (custom cleaning results)
+    """
+    try:
+        preprocessing_results_folder = Path("preprocessing_results")
+        file_path = preprocessing_results_folder / filename
+        
+        if not file_path.exists() or not file_path.is_file():
+            logger.error(f"Preprocessing result file not found: {file_path}")
+            raise HTTPException(status_code=404, detail=f"File {filename} not found in preprocessing_results")
+        
+        logger.info(f"Serving preprocessing result file: {file_path}")
+        
+        return FileResponse(
+            path=str(file_path),
+            filename=filename,
+            media_type='text/csv',
+            headers={
+                "Content-Disposition": f"attachment; filename={filename}",
+                "Access-Control-Allow-Origin": "*"
+            }
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error serving preprocessing result {filename}: {e}")
+        raise HTTPException(status_code=500, detail=f"Error serving file: {str(e)}")
 
 @app.get("/processing-status/{filename}")
 async def get_processing_status(filename: str):
