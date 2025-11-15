@@ -266,8 +266,8 @@ export function AppSidebar() {
   return (
     <Sidebar className="border-r border-border/40">
       {/* Header with Logo */}
-      <SidebarHeader className="border-b border-border/40 p-4">
-        <div className="flex items-center gap-3">
+      <SidebarHeader className="border-b border-sidebar-border p-4">
+        <Link href="/dashboard" className="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
             <Brain className="h-5 w-5" />
           </div>
@@ -279,7 +279,7 @@ export function AppSidebar() {
               Automate ML Workflow
             </span>
           </div>
-        </div>
+        </Link>
       </SidebarHeader>
 
       <SidebarContent className="p-2">

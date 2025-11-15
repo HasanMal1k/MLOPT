@@ -461,7 +461,7 @@ export default function DatasetsPage() {
                             Preview
                           </DropdownMenuItem>
                           <DropdownMenuItem asChild>
-                            <Link href={`/dashboard/preprocessing?file=${dataset.id}`}>
+                            <Link href={`/dashboard/transformations?file=${dataset.id}`}>
                               <Settings className="h-4 w-4 mr-2" />
                               Process
                             </Link>

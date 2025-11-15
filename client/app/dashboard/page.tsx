@@ -299,7 +299,7 @@ export default function Dashboard() {
                         <Eye className="h-4 w-4" />
                       </Button>
                       <Button variant="outline" asChild>
-                        <Link href={`/dashboard/preprocessing?file=${file.id}`}>Preprocess</Link>
+                        <Link href={`/dashboard/transformations?file=${file.id}`}>Process</Link>
                       </Button>
                     </CardFooter>
                   </Card>
