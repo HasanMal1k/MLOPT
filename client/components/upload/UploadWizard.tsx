@@ -14,6 +14,7 @@ import AutoPreprocessing from "./AutoPreprocessing"
 import DataTypeDetection from "./DataTypeDetection"
 import TimeSeriesProcessing from "./TimeSeriesProcessing"
 import CustomCleaning from "./CustomCleaning"
+import FileNaming from "./FileNaming"
 import FinalUpload from "./FinalUpload"
 import UploadComplete from "./UploadComplete"
 import extractMetadata from "@/utils/extractMetaData"
@@ -55,6 +56,9 @@ export default function UploadWizard({ isDragActive }: UploadWizardProps) {
   // Custom cleaning state
   const [customCleanedFiles, setCustomCleanedFiles] = useState<File[]>([])
   const [customCleaningResults, setCustomCleaningResults] = useState<any[]>([])
+  
+  // File naming state
+  const [customFileNames, setCustomFileNames] = useState<Record<string, string>>({})
   
   // Final state
   const [uploadComplete, setUploadComplete] = useState(false)
@@ -346,21 +350,26 @@ export default function UploadWizard({ isDragActive }: UploadWizardProps) {
         }
         
         setCustomCleanedFiles(cleanedFiles)
-        setCurrentStep(6) // Go to final upload
+        setCurrentStep(6) // Go to file naming
       }
       
       downloadCustomCleanedFiles()
     } else {
       // No custom cleaning, use preprocessed files
       setCustomCleanedFiles(preprocessedFiles)
-      setCurrentStep(6)
+      setCurrentStep(6) // Go to file naming
     }
+  }
+
+  const handleFileNamingComplete = (fileNames: Record<string, string>) => {
+    setCustomFileNames(fileNames)
+    setCurrentStep(7) // Go to final upload
   }
   
   const handleFinalUploadComplete = (summary: any) => {
     setUploadSummary(summary)
     setUploadComplete(true)
-    setCurrentStep(7) // Go to complete
+    setCurrentStep(8) // Go to complete
     
     if (summary.successCount === summary.totalFiles) {
       toast({
@@ -453,6 +462,10 @@ export default function UploadWizard({ isDragActive }: UploadWizardProps) {
           <StepDescription>Time series specific processing</StepDescription>
         </Step>
         <Step>
+          <StepTitle>Name Files</StepTitle>
+          <StepDescription>Provide unique file names</StepDescription>
+        </Step>
+        <Step>
           <StepTitle>Upload to Database</StepTitle>
           <StepDescription>Save processed data</StepDescription>
         </Step>
@@ -530,8 +543,9 @@ export default function UploadWizard({ isDragActive }: UploadWizardProps) {
         )}
         
         {currentStep === 6 && (
-          <FinalUpload
-            {...getFinalUploadData()}
+          <FileNaming
+            files={customCleanedFiles.length > 0 ? customCleanedFiles : (preprocessedFiles.length > 0 ? preprocessedFiles : files)}
+            originalFiles={files}
             onBack={() => {
               // Go back to appropriate step based on what processing was done
               if (timeSeriesProcessedFiles.length > 0) {
@@ -540,11 +554,20 @@ export default function UploadWizard({ isDragActive }: UploadWizardProps) {
                 setCurrentStep(4) // Back to custom cleaning
               }
             }}
-            onComplete={handleFinalUploadComplete}
+            onContinue={handleFileNamingComplete}
           />
         )}
         
         {currentStep === 7 && (
+          <FinalUpload
+            {...getFinalUploadData()}
+            customFileNames={customFileNames}
+            onBack={() => setCurrentStep(6)} // Back to file naming
+            onComplete={handleFinalUploadComplete}
+          />
+        )}
+        
+        {currentStep === 8 && (
           <UploadComplete
             uploadSummary={uploadSummary}
             filePreprocessingResults={{ ...preprocessingResults, ...timeSeriesResults }}

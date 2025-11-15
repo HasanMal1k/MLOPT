@@ -20,6 +20,7 @@ interface FinalUploadProps {
   processedFiles: File[]
   preprocessingResults: Record<string, any>
   customCleaningResults: any[]
+  customFileNames: Record<string, string>
   onBack: () => void
   onComplete: (uploadSummary: any) => void
 }
@@ -29,6 +30,7 @@ export default function FinalUpload({
   processedFiles,
   preprocessingResults,
   customCleaningResults,
+  customFileNames,
   onBack,
   onComplete
 }: FinalUploadProps) {
@@ -60,8 +62,13 @@ export default function FinalUpload({
         setUploadProgress((i / totalFiles) * 90) // Leave 10% for final processing
         
         const formData = new FormData()
+        
+        // Get custom filename for this file
+        const customFileName = customFileNames[originalFile.name] || originalFile.name.replace(/\.(csv|xlsx|xls)$/i, '')
+        
         formData.append('file', processedFile)
         formData.append('original_filename', originalFile.name)
+        formData.append('custom_filename', customFileName)
         formData.append('preprocessed', 'true')
         
         // Determine dataset type and add appropriate metadata

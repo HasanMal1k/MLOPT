@@ -19,6 +19,7 @@ export async function POST(request: Request) {
     const file = formData.get('file') as File;
     const isPreprocessed = formData.get('preprocessed') === 'true';
     const originalFilename = formData.get('original_filename') as string;
+    const customFilename = formData.get('custom_filename') as string;
     
     // NEW: Get dataset type and processing configurations
     const datasetType = (formData.get('dataset_type') as string) || 'normal';
@@ -123,6 +124,7 @@ export async function POST(request: Request) {
       .from('files')
       .insert({
         user_id: user.id,
+        name: customFilename || (originalFilename || file.name).replace(/\.(csv|xlsx|xls)$/i, ''), // User's custom display name
         filename: uniqueFilename,
         original_filename: originalFilename || file.name,
         file_size: file.size,
