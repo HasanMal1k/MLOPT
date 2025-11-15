@@ -65,6 +65,7 @@ export default function FinalUpload({
         
         // Get custom filename for this file
         const customFileName = customFileNames[originalFile.name] || originalFile.name.replace(/\.(csv|xlsx|xls)$/i, '')
+        console.log('Uploading file:', originalFile.name, 'with custom name:', customFileName)
         
         formData.append('file', processedFile)
         formData.append('original_filename', originalFile.name)

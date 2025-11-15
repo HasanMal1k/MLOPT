@@ -134,7 +134,7 @@ export default function DatasetsPage() {
   }
 
   const filteredDatasets = datasets.filter(dataset => {
-    const matchesSearch = dataset.original_filename.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesSearch = (dataset.name || dataset.original_filename).toLowerCase().includes(searchTerm.toLowerCase())
     const matchesType = filterType === 'all' || dataset.dataset_type === filterType
     const matchesStatus = filterStatus === 'all' || 
       (filterStatus === 'processed' && dataset.preprocessing_info?.is_preprocessed) ||
@@ -409,7 +409,7 @@ export default function DatasetsPage() {
                       <div className="flex items-center gap-3">
                         {getDatasetTypeIcon(dataset.dataset_type)}
                         <div>
-                          <div className="font-medium">{dataset.original_filename}</div>
+                          <div className="font-medium">{dataset.name || dataset.original_filename}</div>
                           <div className="text-sm text-muted-foreground">
                             {dataset.mime_type.includes('csv') ? 'CSV' : 'Excel'}
                           </div>

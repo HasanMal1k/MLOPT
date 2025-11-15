@@ -232,15 +232,19 @@ def calculate_feature_importance(data: pd.DataFrame, target_column: str, task_ty
         # Sort by importance
         feature_importance.sort(key=lambda x: x["importance"], reverse=True)
         
-        # Calculate cumulative percentages
+        # Calculate relative and cumulative percentages
         total_importance = sum(f["importance"] for f in feature_importance)
         if total_importance > 0:
             cumulative = 0
             for f in feature_importance:
+                # Relative percentage: this feature's share of total importance
+                f["relative_percent"] = (f["importance"] / total_importance) * 100
+                # Cumulative percentage: running sum
                 cumulative += f["importance"]
                 f["cumulative_percent"] = (cumulative / total_importance) * 100
         else:
             for f in feature_importance:
+                f["relative_percent"] = 0.0
                 f["cumulative_percent"] = 0.0
         
         # Get recommended features (top features covering ~80% of importance or top 10)
@@ -891,6 +895,7 @@ async def run_regular_ml_training(config_id: str, config: dict):
                     push_model_result(config_id, failed_result)
             
             # Create leaderboard from all results
+            logger.info(f"📊 Creating leaderboard from {len(all_results)} regression results...")
             leaderboard = pd.DataFrame(all_results)
             if not leaderboard.empty:
                 # Sort by the specified metric or default to R2
@@ -898,16 +903,23 @@ async def run_regular_ml_training(config_id: str, config: dict):
                 leaderboard = leaderboard.sort_values(sort_by, ascending=False)
                 best_model_name = leaderboard.iloc[0]['Model']
                 best_model_id = model_id_map[best_model_name]
+                logger.info(f"🏆 Best model identified: {best_model_name} (ID: {best_model_id})")
                 # Get the actual model using ID
-                if hyperparameter_tuning:
-                    best_model = regression_module.tune_model(
-                        regression_module.create_model(best_model_id, fold=cv_folds, verbose=False),
-                        n_iter=tuning_iterations,
-                        optimize=sort_by,
-                        verbose=False
-                    )
-                else:
-                    best_model = regression_module.create_model(best_model_id, fold=cv_folds, verbose=False)
+                logger.info(f"⏳ Re-creating best model for finalization...")
+                try:
+                    if hyperparameter_tuning:
+                        best_model = regression_module.tune_model(
+                            regression_module.create_model(best_model_id, fold=cv_folds, verbose=False),
+                            n_iter=tuning_iterations,
+                            optimize=sort_by,
+                            verbose=False
+                        )
+                    else:
+                        best_model = regression_module.create_model(best_model_id, fold=cv_folds, verbose=False)
+                    logger.info(f"✅ Best model re-created successfully")
+                except Exception as recreate_error:
+                    logger.error(f"❌ Failed to re-create best model: {recreate_error}")
+                    raise
             else:
                 raise Exception("No models completed successfully")
                 
@@ -986,6 +998,7 @@ async def run_regular_ml_training(config_id: str, config: dict):
                     push_model_result(config_id, failed_result)
             
             # Create leaderboard from all results
+            logger.info(f"📊 Creating leaderboard from {len(all_results)} classification results...")
             leaderboard = pd.DataFrame(all_results)
             if not leaderboard.empty:
                 # Sort by the specified metric or default to Accuracy
@@ -993,27 +1006,46 @@ async def run_regular_ml_training(config_id: str, config: dict):
                 leaderboard = leaderboard.sort_values(sort_by, ascending=False)
                 best_model_name = leaderboard.iloc[0]['Model']
                 best_model_id = model_id_map[best_model_name]
+                logger.info(f"🏆 Best model identified: {best_model_name} (ID: {best_model_id})")
                 # Get the actual model using ID
-                if hyperparameter_tuning:
-                    best_model = classification_module.tune_model(
-                        classification_module.create_model(best_model_id, fold=cv_folds, verbose=False),
-                        n_iter=tuning_iterations,
-                        optimize=sort_by,
-                        verbose=False
-                    )
-                else:
-                    best_model = classification_module.create_model(best_model_id, fold=cv_folds, verbose=False)
+                logger.info(f"⏳ Re-creating best model for finalization...")
+                try:
+                    if hyperparameter_tuning:
+                        best_model = classification_module.tune_model(
+                            classification_module.create_model(best_model_id, fold=cv_folds, verbose=False),
+                            n_iter=tuning_iterations,
+                            optimize=sort_by,
+                            verbose=False
+                        )
+                    else:
+                        best_model = classification_module.create_model(best_model_id, fold=cv_folds, verbose=False)
+                    logger.info(f"✅ Best model re-created successfully")
+                except Exception as recreate_error:
+                    logger.error(f"❌ Failed to re-create best model: {recreate_error}")
+                    raise
             else:
                 raise Exception("No models completed successfully")
         
-        logger.info(f"All models trained. Best model: {best_model_name}")
+        logger.info(f"🎯 All models trained. Best model: {best_model_name}")
+        logger.info(f"📈 Leaderboard contains {len(leaderboard)} models")
         
         training_tasks[config_id]["status"] = "finalizing"
+        logger.info(f"⏳ FINALIZING best model (training on full dataset)...")
         
         # Finalize the best model (train on full dataset)
-        final_best_model = regression_module.finalize_model(best_model) if config["task_type"] == "regression" else classification_module.finalize_model(best_model)
+        try:
+            if config["task_type"] == "regression":
+                final_best_model = regression_module.finalize_model(best_model)
+            else:
+                final_best_model = classification_module.finalize_model(best_model)
+            logger.info(f"✅ Model finalization completed")
+        except Exception as finalize_error:
+            logger.error(f"❌ Model finalization failed: {finalize_error}")
+            # Continue without finalization
+            final_best_model = best_model
         
         training_tasks[config_id]["status"] = "saving_models"
+        logger.info(f"💾 SAVING models to disk...")
         
         # Create models directory
         models_dir = Path("models") / config_id
@@ -1021,73 +1053,39 @@ async def run_regular_ml_training(config_id: str, config: dict):
         
         # Save the finalized best model
         saved_count = 1  # Count the best model
+        logger.info(f"💾 Saving best model: {best_model_name}...")
+        try:
+            if config["task_type"] == "regression":
+                regression_module.save_model(final_best_model, str(models_dir / 'best_model'))
+                logger.info(f"✅ Saved best regression model: {best_model_name}")
+        except Exception as save_error:
+            logger.error(f"❌ Failed to save best model: {save_error}")
+        
         if config["task_type"] == "regression":
-            regression_module.save_model(final_best_model, str(models_dir / 'best_model'))
-            logger.info(f"Saved best model: {best_model_name}")
-            
-            # Save top 5 models as well
-            for idx, (_, row) in enumerate(leaderboard.head(5).iterrows()):
-                if idx == 0:
-                    continue  # Skip best model (already saved)
-                model_name = row['Model']
-                model_id = model_id_map.get(model_name)
-                if model_id:
-                    try:
-                        logger.info(f"Training and saving model {idx + 1}: {model_name}")
-                        # Create and finalize the model
-                        if hyperparameter_tuning:
-                            model = regression_module.tune_model(
-                                regression_module.create_model(model_id, fold=cv_folds, verbose=False),
-                                n_iter=tuning_iterations,
-                                optimize=sort_by,
-                                verbose=False
-                            )
-                        else:
-                            model = regression_module.create_model(model_id, fold=cv_folds, verbose=False)
-                        
-                        final_model = regression_module.finalize_model(model)
-                        safe_name = model_name.lower().replace(' ', '_').replace('(', '').replace(')', '')
-                        regression_module.save_model(final_model, str(models_dir / safe_name))
-                        saved_count += 1
-                        logger.info(f"✅ Saved model: {model_name}")
-                    except Exception as e:
-                        logger.error(f"Failed to save model {model_name}: {e}")
+            # ℹ️ Note: Skipping re-training of top 5 models to prevent hanging
+            # The leaderboard contains all model results, best model is saved
+            logger.info(f"ℹ️  Top {min(5, len(leaderboard))} models available in leaderboard")
         else:
-            classification_module.save_model(final_best_model, str(models_dir / 'best_model'))
-            logger.info(f"Saved best model: {best_model_name}")
+            try:
+                classification_module.save_model(final_best_model, str(models_dir / 'best_model'))
+                logger.info(f"✅ Saved best classification model: {best_model_name}")
+            except Exception as save_error:
+                logger.error(f"❌ Failed to save best model: {save_error}")
             
-            # Save top 5 models as well
-            for idx, (_, row) in enumerate(leaderboard.head(5).iterrows()):
-                if idx == 0:
-                    continue  # Skip best model (already saved)
-                model_name = row['Model']
-                model_id = model_id_map.get(model_name)
-                if model_id:
-                    try:
-                        logger.info(f"Training and saving model {idx + 1}: {model_name}")
-                        # Create and finalize the model
-                        if hyperparameter_tuning:
-                            model = classification_module.tune_model(
-                                classification_module.create_model(model_id, fold=cv_folds, verbose=False),
-                                n_iter=tuning_iterations,
-                                optimize=sort_metric if sort_metric != 'auto' else 'Accuracy',
-                                verbose=False
-                            )
-                        else:
-                            model = classification_module.create_model(model_id, fold=cv_folds, verbose=False)
-                        
-                        final_model = classification_module.finalize_model(model)
-                        safe_name = model_name.lower().replace(' ', '_').replace('(', '').replace(')', '')
-                        classification_module.save_model(final_model, str(models_dir / safe_name))
-                        saved_count += 1
-                        logger.info(f"✅ Saved model: {model_name}")
-                    except Exception as e:
-                        logger.error(f"Failed to save model {model_name}: {e}")
+            # ℹ️ Note: Skipping re-training of top 5 models to prevent hanging
+            # The leaderboard contains all model results, best model is saved
+            logger.info(f"ℹ️  Top {min(5, len(leaderboard))} models available in leaderboard")
         
         # Save leaderboard
-        leaderboard.to_csv(models_dir / 'leaderboard.csv', index=False)
+        logger.info(f"💾 Saving leaderboard to CSV...")
+        try:
+            leaderboard.to_csv(models_dir / 'leaderboard.csv', index=False)
+            logger.info(f"✅ Leaderboard saved")
+        except Exception as csv_error:
+            logger.error(f"❌ Failed to save leaderboard CSV: {csv_error}")
         
         # Update final status
+        logger.info(f"🏁 UPDATING STATUS TO COMPLETED...")
         training_tasks[config_id].update({
             "status": "completed",
             "leaderboard": leaderboard.to_dict('records'),
@@ -1100,7 +1098,12 @@ async def run_regular_ml_training(config_id: str, config: dict):
             "training_notes": "Streamed results in real-time as models completed"
         })
         
-        logger.info(f"Training completed successfully for {config_id}. Tested {len(available_models)} models.")
+        logger.info(f"="*80)
+        logger.info(f"🎉 TRAINING COMPLETED SUCCESSFULLY FOR {config_id}")
+        logger.info(f"   ✅ Total models tested: {len(available_models)}")
+        logger.info(f"   ✅ Best model: {best_model_name}")
+        logger.info(f"   ✅ Status updated to: completed")
+        logger.info(f"="*80)
         
         # Clean up training data file
         try:

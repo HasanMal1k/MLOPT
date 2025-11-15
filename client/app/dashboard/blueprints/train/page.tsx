@@ -63,6 +63,7 @@ import SaveModelDialog from '@/components/SaveModelDialog'
 interface FeatureImportance {
   feature: string
   importance: number
+  relative_percent: number
   cumulative_percent: number
 }
 
@@ -490,9 +491,17 @@ export default function MLTrainingPage() {
             
             // Sort leaderboard by performance metric
             const sortedLeaderboard = [...liveLeaderboard].sort((a, b) => {
-              const metricA = a.R2 || a.Accuracy || 0
-              const metricB = b.R2 || b.Accuracy || 0
-              return metricB - metricA
+              // Determine which metric to use for sorting
+              const metric = sortMetric === 'auto' 
+                ? (taskType === 'regression' ? 'R2' : 'Accuracy')
+                : sortMetric
+              
+              const metricA = a[metric] ?? 0
+              const metricB = b[metric] ?? 0
+              
+              // For error metrics (MAE, RMSE, RMSLE), lower is better
+              const lowerIsBetter = ['MAE', 'RMSE', 'RMSLE', 'MSE'].includes(metric)
+              return lowerIsBetter ? metricA - metricB : metricB - metricA
             })
             
             // Update training results in real-time
@@ -506,9 +515,14 @@ export default function MLTrainingPage() {
             console.log(`✅ Model added to leaderboard: ${modelResult.Model} (${liveLeaderboard.length} total)`)
             
             // Show toast notification
+            const displayMetric = sortMetric === 'auto' 
+              ? (taskType === 'regression' ? 'R2' : 'Accuracy')
+              : sortMetric
+            const displayValue = modelResult[displayMetric] ?? 0
+            
             toast({
               title: `Model Completed: ${modelResult.Model}`,
-              description: `Score: ${(modelResult.R2 || modelResult.Accuracy || 0).toFixed(4)}`,
+              description: `${displayMetric}: ${displayValue.toFixed(4)}`,
               duration: 2000
             })
           }
@@ -1376,7 +1390,7 @@ export default function MLTrainingPage() {
                                 </TableCell>
                                 <TableCell>
                                   <div className="text-sm font-medium">
-                                    {(feature.importance * 100).toFixed(1)}%
+                                    {feature.relative_percent?.toFixed(1) ?? (feature.importance * 100).toFixed(1)}%
                                   </div>
                                 </TableCell>
                                 <TableCell>
@@ -1848,13 +1862,37 @@ export default function MLTrainingPage() {
                     </div>
 
                     {/* Live Leaderboard Preview */}
-                    {trainingResults?.leaderboard && trainingResults.leaderboard.length > 0 && (
+                    {trainingResults?.leaderboard && trainingResults.leaderboard.length > 0 && (() => {
+                      // Determine display metric
+                      const displayMetric = sortMetric === 'auto' 
+                        ? (taskType === 'regression' ? 'R2' : 'Accuracy')
+                        : sortMetric
+                      
+                      // Get metric display name
+                      const metricNames: Record<string, string> = {
+                        'R2': 'R² Score',
+                        'MAE': 'MAE',
+                        'RMSE': 'RMSE',
+                        'RMSLE': 'RMSLE',
+                        'MSE': 'MSE',
+                        'Accuracy': 'Accuracy',
+                        'AUC': 'AUC',
+                        'F1': 'F1 Score',
+                        'Precision': 'Precision',
+                        'Recall': 'Recall'
+                      }
+                      const metricDisplayName = metricNames[displayMetric] || displayMetric
+                      
+                      return (
                       <Card className="border-blue-200 bg-blue-50/50">
                         <CardHeader className="pb-3">
                           <CardTitle className="text-sm flex items-center gap-2">
                             <Sparkles className="h-4 w-4 text-blue-600" />
                             Live Results (Top 5)
                           </CardTitle>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Sorted by: {metricDisplayName}
+                          </p>
                         </CardHeader>
                         <CardContent>
                           <div className="space-y-2">
@@ -1869,15 +1907,21 @@ export default function MLTrainingPage() {
                                   </Badge>
                                   <span className="font-medium text-sm">{model.Model}</span>
                                 </div>
-                                <div className="text-sm font-semibold text-blue-600">
-                                  {(model.R2 || model.Accuracy || 0).toFixed(4)}
+                                <div className="flex flex-col items-end">
+                                  <div className="text-sm font-semibold text-blue-600">
+                                    {(model[displayMetric] ?? 0).toFixed(4)}
+                                  </div>
+                                  <div className="text-xs text-muted-foreground">
+                                    {metricDisplayName}
+                                  </div>
                                 </div>
                               </div>
                             ))}
                           </div>
                         </CardContent>
                       </Card>
-                    )}
+                      )
+                    })()}
                   </div>
                 )}
               </div>
@@ -2117,16 +2161,41 @@ export default function MLTrainingPage() {
                             </Button>
                           </div>
                           <div className="space-y-2">
-                            {trainingResults.leaderboard?.slice(0, 5).map((model: any, index: number) => (
+                            {trainingResults.leaderboard?.slice(0, 5).map((model: any, index: number) => {
+                              // Use the selected metric for display
+                              const displayMetric = sortMetric === 'auto' 
+                                ? (taskType === 'regression' ? 'R2' : 'Accuracy')
+                                : sortMetric
+                              const metricValue = model[displayMetric] ?? 0
+                              
+                              // Get metric display name
+                              const metricNames: Record<string, string> = {
+                                'R2': 'R²',
+                                'MAE': 'MAE',
+                                'RMSE': 'RMSE',
+                                'RMSLE': 'RMSLE',
+                                'MSE': 'MSE',
+                                'Accuracy': 'Accuracy',
+                                'AUC': 'AUC',
+                                'F1': 'F1',
+                                'Precision': 'Precision',
+                                'Recall': 'Recall'
+                              }
+                              const metricDisplayName = metricNames[displayMetric] || displayMetric
+                              
+                              // Format based on metric type
+                              const formattedValue = ['Accuracy', 'AUC', 'F1', 'Precision', 'Recall'].includes(displayMetric)
+                                ? `${(metricValue * 100).toFixed(2)}%`
+                                : metricValue.toFixed(4)
+                              
+                              return (
                               <div key={index} className="flex items-center justify-between p-3 bg-muted rounded-lg hover:bg-muted/80 transition-colors">
                                 <div className="flex items-center gap-3">
                                   {index === 0 && <Award className="h-4 w-4 text-yellow-500" />}
                                   <div>
                                     <div className="font-medium text-sm">{model.Model}</div>
                                     <div className="text-xs text-muted-foreground">
-                                      {taskType === 'classification' 
-                                        ? `Accuracy: ${(model.Accuracy * 100).toFixed(2)}%` 
-                                        : `R²: ${model.R2?.toFixed(4)}`}
+                                      {metricDisplayName}: {formattedValue}
                                     </div>
                                   </div>
                                 </div>
@@ -2162,7 +2231,8 @@ export default function MLTrainingPage() {
                                   </Button>
                                 </div>
                               </div>
-                            ))}
+                              )
+                            })}
                           </div>
                           {trainingResults.leaderboard && trainingResults.leaderboard.length > 5 && (
                             <p className="text-xs text-muted-foreground mt-3">
@@ -2218,18 +2288,29 @@ export default function MLTrainingPage() {
                                 <SelectValue placeholder="Choose a trained model..." />
                               </SelectTrigger>
                               <SelectContent>
-                                {trainingResults.leaderboard?.map((model: any, index: number) => (
+                                {trainingResults.leaderboard?.map((model: any, index: number) => {
+                                  // Use the selected metric for display
+                                  const displayMetric = sortMetric === 'auto' 
+                                    ? (taskType === 'regression' ? 'R2' : 'Accuracy')
+                                    : sortMetric
+                                  const metricValue = model[displayMetric] ?? 0
+                                  
+                                  // Format based on metric type
+                                  const formattedValue = ['Accuracy', 'AUC', 'F1', 'Precision', 'Recall'].includes(displayMetric)
+                                    ? `${(metricValue * 100).toFixed(1)}%`
+                                    : metricValue.toFixed(3)
+                                  
+                                  return (
                                   <SelectItem key={index} value={model.Model}>
                                     <div className="flex items-center justify-between w-full">
                                       <span>{model.Model}</span>
                                       <Badge variant={index === 0 ? "default" : "outline"} className="ml-2">
-                                        {taskType === 'classification' 
-                                          ? `${(model.Accuracy * 100).toFixed(1)}%` 
-                                          : `R²: ${model.R2?.toFixed(3)}`}
+                                        {formattedValue}
                                       </Badge>
                                     </div>
                                   </SelectItem>
-                                ))}
+                                  )
+                                })}
                               </SelectContent>
                             </Select>
                           </div>

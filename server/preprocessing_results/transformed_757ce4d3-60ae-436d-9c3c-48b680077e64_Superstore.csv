@@ -1,0 +1,1000 @@
+Ship Mode,Segment,City,State,Region,Category,Sub-Category,Sales,Quantity,Discount,Profit,Segment_Corporate,Segment_Home Office,Region_East,Region_South,Region_West,Category_Office Supplies,Category_Technology
+Second Class,Consumer,Henderson,Kentucky,South,Furniture,Bookcases,261.96,2,0.0,41.9136,False,False,False,True,False,False,False
+Second Class,Consumer,Henderson,Kentucky,South,Furniture,Chairs,731.94,3,0.0,219.582,False,False,False,True,False,False,False
+Second Class,Corporate,Los Angeles,California,West,Office Supplies,Labels,14.62,2,0.0,6.8714,True,False,False,False,True,True,False
+Standard Class,Consumer,Fort Lauderdale,Florida,South,Furniture,Tables,957.5775,5,0.45,-383.031,False,False,False,True,False,False,False
+Standard Class,Consumer,Fort Lauderdale,Florida,South,Office Supplies,Storage,22.368,2,0.2,2.5164,False,False,False,True,False,True,False
+Standard Class,Consumer,Los Angeles,California,West,Furniture,Furnishings,48.86,7,0.0,14.1694,False,False,False,False,True,False,False
+Standard Class,Consumer,Los Angeles,California,West,Office Supplies,Art,7.28,4,0.0,1.9656,False,False,False,False,True,True,False
+Standard Class,Consumer,Los Angeles,California,West,Technology,Phones,907.152,6,0.2,90.7152,False,False,False,False,True,False,True
+Standard Class,Consumer,Los Angeles,California,West,Office Supplies,Binders,18.504,3,0.2,5.7825,False,False,False,False,True,True,False
+Standard Class,Consumer,Los Angeles,California,West,Office Supplies,Appliances,114.9,5,0.0,34.47,False,False,False,False,True,True,False
+Standard Class,Consumer,Los Angeles,California,West,Furniture,Tables,1706.184,9,0.2,85.3092,False,False,False,False,True,False,False
+Standard Class,Consumer,Los Angeles,California,West,Technology,Phones,911.424,4,0.2,68.3568,False,False,False,False,True,False,True
+Standard Class,Consumer,Concord,North Carolina,South,Office Supplies,Paper,15.552,3,0.2,5.4432,False,False,False,True,False,True,False
+Standard Class,Consumer,Seattle,Washington,West,Office Supplies,Binders,407.976,3,0.2,132.5922,False,False,False,False,True,True,False
+Standard Class,Home Office,Fort Worth,Texas,Central,Office Supplies,Appliances,68.81,5,0.8,-123.858,False,True,False,False,False,True,False
+Standard Class,Home Office,Fort Worth,Texas,Central,Office Supplies,Binders,2.544,3,0.8,-3.816,False,True,False,False,False,True,False
+Standard Class,Consumer,Madison,Wisconsin,Central,Office Supplies,Storage,665.88,6,0.0,13.3176,False,False,False,False,False,True,False
+Second Class,Consumer,West Jordan,Utah,West,Office Supplies,Storage,55.5,2,0.0,9.99,False,False,False,False,True,True,False
+Second Class,Consumer,San Francisco,California,West,Office Supplies,Art,8.56,2,0.0,2.4824,False,False,False,False,True,True,False
+Second Class,Consumer,San Francisco,California,West,Technology,Phones,213.48,3,0.2,16.011,False,False,False,False,True,False,True
+Second Class,Consumer,San Francisco,California,West,Office Supplies,Binders,22.72,4,0.2,7.384,False,False,False,False,True,True,False
+Standard Class,Corporate,Fremont,Nebraska,Central,Office Supplies,Art,19.46,7,0.0,5.0596,True,False,False,False,False,True,False
+Standard Class,Corporate,Fremont,Nebraska,Central,Office Supplies,Appliances,60.34,7,0.0,15.6884,True,False,False,False,False,True,False
+Second Class,Consumer,Philadelphia,Pennsylvania,East,Furniture,Chairs,71.372,2,0.3,-1.0196,False,False,True,False,False,False,False
+Standard Class,Consumer,Orem,Utah,West,Furniture,Tables,1044.63,3,0.0,240.2649,False,False,False,False,True,False,False
+Second Class,Consumer,Los Angeles,California,West,Office Supplies,Binders,11.648,2,0.2,4.2224,False,False,False,False,True,True,False
+Second Class,Consumer,Los Angeles,California,West,Technology,Accessories,90.57,3,0.0,11.7741,False,False,False,False,True,False,True
+Standard Class,Consumer,Philadelphia,Pennsylvania,East,Furniture,Bookcases,3083.43,7,0.5,-1665.0522,False,False,True,False,False,False,False
+Standard Class,Consumer,Philadelphia,Pennsylvania,East,Office Supplies,Binders,9.618,2,0.7,-7.0532,False,False,True,False,False,True,False
+Standard Class,Consumer,Philadelphia,Pennsylvania,East,Furniture,Furnishings,124.2,3,0.2,15.525,False,False,True,False,False,False,False
+Standard Class,Consumer,Philadelphia,Pennsylvania,East,Office Supplies,Envelopes,3.264,2,0.2,1.1016,False,False,True,False,False,True,False
+Standard Class,Consumer,Philadelphia,Pennsylvania,East,Office Supplies,Art,86.304,6,0.2,9.7092,False,False,True,False,False,True,False
+Standard Class,Consumer,Philadelphia,Pennsylvania,East,Office Supplies,Binders,6.858,6,0.7,-5.715,False,False,True,False,False,True,False
+Standard Class,Consumer,Philadelphia,Pennsylvania,East,Office Supplies,Art,15.76,2,0.2,3.546,False,False,True,False,False,True,False
+Second Class,Home Office,Houston,Texas,Central,Office Supplies,Paper,29.472,3,0.2,9.9468,False,True,False,False,False,True,False
+First Class,Corporate,Richardson,Texas,Central,Technology,Phones,1097.544,7,0.2,123.4737,True,False,False,False,False,False,True
+First Class,Corporate,Richardson,Texas,Central,Furniture,Furnishings,190.92,5,0.6,-147.963,True,False,False,False,False,False,False
+Standard Class,Home Office,Houston,Texas,Central,Office Supplies,Envelopes,113.328,9,0.2,35.415,False,True,False,False,False,True,False
+Standard Class,Home Office,Houston,Texas,Central,Furniture,Bookcases,532.3992,3,0.32,-46.9764,False,True,False,False,False,False,False
+Standard Class,Home Office,Houston,Texas,Central,Furniture,Chairs,212.058,3,0.3,-15.147,False,True,False,False,False,False,False
+Standard Class,Home Office,Houston,Texas,Central,Technology,Phones,371.168,4,0.2,41.7564,False,True,False,False,False,False,True
+Standard Class,Corporate,Naperville,Illinois,Central,Technology,Phones,147.168,4,0.2,16.5564,True,False,False,False,False,False,True
+Standard Class,Corporate,Los Angeles,California,West,Office Supplies,Storage,77.88,2,0.0,3.894,True,False,False,False,True,True,False
+Standard Class,Corporate,Melbourne,Florida,South,Office Supplies,Storage,95.616,2,0.2,9.5616,True,False,False,True,False,True,False
+First Class,Corporate,Eagan,Minnesota,Central,Technology,Accessories,45.98,2,0.0,19.7714,True,False,False,False,False,False,True
+First Class,Corporate,Eagan,Minnesota,Central,Office Supplies,Binders,17.46,2,0.0,8.2062,True,False,False,False,False,True,False
+Second Class,Consumer,Westland,Michigan,Central,Office Supplies,Storage,211.96,4,0.0,8.4784,False,False,False,False,False,True,False
+Standard Class,Consumer,Dover,Delaware,East,Technology,Accessories,45.0,3,0.0,4.95,False,False,True,False,False,False,True
+Standard Class,Consumer,Dover,Delaware,East,Technology,Phones,21.8,2,0.0,6.104,False,False,True,False,False,False,True
+Standard Class,Consumer,New Albany,Indiana,Central,Office Supplies,Binders,38.22,6,0.0,17.9634,False,False,False,False,False,True,False
+Standard Class,Consumer,New Albany,Indiana,Central,Office Supplies,Labels,75.18,6,0.0,35.3346,False,False,False,False,False,True,False
+Standard Class,Consumer,New Albany,Indiana,Central,Furniture,Furnishings,6.16,2,0.0,2.9568,False,False,False,False,False,False,False
+Standard Class,Consumer,New Albany,Indiana,Central,Furniture,Chairs,89.99,1,0.0,17.0981,False,False,False,False,False,False,False
+Standard Class,Corporate,New York City,New York,East,Office Supplies,Fasteners,15.26,7,0.0,6.2566,True,False,True,False,False,True,False
+Standard Class,Corporate,New York City,New York,East,Technology,Phones,1029.95,5,0.0,298.6855,True,False,True,False,False,False,True
+First Class,Consumer,Troy,New York,East,Office Supplies,Storage,208.56,6,0.0,52.14,False,False,True,False,False,True,False
+First Class,Consumer,Troy,New York,East,Office Supplies,Paper,32.4,5,0.0,15.552,False,False,True,False,False,True,False
+First Class,Consumer,Troy,New York,East,Furniture,Chairs,319.41,5,0.1,7.098,False,False,True,False,False,False,False
+First Class,Consumer,Troy,New York,East,Office Supplies,Paper,14.56,2,0.0,6.9888,False,False,True,False,False,True,False
+First Class,Consumer,Troy,New York,East,Technology,Accessories,30.0,2,0.0,3.3,False,False,True,False,False,False,True
+First Class,Consumer,Troy,New York,East,Office Supplies,Binders,48.48,4,0.2,16.362,False,False,True,False,False,True,False
+First Class,Consumer,Troy,New York,East,Office Supplies,Art,1.68,1,0.0,0.84,False,False,True,False,False,True,False
+Standard Class,Consumer,Los Angeles,California,West,Technology,Accessories,13.98,2,0.0,6.1512,False,False,False,False,True,False,True
+Standard Class,Consumer,Los Angeles,California,West,Office Supplies,Binders,25.824,6,0.2,9.3612,False,False,False,False,True,True,False
+Standard Class,Consumer,Los Angeles,California,West,Office Supplies,Paper,146.73,3,0.0,68.9631,False,False,False,False,True,True,False
+Standard Class,Consumer,Los Angeles,California,West,Furniture,Furnishings,79.76,4,0.0,22.3328,False,False,False,False,True,False,False
+Standard Class,Home Office,Chicago,Illinois,Central,Furniture,Chairs,213.115,5,0.3,-15.2225,False,True,False,False,False,False,False
+Standard Class,Corporate,Gilbert,Arizona,West,Office Supplies,Art,1113.024,8,0.2,111.3024,True,False,False,False,True,True,False
+Standard Class,Corporate,Gilbert,Arizona,West,Technology,Phones,167.968,4,0.2,62.988,True,False,False,False,True,False,True
+First Class,Consumer,Springfield,Virginia,South,Office Supplies,Paper,75.88,2,0.0,35.6636,False,False,False,True,False,True,False
+Standard Class,Consumer,New York City,New York,East,Office Supplies,Binders,4.616,1,0.2,1.731,False,False,True,False,False,True,False
+Second Class,Consumer,Jackson,Michigan,Central,Office Supplies,Paper,19.05,3,0.0,8.763,False,False,False,False,False,True,False
+Standard Class,Consumer,Memphis,Tennessee,South,Furniture,Chairs,831.936,8,0.2,-114.3912,False,False,False,True,False,False,False
+Standard Class,Consumer,Memphis,Tennessee,South,Furniture,Furnishings,97.04,2,0.2,1.213,False,False,False,True,False,False,False
+Standard Class,Consumer,Memphis,Tennessee,South,Office Supplies,Storage,72.784,1,0.2,-18.196,False,False,False,True,False,True,False
+First Class,Corporate,Houston,Texas,Central,Office Supplies,Binders,1.248,3,0.8,-1.9344,True,False,False,False,False,True,False
+First Class,Corporate,Houston,Texas,Central,Furniture,Furnishings,9.708,3,0.6,-5.8248,True,False,False,False,False,False,False
+First Class,Corporate,Houston,Texas,Central,Office Supplies,Storage,27.24,3,0.2,2.724,True,False,False,False,False,True,False
+Second Class,Consumer,Houston,Texas,Central,Furniture,Furnishings,19.3,5,0.6,-14.475,False,False,False,False,False,False,False
+First Class,Corporate,Decatur,Alabama,South,Office Supplies,Appliances,208.16,1,0.0,56.2032,True,False,False,True,False,True,False
+First Class,Corporate,Decatur,Alabama,South,Office Supplies,Binders,16.74,3,0.0,8.0352,True,False,False,True,False,True,False
+Standard Class,Consumer,San Francisco,California,West,Office Supplies,Art,14.9,5,0.0,4.172,False,False,False,False,True,True,False
+Standard Class,Consumer,San Francisco,California,West,Office Supplies,Storage,21.39,1,0.0,6.2031,False,False,False,False,True,True,False
+Standard Class,Corporate,Durham,North Carolina,South,Office Supplies,Envelopes,200.984,7,0.2,62.8075,True,False,False,True,False,True,False
+First Class,Home Office,Chicago,Illinois,Central,Office Supplies,Storage,230.376,3,0.2,-48.9549,False,True,False,False,False,True,False
+Second Class,Consumer,Columbia,South Carolina,South,Furniture,Chairs,301.96,2,0.0,33.2156,False,False,False,True,False,False,False
+Standard Class,Consumer,Rochester,Minnesota,Central,Technology,Accessories,19.99,1,0.0,6.7966,False,False,False,False,False,False,True
+Standard Class,Consumer,Rochester,Minnesota,Central,Office Supplies,Labels,6.16,2,0.0,2.9568,False,False,False,False,False,True,False
+Second Class,Home Office,Houston,Texas,Central,Office Supplies,Storage,158.368,7,0.2,13.8572,False,True,False,False,False,True,False
+Standard Class,Corporate,Los Angeles,California,West,Office Supplies,Art,20.1,3,0.0,6.633,True,False,False,False,True,True,False
+Standard Class,Corporate,Los Angeles,California,West,Technology,Phones,73.584,2,0.2,8.2782,True,False,False,False,True,False,True
+Standard Class,Corporate,Los Angeles,California,West,Office Supplies,Paper,6.48,1,0.0,3.1104,True,False,False,False,True,True,False
+Second Class,Consumer,Minneapolis,Minnesota,Central,Office Supplies,Paper,12.96,2,0.0,6.2208,False,False,False,False,False,True,False
+Second Class,Consumer,Minneapolis,Minnesota,Central,Furniture,Furnishings,53.34,3,0.0,16.5354,False,False,False,False,False,False,False
+Second Class,Consumer,Minneapolis,Minnesota,Central,Office Supplies,Binders,32.96,2,0.0,16.1504,False,False,False,False,False,True,False
+Standard Class,Home Office,Portland,Oregon,West,Office Supplies,Binders,5.682,1,0.7,-3.788,False,True,False,False,True,True,False
+Second Class,Home Office,New York City,New York,East,Furniture,Furnishings,96.53,7,0.0,40.5426,False,True,True,False,False,False,False
+First Class,Consumer,San Francisco,California,West,Office Supplies,Binders,51.312,3,0.2,17.9592,False,False,False,False,True,True,False
+Standard Class,Corporate,Saint Paul,Minnesota,Central,Office Supplies,Appliances,77.88,6,0.0,22.5852,True,False,False,False,False,True,False
+Standard Class,Home Office,Chicago,Illinois,Central,Office Supplies,Paper,64.624,7,0.2,22.6184,False,True,False,False,False,True,False
+Standard Class,Home Office,Chicago,Illinois,Central,Technology,Accessories,95.976,3,0.2,-10.7973,False,True,False,False,False,False,True
+Standard Class,Home Office,Chicago,Illinois,Central,Office Supplies,Binders,1.788,3,0.8,-3.0396,False,True,False,False,False,True,False
+Second Class,Consumer,Rochester,Minnesota,Central,Office Supplies,Paper,23.92,4,0.0,11.7208,False,False,False,False,False,True,False
+Standard Class,Consumer,Aurora,Colorado,West,Technology,Accessories,238.896,6,0.2,-26.8758,False,False,False,False,True,False,True
+Standard Class,Consumer,Aurora,Colorado,West,Furniture,Furnishings,102.36,3,0.2,-3.8385,False,False,False,False,True,False,False
+Standard Class,Consumer,Aurora,Colorado,West,Office Supplies,Binders,36.882,3,0.7,-25.8174,False,False,False,False,True,True,False
+Standard Class,Consumer,Charlotte,North Carolina,South,Technology,Accessories,74.112,8,0.2,17.6016,False,False,False,True,False,False,True
+Standard Class,Consumer,Charlotte,North Carolina,South,Technology,Phones,27.992,1,0.2,2.0994,False,False,False,True,False,False,True
+Standard Class,Consumer,Charlotte,North Carolina,South,Office Supplies,Art,3.304,1,0.2,1.0738,False,False,False,True,False,True,False
+Standard Class,Home Office,Orland Park,Illinois,Central,Technology,Accessories,339.96,5,0.2,67.992,False,True,False,False,False,False,True
+Standard Class,Corporate,New York City,New York,East,Furniture,Furnishings,41.96,2,0.0,10.9096,True,False,True,False,False,False,False
+Standard Class,Consumer,Urbandale,Iowa,Central,Office Supplies,Art,75.96,2,0.0,22.788,False,False,False,False,False,True,False
+Standard Class,Consumer,Urbandale,Iowa,Central,Office Supplies,Binders,27.24,6,0.0,13.3476,False,False,False,False,False,True,False
+Second Class,Consumer,Columbus,Ohio,East,Office Supplies,Fasteners,40.096,14,0.2,14.5348,False,False,True,False,False,True,False
+Second Class,Consumer,Columbus,Ohio,East,Office Supplies,Envelopes,4.72,2,0.2,1.652,False,False,True,False,False,True,False
+Second Class,Consumer,Columbus,Ohio,East,Office Supplies,Paper,23.976,3,0.2,7.4925,False,False,True,False,False,True,False
+Second Class,Consumer,Columbus,Ohio,East,Office Supplies,Envelopes,130.464,6,0.2,44.0316,False,False,True,False,False,True,False
+Standard Class,Consumer,Seattle,Washington,West,Furniture,Tables,787.53,3,0.0,165.3813,False,False,False,False,True,False,False
+Standard Class,Corporate,Bristol,Tennessee,South,Office Supplies,Binders,157.794,1,0.7,-115.7156,True,False,False,True,False,True,False
+First Class,Consumer,Wilmington,Delaware,East,Furniture,Furnishings,47.04,3,0.0,18.3456,False,False,True,False,False,False,False
+First Class,Consumer,Wilmington,Delaware,East,Office Supplies,Binders,30.84,4,0.0,13.878,False,False,True,False,False,True,False
+First Class,Consumer,Wilmington,Delaware,East,Office Supplies,Storage,226.56,6,0.0,63.4368,False,False,True,False,False,True,False
+First Class,Consumer,Wilmington,Delaware,East,Office Supplies,Envelopes,115.02,9,0.0,51.759,False,False,True,False,False,True,False
+First Class,Consumer,Wilmington,Delaware,East,Technology,Phones,68.04,7,0.0,19.7316,False,False,True,False,False,False,True
+Second Class,Home Office,Houston,Texas,Central,Furniture,Chairs,600.558,3,0.3,-8.5794,False,True,False,False,False,False,False
+Standard Class,Consumer,Bloomington,Illinois,Central,Furniture,Tables,617.7,6,0.5,-407.682,False,False,False,False,False,False,False
+Standard Class,Consumer,Phoenix,Arizona,West,Office Supplies,Binders,2.388,2,0.7,-1.8308,False,False,False,False,True,True,False
+Standard Class,Consumer,Phoenix,Arizona,West,Office Supplies,Storage,243.992,7,0.2,30.499,False,False,False,False,True,True,False
+Second Class,Home Office,Los Angeles,California,West,Furniture,Chairs,81.424,2,0.2,-9.1602,False,True,False,False,True,False,False
+Second Class,Home Office,Los Angeles,California,West,Furniture,Furnishings,238.56,3,0.0,26.2416,False,True,False,False,True,False,False
+First Class,Corporate,Columbus,Ohio,East,Technology,Phones,59.97,5,0.4,-11.994,True,False,True,False,False,False,True
+First Class,Corporate,Columbus,Ohio,East,Office Supplies,Paper,78.304,2,0.2,29.364,True,False,True,False,False,True,False
+First Class,Corporate,Columbus,Ohio,East,Office Supplies,Fasteners,21.456,9,0.2,6.9732,True,False,True,False,False,True,False
+Standard Class,Consumer,Roseville,California,West,Office Supplies,Paper,20.04,3,0.0,9.6192,False,False,False,False,True,True,False
+Standard Class,Consumer,Roseville,California,West,Office Supplies,Paper,35.44,1,0.0,16.6568,False,False,False,False,True,True,False
+Standard Class,Consumer,Roseville,California,West,Office Supplies,Art,11.52,4,0.0,3.456,False,False,False,False,True,True,False
+Standard Class,Consumer,Roseville,California,West,Office Supplies,Fasteners,4.02,2,0.0,1.9698,False,False,False,False,True,True,False
+Standard Class,Consumer,Roseville,California,West,Office Supplies,Binders,76.176,3,0.2,26.6616,False,False,False,False,True,True,False
+Standard Class,Consumer,Roseville,California,West,Office Supplies,Supplies,65.88,6,0.0,18.4464,False,False,False,False,True,True,False
+Standard Class,Consumer,Roseville,California,West,Furniture,Furnishings,43.12,14,0.0,20.6976,False,False,False,False,True,False,False
+Second Class,Corporate,Philadelphia,Pennsylvania,East,Furniture,Furnishings,82.8,2,0.2,10.35,True,False,True,False,False,False,False
+Standard Class,Corporate,San Francisco,California,West,Office Supplies,Art,8.82,3,0.0,2.3814,True,False,False,False,True,True,False
+Standard Class,Corporate,San Francisco,California,West,Office Supplies,Envelopes,10.86,3,0.0,5.1042,True,False,False,False,True,True,False
+Standard Class,Corporate,San Francisco,California,West,Office Supplies,Paper,143.7,3,0.0,68.976,True,False,False,False,True,True,False
+Standard Class,Consumer,Independence,Missouri,Central,Office Supplies,Appliances,839.43,3,0.0,218.2518,False,False,False,False,False,True,False
+Standard Class,Consumer,Pasadena,California,West,Office Supplies,Storage,671.93,7,0.0,20.1579,False,False,False,False,True,True,False
+Standard Class,Home Office,Newark,Ohio,East,Furniture,Furnishings,93.888,4,0.2,12.9096,False,True,True,False,False,False,False
+Standard Class,Corporate,Franklin,Wisconsin,Central,Technology,Phones,384.45,11,0.0,103.8015,True,False,False,False,False,False,True
+Standard Class,Corporate,Franklin,Wisconsin,Central,Technology,Phones,149.97,3,0.0,5.9988,True,False,False,False,False,False,True
+Standard Class,Corporate,Franklin,Wisconsin,Central,Furniture,Chairs,1951.84,8,0.0,585.552,True,False,False,False,False,False,False
+Standard Class,Corporate,Franklin,Wisconsin,Central,Office Supplies,Binders,171.55,5,0.0,80.6285,True,False,False,False,False,True,False
+First Class,Home Office,Scottsdale,Arizona,West,Office Supplies,Appliances,157.92,5,0.2,17.766,False,True,False,False,True,True,False
+First Class,Home Office,Scottsdale,Arizona,West,Technology,Phones,203.184,2,0.2,15.2388,False,True,False,False,True,False,True
+First Class,Corporate,San Jose,California,West,Office Supplies,Paper,58.38,7,0.0,26.271,True,False,False,False,True,True,False
+First Class,Corporate,San Jose,California,West,Office Supplies,Paper,105.52,4,0.0,48.5392,True,False,False,False,True,True,False
+First Class,Corporate,San Jose,California,West,Office Supplies,Storage,80.88,6,0.0,21.0288,True,False,False,False,True,True,False
+Standard Class,Home Office,Seattle,Washington,West,Office Supplies,Art,6.63,3,0.0,1.7901,False,True,False,False,True,True,False
+Second Class,Consumer,Seattle,Washington,West,Furniture,Chairs,457.568,2,0.2,51.4764,False,False,False,False,True,False,False
+Standard Class,Consumer,Edmond,Oklahoma,Central,Office Supplies,Labels,14.62,2,0.0,6.8714,False,False,False,False,False,True,False
+Standard Class,Consumer,Edmond,Oklahoma,Central,Technology,Phones,944.93,7,0.0,236.2325,False,False,False,False,False,False,True
+First Class,Consumer,Los Angeles,California,West,Office Supplies,Paper,5.98,1,0.0,2.691,False,False,False,False,True,True,False
+Second Class,Consumer,Philadelphia,Pennsylvania,East,Technology,Accessories,54.384,2,0.2,1.3596,False,False,True,False,False,False,True
+Standard Class,Consumer,Carlsbad,New Mexico,West,Office Supplies,Envelopes,28.4,5,0.0,13.348,False,False,False,False,True,True,False
+Standard Class,Consumer,Seattle,Washington,West,Office Supplies,Binders,27.68,2,0.2,9.688,False,False,False,False,True,True,False
+Standard Class,Consumer,San Antonio,Texas,Central,Office Supplies,Art,9.936,3,0.2,2.7324,False,False,False,False,False,True,False
+Standard Class,Consumer,San Antonio,Texas,Central,Technology,Machines,8159.952,8,0.4,-1359.992,False,False,False,False,False,False,True
+Standard Class,Consumer,San Antonio,Texas,Central,Office Supplies,Storage,275.928,3,0.2,-58.6347,False,False,False,False,False,True,False
+Standard Class,Consumer,San Antonio,Texas,Central,Furniture,Chairs,1740.06,9,0.3,-24.858,False,False,False,False,False,False,False
+Standard Class,Consumer,San Antonio,Texas,Central,Office Supplies,Art,32.064,6,0.2,6.8136,False,False,False,False,False,True,False
+Standard Class,Consumer,San Antonio,Texas,Central,Office Supplies,Appliances,177.98,5,0.8,-453.849,False,False,False,False,False,True,False
+Standard Class,Consumer,San Antonio,Texas,Central,Technology,Phones,143.976,3,0.2,8.9985,False,False,False,False,False,False,True
+Standard Class,Consumer,Los Angeles,California,West,Office Supplies,Paper,20.94,3,0.0,9.8418,False,False,False,False,True,True,False
+Standard Class,Consumer,Los Angeles,California,West,Office Supplies,Paper,110.96,2,0.0,53.2608,False,False,False,False,True,True,False
+Standard Class,Consumer,Los Angeles,California,West,Furniture,Chairs,340.144,7,0.2,21.259,False,False,False,False,True,False,False
+Standard Class,Corporate,Chicago,Illinois,Central,Office Supplies,Appliances,52.448,2,0.8,-131.12,True,False,False,False,False,True,False
+Standard Class,Corporate,Chicago,Illinois,Central,Office Supplies,Labels,20.16,4,0.2,6.552,True,False,False,False,False,True,False
+Second Class,Consumer,Houston,Texas,Central,Office Supplies,Appliances,97.264,4,0.8,-243.16,False,False,False,False,False,True,False
+Second Class,Consumer,Newark,Ohio,East,Furniture,Chairs,396.802,7,0.3,-11.3372,False,False,True,False,False,False,False
+Second Class,Consumer,Newark,Ohio,East,Office Supplies,Supplies,15.88,5,0.2,-3.7715,False,False,True,False,False,True,False
+Standard Class,Home Office,New York City,New York,East,Office Supplies,Art,3.28,1,0.0,1.4104,False,True,True,False,False,True,False
+Second Class,Corporate,Decatur,Illinois,Central,Office Supplies,Storage,24.816,2,0.2,1.8612,True,False,False,False,False,True,False
+Second Class,Corporate,Decatur,Illinois,Central,Technology,Accessories,408.744,7,0.2,76.6395,True,False,False,False,False,False,True
+Second Class,Home Office,Monroe,Louisiana,South,Technology,Phones,503.96,4,0.0,131.0296,False,True,False,True,False,False,True
+Second Class,Home Office,Monroe,Louisiana,South,Technology,Phones,149.95,5,0.0,41.986,False,True,False,True,False,False,True
+Second Class,Home Office,Monroe,Louisiana,South,Technology,Accessories,29.0,2,0.0,7.25,False,True,False,True,False,False,True
+Standard Class,Consumer,Fairfield,Connecticut,East,Office Supplies,Binders,7.16,2,0.0,3.4368,False,False,True,False,False,True,False
+Standard Class,Home Office,Los Angeles,California,West,Technology,Accessories,176.8,8,0.0,22.984,False,True,False,False,True,False,True
+Standard Class,Corporate,Grand Prairie,Texas,Central,Office Supplies,Storage,37.224,3,0.2,3.7224,True,False,False,False,False,True,False
+Standard Class,Corporate,Grand Prairie,Texas,Central,Office Supplies,Paper,20.016,3,0.2,6.255,True,False,False,False,False,True,False
+First Class,Home Office,New York City,New York,East,Furniture,Bookcases,899.136,4,0.2,112.392,False,True,True,False,False,False,False
+First Class,Home Office,New York City,New York,East,Technology,Phones,71.76,6,0.0,20.0928,False,True,True,False,False,False,True
+First Class,Home Office,New York City,New York,East,Office Supplies,Paper,51.84,8,0.0,24.8832,False,True,True,False,False,True,False
+First Class,Home Office,New York City,New York,East,Furniture,Bookcases,626.352,3,0.2,46.9764,False,True,True,False,False,False,False
+First Class,Home Office,New York City,New York,East,Office Supplies,Art,19.9,5,0.0,6.567,False,True,True,False,False,True,False
+Standard Class,Corporate,Redlands,California,West,Office Supplies,Envelopes,14.28,7,0.0,6.7116,True,False,False,False,True,True,False
+Standard Class,Consumer,Hamilton,Ohio,East,Office Supplies,Art,7.408,2,0.2,1.2038,False,False,True,False,False,True,False
+Standard Class,Consumer,Hamilton,Ohio,East,Office Supplies,Art,6.048,3,0.2,1.5876,False,False,True,False,False,True,False
+Standard Class,Home Office,Westfield,New Jersey,East,Office Supplies,Storage,46.26,3,0.0,12.0276,False,True,True,False,False,True,False
+Standard Class,Corporate,Philadelphia,Pennsylvania,East,Office Supplies,Binders,2.946,2,0.7,-2.2586,True,False,True,False,False,True,False
+Standard Class,Corporate,Philadelphia,Pennsylvania,East,Office Supplies,Paper,16.056,3,0.2,5.8203,True,False,True,False,False,True,False
+Standard Class,Consumer,Akron,Ohio,East,Office Supplies,Paper,21.744,3,0.2,6.795,False,False,True,False,False,True,False
+First Class,Consumer,Denver,Colorado,West,Furniture,Tables,218.75,2,0.5,-161.875,False,False,False,False,True,False,False
+First Class,Consumer,Denver,Colorado,West,Office Supplies,Appliances,2.6,1,0.2,0.2925,False,False,False,False,True,True,False
+Second Class,Consumer,Dallas,Texas,Central,Office Supplies,Appliances,66.284,2,0.8,-178.9668,False,False,False,False,False,True,False
+Standard Class,Corporate,Franklin,Tennessee,South,Furniture,Furnishings,35.168,7,0.2,9.6712,True,False,False,True,False,False,False
+Standard Class,Consumer,Whittier,California,West,Technology,Phones,444.768,4,0.2,44.4768,False,False,False,False,True,False,True
+Standard Class,Consumer,Saginaw,Michigan,Central,Office Supplies,Storage,83.92,4,0.0,5.8744,False,False,False,False,False,True,False
+Standard Class,Consumer,Saginaw,Michigan,Central,Technology,Phones,131.98,2,0.0,35.6346,False,False,False,False,False,False,True
+Standard Class,Consumer,Saginaw,Michigan,Central,Office Supplies,Binders,15.92,4,0.0,7.4824,False,False,False,False,False,True,False
+Standard Class,Consumer,Saginaw,Michigan,Central,Office Supplies,Fasteners,52.29,9,0.0,16.2099,False,False,False,False,False,True,False
+Standard Class,Consumer,Saginaw,Michigan,Central,Office Supplies,Storage,91.99,1,0.0,3.6796,False,False,False,False,False,True,False
+Second Class,Corporate,Dallas,Texas,Central,Technology,Accessories,20.8,2,0.2,6.5,True,False,False,False,False,False,True
+Standard Class,Corporate,Medina,Ohio,East,Office Supplies,Labels,23.68,2,0.2,8.88,True,False,True,False,False,True,False
+Standard Class,Corporate,Medina,Ohio,East,Furniture,Bookcases,452.45,5,0.5,-244.323,True,False,True,False,False,False,False
+Standard Class,Corporate,Medina,Ohio,East,Technology,Phones,62.982,3,0.4,-14.6958,True,False,True,False,False,False,True
+Standard Class,Corporate,Medina,Ohio,East,Technology,Machines,1188.0,9,0.7,-950.4,True,False,True,False,False,False,True
+Standard Class,Corporate,Medina,Ohio,East,Technology,Accessories,89.584,2,0.2,4.4792,True,False,True,False,False,False,True
+Standard Class,Consumer,Los Angeles,California,West,Office Supplies,Storage,93.06,6,0.0,26.0568,False,False,False,False,True,True,False
+Standard Class,Consumer,Los Angeles,California,West,Technology,Phones,302.376,3,0.2,22.6782,False,False,False,False,True,False,True
+First Class,Consumer,Dublin,Ohio,East,Office Supplies,Fasteners,5.584,2,0.2,1.8148,False,False,True,False,False,True,False
+First Class,Consumer,Dublin,Ohio,East,Office Supplies,Paper,22.704,6,0.2,8.2302,False,False,True,False,False,True,False
+First Class,Consumer,Dublin,Ohio,East,Office Supplies,Binders,19.776,4,0.7,-13.8432,False,False,True,False,False,True,False
+First Class,Consumer,Dublin,Ohio,East,Furniture,Furnishings,72.704,4,0.2,19.0848,False,False,True,False,False,False,False
+First Class,Consumer,Dublin,Ohio,East,Technology,Machines,479.988,4,0.7,-383.9904,False,False,True,False,False,False,True
+First Class,Consumer,Dublin,Ohio,East,Office Supplies,Art,27.168,2,0.2,2.7168,False,False,True,False,False,True,False
+Standard Class,Corporate,Detroit,Michigan,Central,Office Supplies,Art,2.2,1,0.0,0.968,True,False,False,False,False,True,False
+Standard Class,Corporate,Detroit,Michigan,Central,Furniture,Tables,622.45,5,0.0,136.939,True,False,False,False,False,False,False
+Standard Class,Corporate,Detroit,Michigan,Central,Office Supplies,Storage,21.98,1,0.0,0.2198,True,False,False,False,False,True,False
+Standard Class,Consumer,Columbia,Tennessee,South,Furniture,Chairs,161.568,2,0.2,-28.2744,False,False,False,True,False,False,False
+Standard Class,Consumer,Columbia,Tennessee,South,Furniture,Chairs,389.696,8,0.2,43.8408,False,False,False,True,False,False,False
+Standard Class,Corporate,Charlotte,North Carolina,South,Office Supplies,Binders,18.648,7,0.7,-12.432,True,False,False,True,False,True,False
+Standard Class,Home Office,Tampa,Florida,South,Furniture,Tables,233.86,2,0.45,-102.048,False,True,False,True,False,False,False
+Standard Class,Home Office,Tampa,Florida,South,Furniture,Tables,620.6145,3,0.45,-248.2458,False,True,False,True,False,False,False
+Standard Class,Home Office,Tampa,Florida,South,Office Supplies,Binders,5.328,2,0.7,-3.552,False,True,False,True,False,True,False
+Standard Class,Home Office,Tampa,Florida,South,Furniture,Furnishings,258.072,3,0.2,0.0,False,True,False,True,False,False,False
+Standard Class,Home Office,Tampa,Florida,South,Technology,Accessories,617.976,3,0.2,-7.7247,False,True,False,True,False,False,True
+Standard Class,Corporate,Santa Clara,California,West,Office Supplies,Paper,10.56,2,0.0,4.752,True,False,False,False,True,True,False
+Second Class,Consumer,Chicago,Illinois,Central,Office Supplies,Paper,25.92,5,0.2,9.396,False,False,False,False,False,True,False
+Second Class,Consumer,Chicago,Illinois,Central,Furniture,Furnishings,419.68,5,0.6,-356.728,False,False,False,False,False,False,False
+Second Class,Consumer,Chicago,Illinois,Central,Furniture,Furnishings,11.688,3,0.6,-4.6752,False,False,False,False,False,False,False
+Second Class,Consumer,Chicago,Illinois,Central,Technology,Phones,31.984,2,0.2,11.1944,False,False,False,False,False,False,True
+Second Class,Consumer,Chicago,Illinois,Central,Furniture,Tables,177.225,5,0.5,-120.513,False,False,False,False,False,False,False
+Second Class,Consumer,Chicago,Illinois,Central,Furniture,Furnishings,4.044,3,0.6,-2.8308,False,False,False,False,False,False,False
+Second Class,Consumer,Chicago,Illinois,Central,Office Supplies,Art,7.408,2,0.2,1.2038,False,False,False,False,False,True,False
+Second Class,Home Office,Lakeville,Minnesota,Central,Furniture,Chairs,2001.86,7,0.0,580.5394,False,True,False,False,False,False,False
+Second Class,Home Office,Lakeville,Minnesota,Central,Office Supplies,Storage,166.72,2,0.0,41.68,False,True,False,False,False,True,False
+Second Class,Home Office,Lakeville,Minnesota,Central,Office Supplies,Paper,47.88,6,0.0,23.94,False,True,False,False,False,True,False
+Second Class,Home Office,Lakeville,Minnesota,Central,Office Supplies,Appliances,1503.25,5,0.0,496.0725,False,True,False,False,False,True,False
+Second Class,Home Office,Lakeville,Minnesota,Central,Office Supplies,Paper,25.92,4,0.0,12.4416,False,True,False,False,False,True,False
+Second Class,Consumer,San Francisco,California,West,Furniture,Chairs,321.568,2,0.2,28.1372,False,False,False,False,True,False,False
+Standard Class,Consumer,San Diego,California,West,Office Supplies,Paper,7.61,1,0.0,3.5767,False,False,False,False,True,True,False
+Standard Class,Consumer,San Diego,California,West,Technology,Accessories,3347.37,13,0.0,636.0003,False,False,False,False,True,False,True
+First Class,Consumer,New York City,New York,East,Office Supplies,Storage,80.58,6,0.0,22.5624,False,False,True,False,False,True,False
+First Class,Consumer,New York City,New York,East,Office Supplies,Envelopes,361.92,4,0.0,162.864,False,False,True,False,False,True,False
+Standard Class,Corporate,Chicago,Illinois,Central,Furniture,Furnishings,12.132,9,0.6,-8.4924,True,False,False,False,False,False,False
+Standard Class,Corporate,Chicago,Illinois,Central,Office Supplies,Storage,82.368,2,0.2,-19.5624,True,False,False,False,False,True,False
+Standard Class,Corporate,Chicago,Illinois,Central,Office Supplies,Storage,53.92,5,0.2,4.044,True,False,False,False,False,True,False
+Standard Class,Corporate,Chicago,Illinois,Central,Technology,Phones,647.904,6,0.2,56.6916,True,False,False,False,False,False,True
+Second Class,Consumer,New York City,New York,East,Technology,Accessories,20.37,3,0.0,6.9258,False,False,True,False,False,False,True
+Second Class,Consumer,New York City,New York,East,Office Supplies,Storage,221.55,3,0.0,6.6465,False,False,True,False,False,True,False
+Second Class,Consumer,New York City,New York,East,Office Supplies,Binders,17.52,5,0.2,6.132,False,False,True,False,False,True,False
+Standard Class,Corporate,Pasadena,Texas,Central,Office Supplies,Appliances,1.624,2,0.8,-4.466,True,False,False,False,False,True,False
+Second Class,Corporate,Houston,Texas,Central,Technology,Machines,3059.982,3,0.4,-509.997,True,False,False,False,False,False,True
+Second Class,Corporate,Houston,Texas,Central,Technology,Machines,2519.958,7,0.4,-251.9958,True,False,False,False,False,False,True
+Standard Class,Consumer,Chicago,Illinois,Central,Technology,Phones,328.224,4,0.2,28.7196,False,False,False,False,False,False,True
+Standard Class,Consumer,Brentwood,California,West,Technology,Accessories,79.9,2,0.0,35.156,False,False,False,False,True,False,True
+Standard Class,Corporate,Chapel Hill,North Carolina,South,Office Supplies,Art,14.016,3,0.2,4.7304,True,False,False,True,False,True,False
+Standard Class,Consumer,Morristown,New Jersey,East,Office Supplies,Fasteners,7.56,6,0.0,0.3024,False,False,True,False,False,True,False
+Standard Class,Corporate,Cincinnati,Ohio,East,Office Supplies,Storage,37.208,1,0.2,-7.4416,True,False,True,False,False,True,False
+Standard Class,Corporate,Cincinnati,Ohio,East,Office Supplies,Envelopes,57.576,3,0.2,21.591,True,False,True,False,False,True,False
+Second Class,Corporate,San Francisco,California,West,Office Supplies,Storage,725.84,4,0.0,210.4936,True,False,False,False,True,True,False
+First Class,Consumer,San Francisco,California,West,Technology,Accessories,209.93,7,0.0,92.3692,False,False,False,False,True,False,True
+First Class,Consumer,San Francisco,California,West,Furniture,Furnishings,5.28,3,0.0,2.3232,False,False,False,False,True,False,False
+First Class,Consumer,San Francisco,California,West,Office Supplies,Binders,10.92,3,0.2,4.095,False,False,False,False,True,True,False
+First Class,Corporate,Inglewood,California,West,Office Supplies,Paper,8.82,2,0.0,4.0572,True,False,False,False,True,True,False
+First Class,Corporate,Inglewood,California,West,Office Supplies,Art,5.98,1,0.0,1.5548,True,False,False,False,True,True,False
+Standard Class,Corporate,Philadelphia,Pennsylvania,East,Office Supplies,Paper,11.648,2,0.2,4.0768,True,False,True,False,False,True,False
+Standard Class,Corporate,Philadelphia,Pennsylvania,East,Office Supplies,Paper,18.176,4,0.2,5.9072,True,False,True,False,False,True,False
+Standard Class,Corporate,Philadelphia,Pennsylvania,East,Office Supplies,Storage,59.712,6,0.2,5.9712,True,False,True,False,False,True,False
+Standard Class,Corporate,Philadelphia,Pennsylvania,East,Office Supplies,Labels,24.84,3,0.2,8.694,True,False,True,False,False,True,False
+Second Class,Consumer,Houston,Texas,Central,Office Supplies,Binders,2.08,5,0.8,-3.432,False,False,False,False,False,True,False
+Second Class,Consumer,Houston,Texas,Central,Technology,Phones,1114.4,7,0.2,376.11,False,False,False,False,False,False,True
+Standard Class,Consumer,Los Angeles,California,West,Furniture,Tables,1038.84,5,0.2,51.942,False,False,False,False,True,False,False
+Standard Class,Consumer,Portland,Oregon,West,Office Supplies,Paper,141.76,5,0.2,47.844,False,False,False,False,True,True,False
+Standard Class,Consumer,Portland,Oregon,West,Technology,Accessories,239.8,5,0.2,47.96,False,False,False,False,True,False,True
+Standard Class,Consumer,Portland,Oregon,West,Office Supplies,Paper,31.104,6,0.2,10.8864,False,False,False,False,True,True,False
+Second Class,Corporate,Tamarac,Florida,South,Office Supplies,Binders,254.058,7,0.7,-169.372,True,False,False,True,False,True,False
+Second Class,Corporate,Tamarac,Florida,South,Office Supplies,Appliances,194.528,2,0.2,24.316,True,False,False,True,False,True,False
+Second Class,Corporate,Tamarac,Florida,South,Office Supplies,Supplies,961.48,5,0.2,-204.3145,True,False,False,True,False,True,False
+Second Class,Home Office,Columbus,Ohio,East,Office Supplies,Fasteners,19.096,7,0.2,6.6836,False,True,True,False,False,True,False
+Second Class,Home Office,Columbus,Ohio,East,Office Supplies,Labels,18.496,8,0.2,6.2424,False,True,True,False,False,True,False
+Second Class,Home Office,Columbus,Ohio,East,Technology,Accessories,255.984,2,0.2,54.3966,False,True,True,False,False,False,True
+Second Class,Home Office,Columbus,Ohio,East,Furniture,Bookcases,86.97,3,0.5,-48.7032,False,True,True,False,False,False,False
+First Class,Corporate,Colorado Springs,Colorado,West,Furniture,Furnishings,300.416,8,0.2,78.8592,True,False,False,False,True,False,False
+First Class,Corporate,Colorado Springs,Colorado,West,Furniture,Chairs,230.352,3,0.2,20.1558,True,False,False,False,True,False,False
+First Class,Corporate,Colorado Springs,Colorado,West,Furniture,Furnishings,218.352,3,0.2,-24.5646,True,False,False,False,True,False,False
+First Class,Corporate,Colorado Springs,Colorado,West,Office Supplies,Binders,78.6,5,0.7,-62.88,True,False,False,False,True,True,False
+First Class,Corporate,Colorado Springs,Colorado,West,Office Supplies,Fasteners,27.552,3,0.2,9.2988,True,False,False,False,True,True,False
+Standard Class,Corporate,Belleville,New Jersey,East,Office Supplies,Paper,32.4,5,0.0,15.552,True,False,True,False,False,True,False
+Standard Class,Corporate,Belleville,New Jersey,East,Office Supplies,Storage,1082.48,8,0.0,10.8248,True,False,True,False,False,True,False
+Standard Class,Corporate,Belleville,New Jersey,East,Office Supplies,Paper,56.91,3,0.0,27.3168,True,False,True,False,False,True,False
+Standard Class,Corporate,Belleville,New Jersey,East,Furniture,Furnishings,77.6,4,0.0,38.024,True,False,True,False,False,False,False
+Standard Class,Corporate,Belleville,New Jersey,East,Office Supplies,Binders,14.28,1,0.0,6.5688,True,False,True,False,False,True,False
+Standard Class,Consumer,Chicago,Illinois,Central,Furniture,Tables,219.075,3,0.5,-131.445,False,False,False,False,False,False,False
+Second Class,Corporate,New York City,New York,East,Furniture,Furnishings,26.8,2,0.0,12.864,True,False,True,False,False,False,False
+Standard Class,Corporate,Taylor,Michigan,Central,Office Supplies,Art,9.84,3,0.0,2.8536,True,False,False,False,False,True,False
+Standard Class,Home Office,Lakewood,New Jersey,East,Office Supplies,Binders,45.48,3,0.0,20.9208,False,True,True,False,False,True,False
+Standard Class,Home Office,Lakewood,New Jersey,East,Office Supplies,Art,289.2,6,0.0,83.868,False,True,True,False,False,True,False
+First Class,Consumer,Arlington,Virginia,South,Office Supplies,Art,4.89,1,0.0,2.0049,False,False,False,True,False,True,False
+Second Class,Corporate,Arvada,Colorado,West,Furniture,Furnishings,15.136,4,0.2,3.5948,True,False,False,False,True,False,False
+Second Class,Corporate,Arvada,Colorado,West,Furniture,Chairs,466.768,2,0.2,52.5114,True,False,False,False,True,False,False
+Second Class,Corporate,Arvada,Colorado,West,Furniture,Furnishings,15.232,1,0.2,1.7136,True,False,False,False,True,False,False
+Second Class,Corporate,Arvada,Colorado,West,Office Supplies,Labels,6.264,3,0.2,2.0358,True,False,False,False,True,True,False
+Standard Class,Corporate,Hackensack,New Jersey,East,Furniture,Furnishings,87.54,3,0.0,37.6422,True,False,True,False,False,False,False
+Standard Class,Corporate,Saint Petersburg,Florida,South,Technology,Phones,178.384,2,0.2,22.298,True,False,False,True,False,False,True
+Standard Class,Corporate,Saint Petersburg,Florida,South,Office Supplies,Paper,15.552,3,0.2,5.4432,True,False,False,True,False,True,False
+First Class,Corporate,Philadelphia,Pennsylvania,East,Office Supplies,Art,99.136,4,0.2,8.6744,True,False,True,False,False,True,False
+Standard Class,Home Office,New York City,New York,East,Furniture,Chairs,135.882,1,0.1,24.1568,False,True,True,False,False,False,False
+Standard Class,Home Office,New York City,New York,East,Technology,Machines,3991.98,2,0.0,1995.99,False,True,True,False,False,False,True
+Standard Class,Home Office,New York City,New York,East,Technology,Phones,275.94,6,0.0,80.0226,False,True,True,False,False,False,True
+Standard Class,Home Office,New York City,New York,East,Technology,Accessories,360.0,4,0.0,129.6,False,True,True,False,False,False,True
+Standard Class,Home Office,New York City,New York,East,Office Supplies,Storage,43.57,1,0.0,13.071,False,True,True,False,False,True,False
+Standard Class,Corporate,Long Beach,California,West,Office Supplies,Fasteners,7.16,2,0.0,3.58,True,False,False,False,True,True,False
+Standard Class,Corporate,Hesperia,California,West,Office Supplies,Binders,251.52,6,0.2,81.744,True,False,False,False,True,True,False
+Standard Class,Corporate,Hesperia,California,West,Technology,Accessories,99.99,1,0.0,34.9965,True,False,False,False,True,False,True
+Second Class,Corporate,Murfreesboro,Tennessee,South,Furniture,Furnishings,15.992,1,0.2,0.9995,True,False,False,True,False,False,False
+First Class,Consumer,Philadelphia,Pennsylvania,East,Technology,Phones,290.898,3,0.4,-67.8762,False,False,True,False,False,False,True
+First Class,Consumer,Philadelphia,Pennsylvania,East,Office Supplies,Storage,54.224,2,0.2,3.389,False,False,True,False,False,True,False
+First Class,Consumer,Philadelphia,Pennsylvania,East,Furniture,Chairs,786.744,4,0.3,-258.5016,False,False,True,False,False,False,False
+First Class,Consumer,Philadelphia,Pennsylvania,East,Office Supplies,Labels,100.24,10,0.2,33.831,False,False,True,False,False,True,False
+First Class,Consumer,Philadelphia,Pennsylvania,East,Office Supplies,Binders,37.764,6,0.7,-27.6936,False,False,True,False,False,True,False
+Second Class,Consumer,Philadelphia,Pennsylvania,East,Technology,Phones,82.8,2,0.4,-20.7,False,False,True,False,False,False,True
+Second Class,Consumer,Philadelphia,Pennsylvania,East,Office Supplies,Binders,20.724,2,0.7,-13.816,False,False,True,False,False,True,False
+Second Class,Consumer,Philadelphia,Pennsylvania,East,Office Supplies,Binders,4.896,3,0.7,-3.4272,False,False,True,False,False,True,False
+Second Class,Consumer,Los Angeles,California,West,Office Supplies,Binders,4.752,1,0.2,1.6038,False,False,False,False,True,True,False
+Second Class,Consumer,Los Angeles,California,West,Technology,Copiers,959.984,2,0.2,335.9944,False,False,False,False,True,False,True
+Second Class,Consumer,Los Angeles,California,West,Office Supplies,Binders,14.368,4,0.2,4.49,False,False,False,False,True,True,False
+Standard Class,Corporate,San Francisco,California,West,Office Supplies,Binders,7.712,2,0.2,2.7956,True,False,False,False,True,True,False
+Standard Class,Corporate,San Francisco,California,West,Furniture,Tables,698.352,3,0.2,-17.4588,True,False,False,False,True,False,False
+Second Class,Consumer,Layton,Utah,West,Office Supplies,Fasteners,4.96,4,0.0,2.3312,False,False,False,False,True,True,False
+Second Class,Corporate,Philadelphia,Pennsylvania,East,Office Supplies,Art,17.856,4,0.2,1.116,True,False,True,False,False,True,False
+Second Class,Corporate,Philadelphia,Pennsylvania,East,Office Supplies,Binders,509.97,10,0.7,-407.976,True,False,True,False,False,True,False
+Second Class,Corporate,Philadelphia,Pennsylvania,East,Office Supplies,Fasteners,30.992,13,0.2,10.0724,True,False,True,False,False,True,False
+Second Class,Corporate,Philadelphia,Pennsylvania,East,Technology,Phones,71.928,12,0.4,8.3916,True,False,True,False,False,False,True
+Standard Class,Consumer,Austin,Texas,Central,Office Supplies,Storage,88.8,4,0.2,-2.22,False,False,False,False,False,True,False
+Standard Class,Consumer,San Francisco,California,West,Technology,Phones,47.976,3,0.2,4.7976,False,False,False,False,True,False,True
+Standard Class,Consumer,Lowell,Massachusetts,East,Office Supplies,Art,7.56,3,0.0,3.0996,False,False,True,False,False,True,False
+Standard Class,Consumer,Lowell,Massachusetts,East,Office Supplies,Paper,24.56,2,0.0,11.5432,False,False,True,False,False,True,False
+Standard Class,Consumer,Lowell,Massachusetts,East,Office Supplies,Art,12.96,2,0.0,4.1472,False,False,True,False,False,True,False
+First Class,Home Office,New York City,New York,East,Technology,Accessories,6.79,1,0.0,2.3086,False,True,True,False,False,False,True
+First Class,Home Office,New York City,New York,East,Office Supplies,Paper,24.56,2,0.0,11.5432,False,True,True,False,False,True,False
+First Class,Home Office,New York City,New York,East,Office Supplies,Binders,3.048,1,0.2,1.0668,False,True,True,False,False,True,False
+First Class,Home Office,New York City,New York,East,Office Supplies,Paper,49.12,4,0.0,23.0864,False,True,True,False,False,True,False
+First Class,Home Office,New York City,New York,East,Office Supplies,Binders,4355.168,4,0.2,1415.4296,False,True,True,False,False,True,False
+Standard Class,Consumer,New York City,New York,East,Furniture,Bookcases,388.704,6,0.2,-4.8588,False,False,True,False,False,False,False
+Standard Class,Consumer,New York City,New York,East,Office Supplies,Envelopes,8.26,2,0.0,3.7996,False,False,True,False,False,True,False
+Standard Class,Consumer,New York City,New York,East,Office Supplies,Art,17.04,4,0.0,6.9864,False,False,True,False,False,True,False
+Standard Class,Consumer,New York City,New York,East,Office Supplies,Paper,34.4,5,0.0,15.824,False,False,True,False,False,True,False
+Standard Class,Corporate,Charlotte,North Carolina,South,Office Supplies,Paper,36.24,5,0.2,11.325,True,False,False,True,False,True,False
+First Class,Corporate,Columbus,Georgia,South,Office Supplies,Appliances,647.84,8,0.0,168.4384,True,False,False,True,False,True,False
+First Class,Corporate,Columbus,Georgia,South,Office Supplies,Labels,20.7,2,0.0,9.936,True,False,False,True,False,True,False
+Standard Class,Consumer,New York City,New York,East,Office Supplies,Labels,20.7,2,0.0,9.936,False,False,True,False,False,True,False
+Standard Class,Consumer,New York City,New York,East,Furniture,Chairs,488.646,3,0.1,86.8704,False,False,True,False,False,False,False
+Standard Class,Consumer,New York City,New York,East,Office Supplies,Art,5.56,2,0.0,1.4456,False,False,True,False,False,True,False
+Standard Class,Consumer,New York City,New York,East,Furniture,Furnishings,47.12,8,0.0,20.7328,False,False,True,False,False,False,False
+Standard Class,Consumer,San Francisco,California,West,Office Supplies,Storage,211.96,4,0.0,8.4784,False,False,False,False,True,True,False
+Same Day,Corporate,Manchester,Connecticut,East,Office Supplies,Binders,23.2,4,0.0,10.44,True,False,True,False,False,True,False
+Same Day,Corporate,Manchester,Connecticut,East,Office Supplies,Supplies,7.36,2,0.0,0.1472,True,False,True,False,False,True,False
+Same Day,Corporate,Manchester,Connecticut,East,Office Supplies,Storage,104.79,7,0.0,29.3412,True,False,True,False,False,True,False
+Same Day,Corporate,Manchester,Connecticut,East,Furniture,Bookcases,1043.92,4,0.0,271.4192,True,False,True,False,False,False,False
+Standard Class,Consumer,Harlingen,Texas,Central,Office Supplies,Paper,25.92,5,0.2,9.396,False,False,False,False,False,True,False
+Standard Class,Consumer,Harlingen,Texas,Central,Office Supplies,Storage,53.424,3,0.2,4.6746,False,False,False,False,False,True,False
+Standard Class,Consumer,Tucson,Arizona,West,Office Supplies,Binders,8.16,5,0.7,-5.712,False,False,False,False,True,True,False
+Standard Class,Consumer,Tucson,Arizona,West,Technology,Accessories,1023.936,8,0.2,179.1888,False,False,False,False,True,False,True
+Standard Class,Consumer,Tucson,Arizona,West,Office Supplies,Art,9.24,1,0.2,0.924,False,False,False,False,True,True,False
+Standard Class,Consumer,Tucson,Arizona,West,Technology,Accessories,479.04,10,0.2,-29.94,False,False,False,False,True,False,True
+First Class,Corporate,Quincy,Illinois,Central,Office Supplies,Paper,99.136,4,0.2,30.98,True,False,False,False,False,True,False
+Standard Class,Corporate,Franklin,Massachusetts,East,Furniture,Tables,1488.424,7,0.3,-297.6848,True,False,True,False,False,False,False
+Standard Class,Consumer,Houston,Texas,Central,Office Supplies,Appliances,8.652,3,0.8,-20.3322,False,False,False,False,False,True,False
+Standard Class,Consumer,Houston,Texas,Central,Office Supplies,Storage,23.832,3,0.2,2.6811,False,False,False,False,False,True,False
+Standard Class,Consumer,Houston,Texas,Central,Office Supplies,Binders,12.176,4,0.8,-18.8728,False,False,False,False,False,True,False
+First Class,Corporate,San Francisco,California,West,Office Supplies,Paper,50.96,7,0.0,25.48,True,False,False,False,True,True,False
+First Class,Corporate,San Francisco,California,West,Office Supplies,Binders,49.536,3,0.2,17.3376,True,False,False,False,True,True,False
+Second Class,Corporate,Taylor,Michigan,Central,Technology,Accessories,41.9,2,0.0,8.799,True,False,False,False,False,False,True
+Standard Class,Consumer,Pembroke Pines,Florida,South,Furniture,Tables,375.4575,3,0.45,-157.0095,False,False,False,True,False,False,False
+Standard Class,Consumer,Pembroke Pines,Florida,South,Technology,Accessories,83.976,3,0.2,-1.0497,False,False,False,True,False,False,True
+Standard Class,Corporate,Philadelphia,Pennsylvania,East,Technology,Machines,482.34,4,0.7,-337.638,True,False,True,False,False,False,True
+Standard Class,Corporate,Philadelphia,Pennsylvania,East,Furniture,Furnishings,2.96,1,0.2,0.777,True,False,True,False,False,False,False
+First Class,Consumer,Cincinnati,Ohio,East,Office Supplies,Art,2.624,1,0.2,0.4264,False,False,True,False,False,True,False
+Standard Class,Consumer,New York City,New York,East,Office Supplies,Binders,23.36,4,0.2,7.884,False,False,True,False,False,True,False
+Standard Class,Consumer,New York City,New York,East,Technology,Accessories,39.98,2,0.0,13.5932,False,False,True,False,False,False,True
+Second Class,Consumer,Des Moines,Washington,West,Technology,Phones,246.384,2,0.2,27.7182,False,False,False,False,True,False,True
+Second Class,Consumer,Des Moines,Washington,West,Technology,Copiers,1799.97,3,0.0,701.9883,False,False,False,False,True,False,True
+Second Class,Corporate,Peoria,Illinois,Central,Office Supplies,Binders,12.462,3,0.8,-20.5623,True,False,False,False,False,True,False
+Standard Class,Home Office,Las Vegas,Nevada,West,Office Supplies,Binders,75.792,3,0.2,25.5798,False,True,False,False,True,True,False
+Second Class,Corporate,Warwick,Rhode Island,East,Office Supplies,Storage,49.96,2,0.0,9.4924,True,False,True,False,False,True,False
+Second Class,Corporate,Warwick,Rhode Island,East,Office Supplies,Paper,12.96,2,0.0,6.2208,True,False,True,False,False,True,False
+Standard Class,Home Office,Jackson,Michigan,Central,Office Supplies,Supplies,70.12,4,0.0,21.036,False,True,False,False,False,True,False
+Second Class,Consumer,Houston,Texas,Central,Office Supplies,Storage,35.952,3,0.2,3.5952,False,False,False,False,False,True,False
+Second Class,Consumer,Houston,Texas,Central,Furniture,Bookcases,2396.2656,4,0.32,-317.1528,False,False,False,False,False,False,False
+Second Class,Consumer,Houston,Texas,Central,Office Supplies,Storage,131.136,4,0.2,-32.784,False,False,False,False,False,True,False
+Second Class,Consumer,Houston,Texas,Central,Technology,Accessories,57.584,2,0.2,0.7198,False,False,False,False,False,False,True
+First Class,Consumer,Miami,Florida,South,Office Supplies,Paper,9.568,2,0.2,3.4684,False,False,False,True,False,True,False
+Standard Class,Corporate,Wilmington,North Carolina,South,Office Supplies,Art,39.072,6,0.2,9.768,True,False,False,True,False,True,False
+Standard Class,Consumer,New York City,New York,East,Office Supplies,Appliances,35.91,3,0.0,9.6957,False,False,True,False,False,True,False
+Standard Class,Consumer,San Francisco,California,West,Technology,Accessories,179.95,5,0.0,37.7895,False,False,False,False,True,False,True
+Standard Class,Consumer,San Francisco,California,West,Technology,Copiers,1199.976,3,0.2,434.9913,False,False,False,False,True,False,True
+Standard Class,Consumer,San Francisco,California,West,Office Supplies,Paper,27.15,5,0.0,13.3035,False,False,False,False,True,True,False
+Standard Class,Consumer,San Francisco,California,West,Furniture,Tables,1004.024,7,0.2,-112.9527,False,False,False,False,True,False,False
+Standard Class,Consumer,San Francisco,California,West,Office Supplies,Paper,9.68,1,0.0,4.6464,False,False,False,False,True,True,False
+Standard Class,Consumer,San Francisco,California,West,Office Supplies,Labels,28.35,9,0.0,13.608,False,False,False,False,True,True,False
+Standard Class,Consumer,San Francisco,California,West,Office Supplies,Paper,55.98,1,0.0,27.4302,False,False,False,False,True,True,False
+Standard Class,Consumer,San Francisco,California,West,Furniture,Bookcases,1336.829,13,0.15,31.4548,False,False,False,False,True,False,False
+Standard Class,Consumer,San Francisco,California,West,Furniture,Chairs,113.568,2,0.2,-18.4548,False,False,False,False,True,False,False
+Standard Class,Corporate,Seattle,Washington,West,Office Supplies,Paper,139.86,7,0.0,65.7342,True,False,False,False,True,True,False
+Standard Class,Corporate,Seattle,Washington,West,Furniture,Chairs,307.136,4,0.2,26.8744,True,False,False,False,True,False,False
+Standard Class,Consumer,Huntington Beach,California,West,Office Supplies,Art,95.92,8,0.0,25.8984,False,False,False,False,True,True,False
+Standard Class,Consumer,Los Angeles,California,West,Furniture,Chairs,383.8,5,0.2,38.38,False,False,False,False,True,False,False
+Standard Class,Corporate,Richmond,Kentucky,South,Office Supplies,Paper,5.78,1,0.0,2.8322,True,False,False,True,False,True,False
+Standard Class,Corporate,Los Angeles,California,West,Office Supplies,Art,9.32,4,0.0,2.7028,True,False,False,False,True,True,False
+Standard Class,Corporate,Los Angeles,California,West,Office Supplies,Envelopes,15.25,1,0.0,7.015,True,False,False,False,True,True,False
+First Class,Consumer,Louisville,Colorado,West,Technology,Accessories,196.752,6,0.2,56.5662,False,False,False,False,True,False,True
+Standard Class,Corporate,Lawrence,Massachusetts,East,Furniture,Furnishings,56.56,4,0.0,14.7056,True,False,True,False,False,False,False
+Standard Class,Corporate,Lawrence,Massachusetts,East,Office Supplies,Storage,32.7,3,0.0,8.502,True,False,True,False,False,True,False
+Second Class,Consumer,Jackson,Mississippi,South,Furniture,Chairs,866.4,4,0.0,225.264,False,False,False,True,False,False,False
+Second Class,Corporate,Canton,Michigan,Central,Furniture,Furnishings,28.4,2,0.0,11.076,True,False,False,False,False,False,False
+Second Class,Corporate,Canton,Michigan,Central,Office Supplies,Binders,287.92,8,0.0,138.2016,True,False,False,False,False,True,False
+First Class,Home Office,New Rochelle,New York,East,Technology,Machines,69.99,1,0.0,30.0957,False,True,True,False,False,False,True
+Standard Class,Corporate,San Antonio,Texas,Central,Office Supplies,Art,6.672,6,0.2,0.5004,True,False,False,False,False,True,False
+Standard Class,Home Office,Gastonia,North Carolina,South,Office Supplies,Binders,189.588,2,0.7,-145.3508,False,True,False,True,False,True,False
+Standard Class,Home Office,Gastonia,North Carolina,South,Technology,Accessories,408.744,7,0.2,76.6395,False,True,False,True,False,False,True
+Standard Class,Home Office,Gastonia,North Carolina,South,Technology,Accessories,291.96,5,0.2,54.7425,False,True,False,True,False,False,True
+Standard Class,Home Office,Gastonia,North Carolina,South,Office Supplies,Storage,4.768,2,0.2,-0.7748,False,True,False,True,False,True,False
+First Class,Consumer,Lowell,Massachusetts,East,Office Supplies,Storage,714.3,5,0.0,207.147,False,False,True,False,False,True,False
+Standard Class,Consumer,Jacksonville,Florida,South,Office Supplies,Binders,4.812,2,0.7,-3.6892,False,False,False,True,False,True,False
+Standard Class,Consumer,Jacksonville,Florida,South,Technology,Accessories,247.8,5,0.2,-18.585,False,False,False,True,False,False,True
+Second Class,Home Office,Chicago,Illinois,Central,Technology,Machines,1007.979,3,0.3,43.1991,False,True,False,False,False,False,True
+Second Class,Home Office,Chicago,Illinois,Central,Office Supplies,Paper,313.488,7,0.2,113.6394,False,True,False,False,False,True,False
+Standard Class,Corporate,Houston,Texas,Central,Office Supplies,Paper,31.872,8,0.2,11.5536,True,False,False,False,False,True,False
+Second Class,Corporate,New York City,New York,East,Furniture,Chairs,207.846,3,0.1,2.3094,True,False,True,False,False,False,False
+Second Class,Consumer,Detroit,Michigan,Central,Furniture,Furnishings,12.22,1,0.0,3.666,False,False,False,False,False,False,False
+Second Class,Consumer,Detroit,Michigan,Central,Office Supplies,Storage,194.94,3,0.0,23.3928,False,False,False,False,False,True,False
+Second Class,Consumer,Detroit,Michigan,Central,Office Supplies,Storage,70.95,3,0.0,20.5755,False,False,False,False,False,True,False
+Second Class,Consumer,Detroit,Michigan,Central,Office Supplies,Paper,91.36,4,0.0,42.0256,False,False,False,False,False,True,False
+Second Class,Consumer,Detroit,Michigan,Central,Furniture,Chairs,242.94,3,0.0,29.1528,False,False,False,False,False,False,False
+Second Class,Consumer,Detroit,Michigan,Central,Office Supplies,Labels,22.05,7,0.0,10.584,False,False,False,False,False,True,False
+Second Class,Consumer,Columbus,Indiana,Central,Furniture,Furnishings,2.91,1,0.0,1.3677,False,False,False,False,False,False,False
+Second Class,Consumer,Auburn,New York,East,Office Supplies,Art,59.52,3,0.0,15.4752,False,False,True,False,False,True,False
+Second Class,Consumer,Auburn,New York,East,Office Supplies,Storage,161.94,3,0.0,9.7164,False,False,True,False,False,True,False
+Second Class,Consumer,Auburn,New York,East,Office Supplies,Art,263.88,6,0.0,71.2476,False,False,True,False,False,True,False
+Second Class,Consumer,Auburn,New York,East,Office Supplies,Art,30.48,3,0.0,7.9248,False,False,True,False,False,True,False
+Second Class,Consumer,Auburn,New York,East,Office Supplies,Art,9.84,3,0.0,2.8536,False,False,True,False,False,True,False
+Second Class,Consumer,Auburn,New York,East,Technology,Phones,35.12,4,0.0,9.1312,False,False,True,False,False,False,True
+Standard Class,Corporate,Akron,Ohio,East,Furniture,Tables,284.364,2,0.4,-75.8304,True,False,True,False,False,False,False
+Standard Class,Corporate,Akron,Ohio,East,Office Supplies,Storage,665.408,2,0.2,66.5408,True,False,True,False,False,True,False
+Standard Class,Corporate,Norman,Oklahoma,Central,Technology,Accessories,63.88,4,0.0,24.9132,True,False,False,False,False,False,True
+Standard Class,Consumer,Concord,California,West,Furniture,Chairs,129.568,2,0.2,-24.294,False,False,False,False,True,False,False
+Standard Class,Consumer,Decatur,Illinois,Central,Furniture,Chairs,747.558,3,0.3,-96.1146,False,False,False,False,False,False,False
+Standard Class,Consumer,Decatur,Illinois,Central,Office Supplies,Envelopes,8.928,2,0.2,3.348,False,False,False,False,False,True,False
+Standard Class,Consumer,Seattle,Washington,West,Office Supplies,Appliances,103.92,4,0.0,36.372,False,False,False,False,True,True,False
+Standard Class,Consumer,Seattle,Washington,West,Technology,Accessories,899.91,9,0.0,377.9622,False,False,False,False,True,False,True
+Standard Class,Consumer,Seattle,Washington,West,Office Supplies,Binders,51.312,3,0.2,18.6006,False,False,False,False,True,True,False
+Standard Class,Home Office,Phoenix,Arizona,West,Furniture,Furnishings,23.56,5,0.2,7.068,False,True,False,False,True,False,False
+Standard Class,Home Office,Phoenix,Arizona,West,Furniture,Tables,1272.63,6,0.5,-814.4832,False,True,False,False,True,False,False
+Standard Class,Home Office,Phoenix,Arizona,West,Office Supplies,Binders,28.485,5,0.7,-20.889,False,True,False,False,True,True,False
+Standard Class,Home Office,Phoenix,Arizona,West,Office Supplies,Supplies,185.376,2,0.2,-34.758,False,True,False,False,True,True,False
+Standard Class,Home Office,Phoenix,Arizona,West,Office Supplies,Appliances,78.272,2,0.2,5.8704,False,True,False,False,True,True,False
+Standard Class,Home Office,Park Ridge,Illinois,Central,Furniture,Furnishings,254.744,7,0.6,-312.0614,False,True,False,False,False,False,False
+Standard Class,Corporate,Amarillo,Texas,Central,Furniture,Bookcases,205.3328,2,0.32,-36.2352,True,False,False,False,False,False,False
+Second Class,Consumer,Chicago,Illinois,Central,Office Supplies,Binders,4.788,3,0.8,-7.9002,False,False,False,False,False,True,False
+Standard Class,Corporate,Lindenhurst,New York,East,Office Supplies,Paper,55.48,1,0.0,26.6304,True,False,True,False,False,True,False
+Second Class,Consumer,San Francisco,California,West,Office Supplies,Storage,340.92,3,0.0,3.4092,False,False,False,False,True,True,False
+Second Class,Consumer,San Francisco,California,West,Furniture,Bookcases,222.666,2,0.15,10.4784,False,False,False,False,True,False,False
+Second Class,Consumer,San Francisco,California,West,Technology,Phones,703.968,4,0.2,87.996,False,False,False,False,True,False,True
+Second Class,Consumer,San Francisco,California,West,Office Supplies,Storage,92.52,6,0.0,24.9804,False,False,False,False,True,True,False
+Second Class,Consumer,San Francisco,California,West,Office Supplies,Paper,62.65,7,0.0,28.819,False,False,False,False,True,True,False
+Second Class,Consumer,San Francisco,California,West,Office Supplies,Paper,94.85,5,0.0,45.528,False,False,False,False,True,True,False
+Standard Class,Corporate,Los Angeles,California,West,Technology,Phones,95.76,6,0.2,7.182,True,False,False,False,True,False,True
+Standard Class,Consumer,Troy,New York,East,Furniture,Furnishings,40.2,3,0.0,19.296,False,False,True,False,False,False,False
+Standard Class,Corporate,New York City,New York,East,Office Supplies,Art,14.7,5,0.0,6.615,True,False,True,False,False,True,False
+Standard Class,Corporate,New York City,New York,East,Office Supplies,Storage,704.25,5,0.0,84.51,True,False,True,False,False,True,False
+Standard Class,Consumer,San Diego,California,West,Technology,Accessories,9.09,3,0.0,1.9089,False,False,False,False,True,False,True
+Standard Class,Consumer,New York City,New York,East,Office Supplies,Art,5.96,2,0.0,1.6688,False,False,True,False,False,True,False
+Standard Class,Consumer,New York City,New York,East,Technology,Accessories,159.98,2,0.0,57.5928,False,False,True,False,False,False,True
+First Class,Home Office,Los Angeles,California,West,Office Supplies,Labels,29.6,2,0.0,14.8,False,True,False,False,True,True,False
+First Class,Home Office,Los Angeles,California,West,Furniture,Bookcases,514.165,5,0.15,-30.245,False,True,False,False,True,False,False
+First Class,Home Office,Los Angeles,California,West,Technology,Phones,279.96,5,0.2,17.4975,False,True,False,False,True,False,True
+First Class,Consumer,Chicago,Illinois,Central,Technology,Phones,2735.952,6,0.2,341.994,False,False,False,False,False,False,True
+Second Class,Home Office,Huntsville,Texas,Central,Technology,Phones,7.992,1,0.2,0.5994,False,True,False,False,False,False,True
+Second Class,Home Office,Huntsville,Texas,Central,Technology,Accessories,63.984,2,0.2,10.3974,False,True,False,False,False,False,True
+Second Class,Home Office,Huntsville,Texas,Central,Office Supplies,Art,70.368,2,0.2,6.1572,False,True,False,False,False,True,False
+Standard Class,Consumer,Rochester,New York,East,Office Supplies,Storage,449.15,5,0.0,8.983,False,False,True,False,False,True,False
+Standard Class,Consumer,Rochester,New York,East,Office Supplies,Envelopes,11.07,3,0.0,5.0922,False,False,True,False,False,True,False
+Standard Class,Consumer,Seattle,Washington,West,Technology,Accessories,93.98,2,0.0,13.1572,False,False,False,False,True,False,True
+Second Class,Consumer,Memphis,Tennessee,South,Furniture,Tables,189.882,3,0.4,-94.941,False,False,False,True,False,False,False
+Standard Class,Consumer,Fayetteville,Arkansas,South,Office Supplies,Envelopes,105.42,2,0.0,51.6558,False,False,False,True,False,True,False
+Standard Class,Consumer,Costa Mesa,California,West,Office Supplies,Binders,119.616,8,0.2,40.3704,False,False,False,False,True,True,False
+Standard Class,Consumer,Costa Mesa,California,West,Furniture,Furnishings,255.76,4,0.0,81.8432,False,False,False,False,True,False,False
+Standard Class,Consumer,Costa Mesa,California,West,Furniture,Chairs,241.568,2,0.2,18.1176,False,False,False,False,True,False,False
+Standard Class,Consumer,Costa Mesa,California,West,Furniture,Furnishings,69.3,9,0.0,22.869,False,False,False,False,True,False,False
+Standard Class,Corporate,Parker,Colorado,West,Office Supplies,Binders,22.62,2,0.7,-15.08,True,False,False,False,True,True,False
+Standard Class,Corporate,Parker,Colorado,West,Office Supplies,Binders,14.952,2,0.7,-11.9616,True,False,False,False,True,True,False
+Standard Class,Corporate,Parker,Colorado,West,Furniture,Chairs,801.568,2,0.2,50.098,True,False,False,False,True,False,False
+Standard Class,Corporate,Parker,Colorado,West,Office Supplies,Binders,2.376,3,0.7,-1.9008,True,False,False,False,True,True,False
+Standard Class,Corporate,Parker,Colorado,West,Office Supplies,Paper,32.792,1,0.2,11.8871,True,False,False,False,True,True,False
+Second Class,Corporate,New York City,New York,East,Office Supplies,Binders,15.92,5,0.2,5.373,True,False,True,False,False,True,False
+Standard Class,Consumer,Atlanta,Georgia,South,Office Supplies,Art,2.74,1,0.0,0.7398,False,False,False,True,False,True,False
+Standard Class,Consumer,Atlanta,Georgia,South,Office Supplies,Art,8.34,3,0.0,2.1684,False,False,False,True,False,True,False
+Standard Class,Consumer,Atlanta,Georgia,South,Office Supplies,Storage,46.74,3,0.0,11.685,False,False,False,True,False,True,False
+Standard Class,Consumer,Atlanta,Georgia,South,Office Supplies,Binders,6354.95,5,0.0,3177.475,False,False,False,True,False,True,False
+First Class,Consumer,Gladstone,Missouri,Central,Furniture,Furnishings,126.3,3,0.0,40.416,False,False,False,False,False,False,False
+First Class,Consumer,Gladstone,Missouri,Central,Technology,Accessories,38.04,2,0.0,12.1728,False,False,False,False,False,False,True
+First Class,Consumer,Newark,Ohio,East,Office Supplies,Art,7.152,3,0.2,0.7152,False,False,True,False,False,True,False
+Standard Class,Consumer,Los Angeles,California,West,Office Supplies,Art,6.63,3,0.0,1.7901,False,False,False,False,True,True,False
+Standard Class,Consumer,Los Angeles,California,West,Office Supplies,Art,5.88,2,0.0,1.7052,False,False,False,False,True,True,False
+Standard Class,Home Office,Great Falls,Montana,West,Technology,Copiers,2999.95,5,0.0,1379.977,False,True,False,False,True,False,True
+Standard Class,Home Office,Great Falls,Montana,West,Office Supplies,Storage,51.45,3,0.0,13.8915,False,True,False,False,True,True,False
+Standard Class,Home Office,Great Falls,Montana,West,Office Supplies,Paper,11.96,2,0.0,5.382,False,True,False,False,True,True,False
+Standard Class,Home Office,Great Falls,Montana,West,Office Supplies,Storage,1126.02,3,0.0,56.301,False,True,False,False,True,True,False
+Standard Class,Consumer,Houston,Texas,Central,Technology,Accessories,18.392,1,0.2,5.2877,False,False,False,False,False,False,True
+Standard Class,Consumer,Houston,Texas,Central,Office Supplies,Storage,129.568,2,0.2,-25.9136,False,False,False,False,False,True,False
+Standard Class,Consumer,Houston,Texas,Central,Office Supplies,Binders,14.112,9,0.8,-21.168,False,False,False,False,False,True,False
+First Class,Corporate,Detroit,Michigan,Central,Furniture,Tables,210.98,2,0.0,21.098,True,False,False,False,False,False,False
+First Class,Consumer,Los Angeles,California,West,Technology,Phones,55.176,3,0.2,-12.4146,False,False,False,False,True,False,True
+First Class,Consumer,Los Angeles,California,West,Technology,Accessories,66.26,2,0.0,27.1666,False,False,False,False,True,False,True
+Standard Class,Consumer,Lawrence,Massachusetts,East,Office Supplies,Fasteners,22.2,5,0.0,10.434,False,False,True,False,False,True,False
+Standard Class,Home Office,Lakeland,Florida,South,Furniture,Chairs,683.952,3,0.2,42.747,False,True,False,True,False,False,False
+Standard Class,Home Office,Lakeland,Florida,South,Furniture,Furnishings,45.696,3,0.2,5.1408,False,True,False,True,False,False,False
+Standard Class,Consumer,Philadelphia,Pennsylvania,East,Office Supplies,Storage,36.336,3,0.2,-7.2672,False,False,True,False,False,True,False
+Standard Class,Consumer,Philadelphia,Pennsylvania,East,Office Supplies,Supplies,666.248,1,0.2,-149.9058,False,False,True,False,False,True,False
+Standard Class,Consumer,Philadelphia,Pennsylvania,East,Office Supplies,Envelopes,52.512,6,0.2,19.692,False,False,True,False,False,True,False
+Second Class,Corporate,Los Angeles,California,West,Furniture,Chairs,190.72,1,0.2,11.92,True,False,False,False,True,False,False
+Standard Class,Consumer,Los Angeles,California,West,Furniture,Furnishings,47.94,3,0.0,2.397,False,False,False,False,True,False,False
+Second Class,Consumer,Montgomery,Alabama,South,Technology,Phones,979.95,5,0.0,274.386,False,False,False,True,False,False,True
+Second Class,Consumer,Montgomery,Alabama,South,Office Supplies,Binders,22.75,5,0.0,11.375,False,False,False,True,False,True,False
+Standard Class,Consumer,Mesa,Arizona,West,Office Supplies,Storage,16.768,2,0.2,1.4672,False,False,False,False,True,True,False
+Second Class,Consumer,Chicago,Illinois,Central,Office Supplies,Binders,42.616,7,0.8,-68.1856,False,False,False,False,False,True,False
+Standard Class,Home Office,New York City,New York,East,Office Supplies,Binders,10.752,4,0.2,3.36,False,True,True,False,False,True,False
+Standard Class,Consumer,Henderson,Kentucky,South,Office Supplies,Appliances,152.94,3,0.0,41.2938,False,False,False,True,False,True,False
+Standard Class,Consumer,Henderson,Kentucky,South,Furniture,Chairs,283.92,4,0.0,70.98,False,False,False,True,False,False,False
+First Class,Consumer,Green Bay,Wisconsin,Central,Technology,Accessories,468.9,6,0.0,206.316,False,False,False,False,False,False,True
+First Class,Corporate,Tucson,Arizona,West,Technology,Phones,380.864,8,0.2,38.0864,True,False,False,False,True,False,True
+Standard Class,Consumer,Springfield,Ohio,East,Office Supplies,Storage,646.776,9,0.2,-145.5246,False,False,True,False,False,True,False
+Standard Class,Consumer,Fort Worth,Texas,Central,Technology,Accessories,58.112,2,0.2,7.264,False,False,False,False,False,False,True
+Standard Class,Consumer,Fort Worth,Texas,Central,Technology,Phones,100.792,1,0.2,6.2995,False,False,False,False,False,False,True
+Standard Class,Consumer,Fort Worth,Texas,Central,Furniture,Furnishings,66.112,4,0.6,-84.2928,False,False,False,False,False,False,False
+First Class,Home Office,New York City,New York,East,Office Supplies,Binders,41.28,6,0.2,13.932,False,True,True,False,False,True,False
+First Class,Home Office,New York City,New York,East,Office Supplies,Paper,13.36,2,0.0,6.4128,False,True,True,False,False,True,False
+Second Class,Corporate,Chicago,Illinois,Central,Office Supplies,Storage,250.272,9,0.2,15.642,True,False,False,False,False,True,False
+Second Class,Corporate,Chicago,Illinois,Central,Office Supplies,Binders,11.364,3,0.8,-17.046,True,False,False,False,False,True,False
+Second Class,Corporate,Chicago,Illinois,Central,Office Supplies,Supplies,8.72,5,0.2,-1.744,True,False,False,False,False,True,False
+Second Class,Consumer,San Francisco,California,West,Furniture,Chairs,1121.568,2,0.2,0.0,False,False,False,False,True,False,False
+First Class,Consumer,Jacksonville,Florida,South,Furniture,Furnishings,34.504,1,0.2,6.0382,False,False,False,True,False,False,False
+Standard Class,Consumer,Houston,Texas,Central,Office Supplies,Fasteners,10.824,3,0.2,2.5707,False,False,False,False,False,True,False
+Second Class,Corporate,Anaheim,California,West,Office Supplies,Storage,1295.78,2,0.0,310.9872,True,False,False,False,True,True,False
+Second Class,Consumer,Wilmington,North Carolina,South,Office Supplies,Art,19.456,4,0.2,3.4048,False,False,False,True,False,True,False
+Standard Class,Consumer,Los Angeles,California,West,Office Supplies,Labels,20.7,2,0.0,9.936,False,False,False,False,True,True,False
+Standard Class,Consumer,Los Angeles,California,West,Furniture,Tables,1335.68,4,0.2,-217.048,False,False,False,False,True,False,False
+Standard Class,Consumer,Los Angeles,California,West,Office Supplies,Paper,32.4,5,0.0,15.552,False,False,False,False,True,True,False
+Second Class,Consumer,San Francisco,California,West,Furniture,Furnishings,42.6,3,0.0,16.614,False,False,False,False,True,False,False
+Second Class,Consumer,San Francisco,California,West,Office Supplies,Binders,84.056,7,0.2,27.3182,False,False,False,False,True,True,False
+Second Class,Consumer,Tampa,Florida,South,Office Supplies,Appliances,13.0,5,0.2,1.3,False,False,False,True,False,True,False
+Second Class,Consumer,Tampa,Florida,South,Furniture,Furnishings,13.128,3,0.2,3.7743,False,False,False,True,False,False,False
+First Class,Consumer,Seattle,Washington,West,Office Supplies,Fasteners,3.96,2,0.0,0.0,False,False,False,False,True,True,False
+First Class,Consumer,Seattle,Washington,West,Office Supplies,Labels,2.61,1,0.0,1.2006,False,False,False,False,True,True,False
+First Class,Consumer,Los Angeles,California,West,Technology,Phones,374.376,3,0.2,46.797,False,False,False,False,True,False,True
+Standard Class,Corporate,Seattle,Washington,West,Office Supplies,Paper,91.84,8,0.0,45.0016,True,False,False,False,True,True,False
+Standard Class,Corporate,Seattle,Washington,West,Office Supplies,Binders,81.088,7,0.2,27.3672,True,False,False,False,True,True,False
+Standard Class,Corporate,Seattle,Washington,West,Office Supplies,Paper,19.44,3,0.0,9.3312,True,False,False,False,True,True,False
+Standard Class,Corporate,Seattle,Washington,West,Furniture,Chairs,451.152,3,0.2,0.0,True,False,False,False,True,False,False
+Standard Class,Consumer,New York City,New York,East,Office Supplies,Labels,72.45,7,0.0,34.776,False,False,True,False,False,True,False
+Standard Class,Consumer,New York City,New York,East,Office Supplies,Fasteners,13.96,4,0.0,6.4216,False,False,True,False,False,True,False
+Standard Class,Consumer,New York City,New York,East,Office Supplies,Binders,33.264,7,0.2,11.2266,False,False,True,False,False,True,False
+Standard Class,Consumer,New York City,New York,East,Technology,Phones,14.85,3,0.0,4.0095,False,False,True,False,False,False,True
+Standard Class,Consumer,Marysville,Washington,West,Office Supplies,Art,8.82,3,0.0,2.3814,False,False,False,False,True,True,False
+Second Class,Consumer,Long Beach,California,West,Office Supplies,Paper,160.72,14,0.0,78.7528,False,False,False,False,True,True,False
+Second Class,Consumer,Long Beach,California,West,Office Supplies,Paper,19.92,4,0.0,9.7608,False,False,False,False,True,True,False
+Second Class,Consumer,Long Beach,California,West,Office Supplies,Supplies,7.3,2,0.0,2.19,False,False,False,False,True,True,False
+Standard Class,Consumer,Chicago,Illinois,Central,Office Supplies,Storage,69.712,2,0.2,8.714,False,False,False,False,False,True,False
+Standard Class,Consumer,Chicago,Illinois,Central,Furniture,Furnishings,8.792,1,0.6,-5.7148,False,False,False,False,False,False,False
+Standard Class,Consumer,Los Angeles,California,West,Office Supplies,Supplies,51.52,4,0.0,1.5456,False,False,False,False,True,True,False
+Standard Class,Consumer,Denver,Colorado,West,Technology,Phones,470.376,3,0.2,52.9173,False,False,False,False,True,False,True
+Standard Class,Consumer,Denver,Colorado,West,Technology,Phones,105.584,2,0.2,9.2386,False,False,False,False,True,False,True
+Standard Class,Consumer,Denver,Colorado,West,Office Supplies,Appliances,31.152,3,0.2,3.5046,False,False,False,False,True,True,False
+Standard Class,Consumer,Denver,Colorado,West,Office Supplies,Binders,6.783,7,0.7,-4.7481,False,False,False,False,True,True,False
+Standard Class,Consumer,Denver,Colorado,West,Technology,Phones,406.368,4,0.2,30.4776,False,False,False,False,True,False,True
+Standard Class,Consumer,Richmond,Kentucky,South,Furniture,Chairs,70.98,1,0.0,4.9686,False,False,False,True,False,False,False
+Standard Class,Consumer,Richmond,Kentucky,South,Office Supplies,Labels,294.93,3,0.0,144.5157,False,False,False,True,False,True,False
+Standard Class,Consumer,Salem,Oregon,West,Technology,Phones,84.784,2,0.2,-20.1362,False,False,False,False,True,False,True
+Standard Class,Consumer,Salem,Oregon,West,Office Supplies,Paper,20.736,4,0.2,7.2576,False,False,False,False,True,True,False
+Standard Class,Consumer,Salem,Oregon,West,Office Supplies,Binders,16.821,3,0.7,-12.8961,False,False,False,False,True,True,False
+Standard Class,Consumer,Salem,Oregon,West,Office Supplies,Paper,10.368,2,0.2,3.6288,False,False,False,False,True,True,False
+Standard Class,Consumer,Laredo,Texas,Central,Office Supplies,Art,9.344,2,0.2,1.168,False,False,False,False,False,True,False
+Standard Class,Consumer,Laredo,Texas,Central,Technology,Accessories,31.2,3,0.2,9.75,False,False,False,False,False,False,True
+Standard Class,Consumer,San Diego,California,West,Office Supplies,Appliances,76.12,2,0.0,22.0748,False,False,False,False,True,True,False
+Standard Class,Consumer,San Diego,California,West,Technology,Copiers,1199.976,3,0.2,434.9913,False,False,False,False,True,False,True
+Standard Class,Consumer,San Diego,California,West,Technology,Phones,445.96,5,0.2,55.745,False,False,False,False,True,False,True
+Standard Class,Consumer,San Diego,California,West,Furniture,Furnishings,327.76,8,0.0,91.7728,False,False,False,False,True,False,False
+First Class,Consumer,Philadelphia,Pennsylvania,East,Office Supplies,Supplies,11.632,2,0.2,1.0178,False,False,True,False,False,True,False
+Standard Class,Consumer,Philadelphia,Pennsylvania,East,Technology,Phones,143.982,3,0.4,-28.7964,False,False,True,False,False,False,True
+Standard Class,Consumer,Philadelphia,Pennsylvania,East,Technology,Phones,494.376,4,0.4,-115.3544,False,False,True,False,False,False,True
+Standard Class,Consumer,Philadelphia,Pennsylvania,East,Office Supplies,Supplies,5.84,2,0.2,0.73,False,False,True,False,False,True,False
+Standard Class,Consumer,Tampa,Florida,South,Office Supplies,Storage,142.776,1,0.2,17.847,False,False,False,True,False,True,False
+Standard Class,Consumer,Tampa,Florida,South,Furniture,Furnishings,45.696,3,0.2,5.1408,False,False,False,True,False,False,False
+Standard Class,Consumer,Tampa,Florida,South,Office Supplies,Binders,7.218,3,0.7,-5.5338,False,False,False,True,False,True,False
+Standard Class,Consumer,Tampa,Florida,South,Office Supplies,Binders,43.188,4,0.7,-31.6712,False,False,False,True,False,True,False
+Standard Class,Consumer,Tampa,Florida,South,Office Supplies,Paper,131.904,3,0.2,47.8152,False,False,False,True,False,True,False
+Standard Class,Consumer,Philadelphia,Pennsylvania,East,Office Supplies,Binders,3.282,2,0.7,-2.6256,False,False,True,False,False,True,False
+Standard Class,Consumer,Philadelphia,Pennsylvania,East,Office Supplies,Art,21.168,9,0.2,2.3814,False,False,True,False,False,True,False
+Standard Class,Consumer,Philadelphia,Pennsylvania,East,Technology,Phones,55.188,2,0.4,-10.1178,False,False,True,False,False,False,True
+First Class,Corporate,Dallas,Texas,Central,Technology,Phones,369.576,3,0.2,41.5773,True,False,False,False,False,False,True
+First Class,Corporate,Dallas,Texas,Central,Office Supplies,Labels,15.712,4,0.2,5.6956,True,False,False,False,False,True,False
+Second Class,Corporate,Philadelphia,Pennsylvania,East,Office Supplies,Paper,8.448,2,0.2,2.64,True,False,True,False,False,True,False
+Second Class,Corporate,Philadelphia,Pennsylvania,East,Technology,Phones,728.946,9,0.4,-157.9383,True,False,True,False,False,False,True
+Second Class,Consumer,Grove City,Ohio,East,Technology,Phones,119.94,10,0.4,15.992,False,False,True,False,False,False,True
+Second Class,Consumer,Grove City,Ohio,East,Office Supplies,Binders,3.648,2,0.7,-2.7968,False,False,True,False,False,True,False
+Second Class,Corporate,New York City,New York,East,Furniture,Furnishings,40.48,2,0.0,15.7872,True,False,True,False,False,False,False
+Second Class,Corporate,New York City,New York,East,Furniture,Furnishings,9.94,2,0.0,3.0814,True,False,True,False,False,False,False
+Second Class,Corporate,New York City,New York,East,Office Supplies,Binders,107.424,9,0.2,33.57,True,False,True,False,False,True,False
+Second Class,Corporate,New York City,New York,East,Technology,Phones,37.91,1,0.0,10.9939,True,False,True,False,False,False,True
+Second Class,Corporate,New York City,New York,East,Furniture,Furnishings,88.02,3,0.0,27.2862,True,False,True,False,False,False,False
+Standard Class,Consumer,Chicago,Illinois,Central,Office Supplies,Binders,8.69,5,0.8,-14.773,False,False,False,False,False,True,False
+Standard Class,Corporate,Dearborn,Michigan,Central,Furniture,Chairs,301.96,2,0.0,87.5684,True,False,False,False,False,False,False
+Standard Class,Corporate,Dearborn,Michigan,Central,Office Supplies,Appliances,555.21,5,0.1,178.901,True,False,False,False,False,True,False
+Standard Class,Corporate,Dearborn,Michigan,Central,Office Supplies,Storage,523.48,4,0.0,130.87,True,False,False,False,False,True,False
+Standard Class,Corporate,Dearborn,Michigan,Central,Office Supplies,Art,161.82,9,0.0,46.9278,True,False,False,False,False,True,False
+Standard Class,Home Office,New York City,New York,East,Furniture,Furnishings,35.56,7,0.0,12.0904,False,True,True,False,False,False,False
+Standard Class,Consumer,Seattle,Washington,West,Office Supplies,Appliances,97.16,2,0.0,28.1764,False,False,False,False,True,True,False
+Standard Class,Consumer,San Francisco,California,West,Office Supplies,Binders,15.24,5,0.2,5.1435,False,False,False,False,True,True,False
+Standard Class,Consumer,San Francisco,California,West,Office Supplies,Paper,13.23,3,0.0,6.0858,False,False,False,False,True,True,False
+Second Class,Consumer,Aurora,Colorado,West,Office Supplies,Storage,243.384,3,0.2,-51.7191,False,False,False,False,True,True,False
+Second Class,Consumer,Aurora,Colorado,West,Technology,Accessories,119.8,5,0.2,29.95,False,False,False,False,True,False,True
+Second Class,Consumer,Aurora,Colorado,West,Technology,Phones,300.768,4,0.2,30.0768,False,False,False,False,True,False,True
+Second Class,Consumer,Miami,Florida,South,Technology,Accessories,17.88,3,0.2,2.4585,False,False,False,True,False,False,True
+Second Class,Consumer,Miami,Florida,South,Office Supplies,Labels,235.944,3,0.2,85.5297,False,False,False,True,False,True,False
+Second Class,Corporate,Warner Robins,Georgia,South,Furniture,Chairs,392.94,3,0.0,43.2234,True,False,False,True,False,False,False
+Standard Class,Consumer,Aurora,Colorado,West,Office Supplies,Binders,18.882,3,0.7,-13.8468,False,False,False,False,True,True,False
+Standard Class,Consumer,Aurora,Colorado,West,Office Supplies,Appliances,122.328,3,0.2,12.2328,False,False,False,False,True,True,False
+Standard Class,Home Office,Vallejo,California,West,Furniture,Furnishings,1049.2,5,0.0,272.792,False,True,False,False,True,False,False
+Standard Class,Home Office,Vallejo,California,West,Office Supplies,Binders,15.424,4,0.2,5.0128,False,True,False,False,True,True,False
+Standard Class,Corporate,Minneapolis,Minnesota,Central,Furniture,Furnishings,18.84,3,0.0,6.0288,True,False,False,False,False,False,False
+Second Class,Consumer,Mission Viejo,California,West,Office Supplies,Storage,330.4,2,0.0,85.904,False,False,False,False,True,True,False
+Second Class,Consumer,Mission Viejo,California,West,Office Supplies,Labels,26.25,7,0.0,12.6,False,False,False,False,True,True,False
+Standard Class,Consumer,Rochester Hills,Michigan,Central,Technology,Accessories,132.52,4,0.0,54.3332,False,False,False,False,False,False,True
+Standard Class,Home Office,Plainfield,New Jersey,East,Office Supplies,Paper,6.48,1,0.0,3.1752,False,True,True,False,False,True,False
+Standard Class,Home Office,Columbus,Indiana,Central,Office Supplies,Appliances,209.3,2,0.0,56.511,False,True,False,False,False,True,False
+Standard Class,Corporate,Sierra Vista,Arizona,West,Office Supplies,Fasteners,31.56,5,0.2,9.8625,True,False,False,False,True,True,False
+Standard Class,Corporate,Sierra Vista,Arizona,West,Office Supplies,Appliances,30.144,2,0.2,3.0144,True,False,False,False,True,True,False
+Second Class,Corporate,Vancouver,Washington,West,Furniture,Furnishings,14.8,4,0.0,6.068,True,False,False,False,True,False,False
+Second Class,Corporate,Vancouver,Washington,West,Technology,Phones,302.376,3,0.2,22.6782,True,False,False,False,True,False,True
+Second Class,Corporate,Vancouver,Washington,West,Technology,Accessories,316.0,4,0.0,31.6,True,False,False,False,True,False,True
+Standard Class,Home Office,New York City,New York,East,Office Supplies,Paper,379.4,10,0.0,178.318,False,True,True,False,False,True,False
+Standard Class,Corporate,New York City,New York,East,Office Supplies,Paper,97.82,2,0.0,45.9754,True,False,True,False,False,True,False
+Standard Class,Corporate,New York City,New York,East,Technology,Accessories,103.12,8,0.0,10.312,True,False,True,False,False,False,True
+Standard Class,Consumer,Columbus,Ohio,East,Office Supplies,Appliances,113.552,2,0.2,8.5164,False,False,True,False,False,True,False
+Standard Class,Consumer,Columbus,Ohio,East,Office Supplies,Binders,3.318,2,0.7,-2.6544,False,False,True,False,False,True,False
+Standard Class,Consumer,Columbus,Ohio,East,Office Supplies,Envelopes,134.288,2,0.2,45.3222,False,False,True,False,False,True,False
+Same Day,Home Office,Aurora,Illinois,Central,Furniture,Chairs,701.372,2,0.3,-50.098,False,True,False,False,False,False,False
+Same Day,Home Office,Aurora,Illinois,Central,Office Supplies,Binders,2.308,2,0.8,-3.462,False,True,False,False,False,True,False
+Standard Class,Consumer,Arlington,Texas,Central,Office Supplies,Storage,999.432,7,0.2,124.929,False,False,False,False,False,True,False
+Standard Class,Consumer,Arlington,Texas,Central,Office Supplies,Storage,724.08,14,0.2,-135.765,False,False,False,False,False,True,False
+Standard Class,Consumer,Arlington,Texas,Central,Furniture,Tables,918.785,5,0.3,-118.1295,False,False,False,False,False,False,False
+Standard Class,Consumer,Arlington,Texas,Central,Office Supplies,Binders,2.724,3,0.8,-4.2222,False,False,False,False,False,True,False
+Standard Class,Corporate,New York City,New York,East,Office Supplies,Storage,459.95,5,0.0,18.398,True,False,True,False,False,True,False
+Same Day,Consumer,Louisville,Kentucky,South,Office Supplies,Fasteners,10.74,3,0.0,5.2626,False,False,False,True,False,True,False
+Second Class,Corporate,Dallas,Texas,Central,Office Supplies,Supplies,23.76,3,0.2,2.079,True,False,False,False,False,True,False
+Second Class,Corporate,Dallas,Texas,Central,Office Supplies,Paper,85.056,3,0.2,28.7064,True,False,False,False,False,True,False
+Second Class,Corporate,Dallas,Texas,Central,Technology,Phones,381.576,3,0.2,28.6182,True,False,False,False,False,False,True
+First Class,Consumer,Cleveland,Ohio,East,Furniture,Furnishings,30.36,5,0.2,8.7285,False,False,True,False,False,False,False
+Standard Class,Home Office,Chicago,Illinois,Central,Furniture,Furnishings,23.976,3,0.6,-14.3856,False,True,False,False,False,False,False
+Standard Class,Home Office,Chicago,Illinois,Central,Furniture,Tables,108.925,1,0.5,-71.8905,False,True,False,False,False,False,False
+Standard Class,Home Office,Chicago,Illinois,Central,Office Supplies,Paper,36.352,8,0.2,11.36,False,True,False,False,False,True,False
+Standard Class,Consumer,Quincy,Illinois,Central,Office Supplies,Art,19.56,5,0.2,1.7115,False,False,False,False,False,True,False
+First Class,Consumer,Columbus,Indiana,Central,Office Supplies,Appliances,61.44,3,0.0,16.5888,False,False,False,False,False,True,False
+First Class,Consumer,Columbus,Indiana,Central,Office Supplies,Paper,38.9,5,0.0,17.505,False,False,False,False,False,True,False
+First Class,Consumer,Columbus,Indiana,Central,Technology,Accessories,99.39,3,0.0,40.7499,False,False,False,False,False,False,True
+Standard Class,Consumer,Tyler,Texas,Central,Office Supplies,Appliances,2.688,3,0.8,-7.392,False,False,False,False,False,True,False
+Standard Class,Consumer,Tyler,Texas,Central,Technology,Accessories,27.816,3,0.2,4.5201,False,False,False,False,False,False,True
+Standard Class,Consumer,Tyler,Texas,Central,Furniture,Furnishings,82.524,3,0.6,-41.262,False,False,False,False,False,False,False
+Standard Class,Consumer,Tyler,Texas,Central,Office Supplies,Binders,182.994,3,0.8,-320.2395,False,False,False,False,False,True,False
+Standard Class,Consumer,New York City,New York,East,Office Supplies,Binders,14.352,3,0.2,4.6644,False,False,True,False,False,True,False
+Standard Class,Consumer,New York City,New York,East,Office Supplies,Storage,64.96,2,0.0,2.5984,False,False,True,False,False,True,False
+Standard Class,Consumer,New York City,New York,East,Office Supplies,Storage,68.6,4,0.0,18.522,False,False,True,False,False,True,False
+Same Day,Corporate,Burlington,North Carolina,South,Technology,Machines,7999.98,4,0.5,-3839.9905,True,False,False,True,False,False,True
+Same Day,Corporate,Burlington,North Carolina,South,Office Supplies,Appliances,167.44,2,0.2,14.651,True,False,False,True,False,True,False
+First Class,Consumer,Jackson,Mississippi,South,Technology,Accessories,479.97,3,0.0,163.1898,False,False,False,True,False,False,True
+First Class,Consumer,Jackson,Mississippi,South,Office Supplies,Labels,14.62,2,0.0,6.8714,False,False,False,True,False,True,False
+First Class,Consumer,Jackson,Mississippi,South,Office Supplies,Paper,19.44,3,0.0,9.3312,False,False,False,True,False,True,False
+Standard Class,Consumer,New York City,New York,East,Furniture,Bookcases,191.984,2,0.2,4.7996,False,False,True,False,False,False,False
+Second Class,Consumer,Waynesboro,Virginia,South,Furniture,Furnishings,104.01,1,0.0,14.5614,False,False,False,True,False,False,False
+Second Class,Consumer,Waynesboro,Virginia,South,Technology,Phones,284.82,1,0.0,74.0532,False,False,False,True,False,False,True
+Second Class,Consumer,Waynesboro,Virginia,South,Office Supplies,Storage,36.84,3,0.0,10.3152,False,False,False,True,False,True,False
+Standard Class,Consumer,Los Angeles,California,West,Technology,Accessories,166.24,1,0.0,24.936,False,False,False,False,True,False,True
+Standard Class,Consumer,Los Angeles,California,West,Office Supplies,Paper,33.4,5,0.0,16.032,False,False,False,False,True,True,False
+First Class,Home Office,Chester,Pennsylvania,East,Office Supplies,Art,198.272,8,0.2,17.3488,False,True,True,False,False,True,False
+First Class,Home Office,Chester,Pennsylvania,East,Office Supplies,Labels,47.36,4,0.2,17.76,False,True,True,False,False,True,False
+First Class,Home Office,Chester,Pennsylvania,East,Office Supplies,Envelopes,200.984,7,0.2,62.8075,False,True,True,False,False,True,False
+First Class,Home Office,Chester,Pennsylvania,East,Office Supplies,Labels,97.696,4,0.2,31.7512,False,True,True,False,False,True,False
+First Class,Home Office,Chester,Pennsylvania,East,Office Supplies,Art,2.696,1,0.2,0.8088,False,True,True,False,False,True,False
+First Class,Home Office,Chester,Pennsylvania,East,Office Supplies,Binders,18.588,2,0.7,-13.6312,False,True,True,False,False,True,False
+First Class,Home Office,Chester,Pennsylvania,East,Office Supplies,Binders,4.896,3,0.7,-3.4272,False,True,True,False,False,True,False
+Standard Class,Corporate,Cleveland,Ohio,East,Furniture,Furnishings,15.072,3,0.2,4.1448,True,False,True,False,False,False,False
+Second Class,Corporate,Seattle,Washington,West,Furniture,Furnishings,209.88,3,0.0,35.6796,True,False,False,False,True,False,False
+Standard Class,Consumer,Long Beach,California,West,Furniture,Tables,369.912,3,0.2,-13.8717,False,False,False,False,True,False,False
+Standard Class,Corporate,Cary,North Carolina,South,Office Supplies,Paper,10.368,2,0.2,3.6288,True,False,False,True,False,True,False
+Standard Class,Corporate,Cary,North Carolina,South,Office Supplies,Appliances,166.84,5,0.2,18.7695,True,False,False,True,False,True,False
+Standard Class,Corporate,Cary,North Carolina,South,Technology,Accessories,15.216,1,0.2,2.2824,True,False,False,True,False,False,True
+First Class,Consumer,New York City,New York,East,Technology,Accessories,119.96,4,0.0,52.7824,False,False,True,False,False,False,True
+First Class,Consumer,New York City,New York,East,Furniture,Bookcases,883.92,5,0.2,-110.49,False,False,True,False,False,False,False
+First Class,Consumer,New York City,New York,East,Office Supplies,Binders,46.72,8,0.2,15.768,False,False,True,False,False,True,False
+First Class,Home Office,New York City,New York,East,Office Supplies,Paper,55.48,1,0.0,26.6304,False,True,True,False,False,True,False
+Standard Class,Consumer,Palm Coast,Florida,South,Office Supplies,Envelopes,24.448,4,0.2,8.8624,False,False,False,True,False,True,False
+Standard Class,Corporate,Mount Vernon,New York,East,Office Supplies,Appliances,281.34,6,0.0,109.7226,True,False,True,False,False,True,False
+Standard Class,Corporate,Mount Vernon,New York,East,Technology,Phones,307.98,2,0.0,89.3142,True,False,True,False,False,False,True
+Standard Class,Corporate,Mount Vernon,New York,East,Technology,Accessories,299.97,3,0.0,113.9886,True,False,True,False,False,False,True
+Second Class,Corporate,Seattle,Washington,West,Office Supplies,Binders,19.92,5,0.2,6.972,True,False,False,False,True,True,False
+First Class,Consumer,Dover,Delaware,East,Furniture,Furnishings,9.94,2,0.0,3.0814,False,False,True,False,False,False,False
+Standard Class,Consumer,Newark,Ohio,East,Furniture,Furnishings,103.056,3,0.2,24.4758,False,False,True,False,False,False,False
+Standard Class,Home Office,Orem,Utah,West,Office Supplies,Binders,59.808,3,0.2,19.4376,False,True,False,False,True,True,False
+Standard Class,Home Office,Orem,Utah,West,Furniture,Furnishings,73.32,6,0.0,21.996,False,True,False,False,True,False,False
+Standard Class,Home Office,Los Angeles,California,West,Office Supplies,Paper,146.82,3,0.0,73.41,False,True,False,False,True,True,False
+Standard Class,Corporate,Detroit,Michigan,Central,Furniture,Tables,1652.94,3,0.0,231.4116,True,False,False,False,False,False,False
+Standard Class,Corporate,Detroit,Michigan,Central,Office Supplies,Storage,296.37,3,0.0,80.0199,True,False,False,False,False,True,False
+Standard Class,Home Office,Philadelphia,Pennsylvania,East,Furniture,Furnishings,129.92,5,0.2,21.112,False,True,True,False,False,False,False
+Standard Class,Corporate,Hialeah,Florida,South,Office Supplies,Supplies,45.584,7,0.2,5.1282,True,False,False,True,False,True,False
+Standard Class,Consumer,Austin,Texas,Central,Office Supplies,Envelopes,17.568,2,0.2,6.3684,False,False,False,False,False,True,False
+Standard Class,Consumer,Austin,Texas,Central,Technology,Phones,55.992,1,0.2,5.5992,False,False,False,False,False,False,True
+First Class,Consumer,Oceanside,New York,East,Office Supplies,Paper,182.72,8,0.0,84.0512,False,False,True,False,False,True,False
+First Class,Consumer,Oceanside,New York,East,Furniture,Tables,400.032,2,0.4,-153.3456,False,False,True,False,False,False,False
+First Class,Consumer,Oceanside,New York,East,Office Supplies,Storage,33.63,3,0.0,10.089,False,False,True,False,False,True,False
+First Class,Consumer,Oceanside,New York,East,Furniture,Chairs,542.646,3,0.1,102.4998,False,False,True,False,False,False,False
+First Class,Consumer,Oceanside,New York,East,Office Supplies,Labels,6.3,2,0.0,3.024,False,False,True,False,False,True,False
+Standard Class,Home Office,Seattle,Washington,West,Office Supplies,Storage,242.94,3,0.0,9.7176,False,True,False,False,True,True,False
+Standard Class,Home Office,Seattle,Washington,West,Technology,Accessories,179.97,3,0.0,86.3856,False,True,False,False,True,False,True
+Standard Class,Home Office,Seattle,Washington,West,Office Supplies,Binders,99.696,6,0.2,33.6474,False,True,False,False,True,True,False
+Standard Class,Home Office,Seattle,Washington,West,Office Supplies,Binders,27.936,4,0.2,9.4284,False,True,False,False,True,True,False
+Standard Class,Home Office,Seattle,Washington,West,Furniture,Bookcases,84.98,1,0.0,18.6956,False,True,False,False,True,False,False
+Standard Class,Home Office,Seattle,Washington,West,Office Supplies,Binders,18.72,5,0.2,6.552,False,True,False,False,True,True,False
+Standard Class,Consumer,San Francisco,California,West,Technology,Accessories,49.98,2,0.0,8.4966,False,False,False,False,True,False,True
+Standard Class,Home Office,Naperville,Illinois,Central,Office Supplies,Labels,11.784,3,0.2,4.2717,False,True,False,False,False,True,False
+Standard Class,Home Office,Naperville,Illinois,Central,Office Supplies,Storage,272.736,3,0.2,-64.7748,False,True,False,False,False,True,False
+Standard Class,Home Office,Naperville,Illinois,Central,Office Supplies,Binders,3.54,2,0.8,-5.487,False,True,False,False,False,True,False
+Standard Class,Consumer,Dallas,Texas,Central,Office Supplies,Supplies,51.52,5,0.2,-10.948,False,False,False,False,False,True,False
+Standard Class,Consumer,Dallas,Texas,Central,Office Supplies,Paper,3.528,1,0.2,1.1466,False,False,False,False,False,True,False
+Standard Class,Consumer,Dallas,Texas,Central,Office Supplies,Paper,4.624,1,0.2,1.6762,False,False,False,False,False,True,False
+Standard Class,Consumer,Dallas,Texas,Central,Office Supplies,Supplies,55.168,4,0.2,6.2064,False,False,False,False,False,True,False
+Same Day,Corporate,San Diego,California,West,Furniture,Tables,567.12,10,0.2,-28.356,True,False,False,False,True,False,False
+Same Day,Corporate,San Diego,California,West,Office Supplies,Storage,359.32,4,0.0,7.1864,True,False,False,False,True,True,False
+Second Class,Consumer,Evanston,Illinois,Central,Technology,Phones,11.992,1,0.2,0.8994,False,False,False,False,False,False,True
+Standard Class,Consumer,Trenton,Michigan,Central,Office Supplies,Binders,58.05,3,0.0,26.703,False,False,False,False,False,True,False
+Standard Class,Consumer,Trenton,Michigan,Central,Furniture,Furnishings,157.74,11,0.0,56.7864,False,False,False,False,False,False,False
+Standard Class,Consumer,Trenton,Michigan,Central,Office Supplies,Art,56.98,7,0.0,22.792,False,False,False,False,False,True,False
+Standard Class,Consumer,Trenton,Michigan,Central,Office Supplies,Binders,2.88,1,0.0,1.4112,False,False,False,False,False,True,False
+First Class,Corporate,San Francisco,California,West,Technology,Copiers,1199.976,3,0.2,374.9925,True,False,False,False,True,False,True
+Standard Class,Consumer,Los Angeles,California,West,Furniture,Furnishings,79.92,4,0.0,28.7712,False,False,False,False,True,False,False
+Standard Class,Corporate,Jacksonville,Florida,South,Furniture,Tables,383.438,4,0.45,-167.3184,True,False,False,True,False,False,False
+Standard Class,Consumer,Cottage Grove,Minnesota,Central,Office Supplies,Storage,24.56,2,0.0,6.8768,False,False,False,False,False,True,False
+Standard Class,Consumer,Cottage Grove,Minnesota,Central,Technology,Accessories,119.8,4,0.0,47.92,False,False,False,False,False,False,True
+Standard Class,Corporate,New York City,New York,East,Office Supplies,Binders,13.128,3,0.2,4.2666,True,False,True,False,False,True,False
+Standard Class,Corporate,Green Bay,Wisconsin,Central,Office Supplies,Paper,22.72,4,0.0,10.224,True,False,False,False,False,True,False
+Standard Class,Consumer,Los Angeles,California,West,Office Supplies,Paper,58.32,9,0.0,27.9936,False,False,False,False,True,True,False
+Standard Class,Corporate,Atlanta,Georgia,South,Office Supplies,Labels,12.39,3,0.0,5.6994,True,False,False,True,False,True,False
+Standard Class,Consumer,Columbus,Ohio,East,Technology,Phones,107.982,3,0.4,-26.9955,False,False,True,False,False,False,True
+Second Class,Corporate,Bossier City,Louisiana,South,Office Supplies,Envelopes,11.36,2,0.0,5.3392,True,False,False,True,False,True,False
+Second Class,Corporate,Bossier City,Louisiana,South,Office Supplies,Envelopes,50.94,3,0.0,25.47,True,False,False,True,False,True,False
+Second Class,Corporate,Bossier City,Louisiana,South,Technology,Accessories,646.74,6,0.0,258.696,True,False,False,True,False,False,True
+Second Class,Corporate,Bossier City,Louisiana,South,Office Supplies,Binders,5.64,3,0.0,2.7072,True,False,False,True,False,True,False
+Second Class,Corporate,Bossier City,Louisiana,South,Office Supplies,Storage,572.58,6,0.0,34.3548,True,False,False,True,False,True,False
+Standard Class,Corporate,Saint Petersburg,Florida,South,Furniture,Furnishings,310.88,2,0.2,23.316,True,False,False,True,False,False,False
+Standard Class,Consumer,Arlington,Virginia,South,Furniture,Chairs,641.96,2,0.0,179.7488,False,False,False,True,False,False,False
+Standard Class,Corporate,Des Moines,Iowa,Central,Office Supplies,Binders,18.28,2,0.0,9.14,True,False,False,False,False,True,False
+Standard Class,Corporate,Des Moines,Iowa,Central,Technology,Phones,207.0,3,0.0,51.75,True,False,False,False,False,False,True
+Standard Class,Corporate,Des Moines,Iowa,Central,Office Supplies,Binders,32.35,5,0.0,16.175,True,False,False,False,False,True,False
+Standard Class,Corporate,Des Moines,Iowa,Central,Office Supplies,Binders,7.71,1,0.0,3.4695,True,False,False,False,False,True,False
+Standard Class,Corporate,Des Moines,Iowa,Central,Office Supplies,Art,40.3,2,0.0,10.881,True,False,False,False,False,True,False
+Standard Class,Corporate,Des Moines,Iowa,Central,Furniture,Furnishings,34.58,7,0.0,14.5236,True,False,False,False,False,False,False
+Standard Class,Consumer,Cincinnati,Ohio,East,Office Supplies,Art,32.76,7,0.2,3.6855,False,False,True,False,False,True,False
+First Class,Home Office,San Francisco,California,West,Furniture,Chairs,544.008,3,0.2,40.8006,False,True,False,False,True,False,False
+First Class,Home Office,San Francisco,California,West,Office Supplies,Paper,59.94,3,0.0,28.1718,False,True,False,False,True,True,False
+First Class,Home Office,San Francisco,California,West,Office Supplies,Paper,23.92,4,0.0,11.7208,False,True,False,False,True,True,False
+First Class,Home Office,San Francisco,California,West,Office Supplies,Paper,4.28,1,0.0,1.926,False,True,False,False,True,True,False
+Second Class,Consumer,Columbus,Ohio,East,Office Supplies,Binders,32.07,5,0.7,-22.449,False,False,True,False,False,True,False
+Second Class,Consumer,Columbus,Ohio,East,Technology,Accessories,24.0,2,0.2,-2.7,False,False,True,False,False,False,True
+Second Class,Consumer,Columbus,Ohio,East,Furniture,Bookcases,35.49,1,0.5,-15.6156,False,False,True,False,False,False,False
+Second Class,Consumer,Columbus,Ohio,East,Technology,Accessories,47.984,2,0.2,0.5998,False,False,True,False,False,False,True
+Standard Class,Corporate,Columbia,South Carolina,South,Office Supplies,Envelopes,186.69,3,0.0,87.7443,True,False,False,True,False,True,False
+Second Class,Consumer,Lancaster,California,West,Office Supplies,Binders,17.456,2,0.2,5.8914,False,False,False,False,True,True,False
+Standard Class,Consumer,Lancaster,California,West,Furniture,Chairs,348.928,2,0.2,34.8928,False,False,False,False,True,False,False
+Standard Class,Consumer,Richmond,Virginia,South,Office Supplies,Binders,143.96,4,0.0,69.1008,False,False,False,True,False,True,False
+Standard Class,Consumer,Richmond,Virginia,South,Office Supplies,Storage,15.42,1,0.0,4.1634,False,False,False,True,False,True,False
+Standard Class,Consumer,Richmond,Virginia,South,Office Supplies,Binders,43.04,8,0.0,21.0896,False,False,False,True,False,True,False
+Standard Class,Consumer,Richmond,Virginia,South,Furniture,Chairs,332.94,3,0.0,79.9056,False,False,False,True,False,False,False
+Same Day,Consumer,Asheville,North Carolina,South,Technology,Phones,1363.96,5,0.2,85.2475,False,False,False,True,False,False,True
+Standard Class,Consumer,San Francisco,California,West,Office Supplies,Labels,9.96,2,0.0,4.5816,False,False,False,False,True,True,False
+Standard Class,Consumer,San Francisco,California,West,Office Supplies,Paper,21.72,4,0.0,10.6428,False,False,False,False,True,True,False
+Standard Class,Consumer,Rochester,Minnesota,Central,Office Supplies,Binders,20.16,7,0.0,9.8784,False,False,False,False,False,True,False
+First Class,Corporate,Rochester,New York,East,Office Supplies,Paper,132.79,7,0.0,63.7392,True,False,True,False,False,True,False
+First Class,Corporate,Rochester,New York,East,Office Supplies,Paper,12.96,2,0.0,6.2208,True,False,True,False,False,True,False
+First Class,Corporate,Rochester,New York,East,Office Supplies,Labels,21.56,7,0.0,10.3488,True,False,True,False,False,True,False
+Standard Class,Consumer,Lake Elsinore,California,West,Furniture,Chairs,283.92,5,0.2,17.745,False,False,False,False,True,False,False
+First Class,Corporate,San Diego,California,West,Furniture,Furnishings,22.23,1,0.0,7.3359,True,False,False,False,True,False,False
+First Class,Corporate,San Diego,California,West,Technology,Phones,215.968,2,0.2,18.8972,True,False,False,False,True,False,True
+Second Class,Corporate,New York City,New York,East,Office Supplies,Appliances,355.32,9,0.0,99.4896,True,False,True,False,False,True,False
+Standard Class,Corporate,Monroe,Louisiana,South,Office Supplies,Paper,12.96,2,0.0,6.2208,True,False,False,True,False,True,False
+First Class,Consumer,San Francisco,California,West,Furniture,Furnishings,18.28,2,0.0,6.2152,False,False,False,False,True,False,False
+Standard Class,Consumer,Denver,Colorado,West,Office Supplies,Art,43.176,3,0.2,4.3176,False,False,False,False,True,True,False
+Standard Class,Consumer,Denver,Colorado,West,Technology,Phones,1983.968,4,0.2,247.996,False,False,False,False,True,False,True
+First Class,Consumer,Omaha,Nebraska,Central,Furniture,Furnishings,28.4,2,0.0,11.076,False,False,False,False,False,False,False
+First Class,Consumer,Omaha,Nebraska,Central,Technology,Accessories,149.97,3,0.0,50.9898,False,False,False,False,False,False,True
+First Class,Consumer,Edmonds,Washington,West,Office Supplies,Art,11.52,4,0.0,3.2256,False,False,False,False,True,True,False
+First Class,Consumer,Edmonds,Washington,West,Furniture,Tables,1298.55,5,0.0,311.652,False,False,False,False,True,False,False
+First Class,Consumer,Edmonds,Washington,West,Office Supplies,Appliances,213.92,4,0.0,62.0368,False,False,False,False,True,True,False
+First Class,Consumer,Edmonds,Washington,West,Technology,Accessories,25.78,2,0.0,2.578,False,False,False,False,True,False,True
+Same Day,Consumer,Santa Ana,California,West,Furniture,Furnishings,18.28,2,0.0,6.2152,False,False,False,False,True,False,False
+Same Day,Consumer,Santa Ana,California,West,Technology,Accessories,1399.93,7,0.0,601.9699,False,False,False,False,True,False,True
+First Class,Corporate,Milwaukee,Wisconsin,Central,Office Supplies,Paper,51.84,8,0.0,24.8832,True,False,False,False,False,True,False
+Standard Class,Consumer,Philadelphia,Pennsylvania,East,Office Supplies,Paper,5.344,1,0.2,1.8704,False,False,True,False,False,True,False
+Standard Class,Consumer,Philadelphia,Pennsylvania,East,Office Supplies,Paper,41.472,8,0.2,14.5152,False,False,True,False,False,True,False
+Standard Class,Consumer,Philadelphia,Pennsylvania,East,Office Supplies,Binders,3.168,3,0.7,-2.4288,False,False,True,False,False,True,False
+Standard Class,Consumer,Philadelphia,Pennsylvania,East,Furniture,Chairs,1228.465,5,0.3,0.0,False,False,True,False,False,False,False
+Standard Class,Consumer,Philadelphia,Pennsylvania,East,Office Supplies,Binders,31.086,3,0.7,-22.7964,False,False,True,False,False,True,False
+Standard Class,Consumer,Philadelphia,Pennsylvania,East,Office Supplies,Paper,335.52,4,0.2,117.432,False,False,True,False,False,True,False
+Standard Class,Consumer,Belleville,New Jersey,East,Technology,Accessories,239.97,3,0.0,71.991,False,False,True,False,False,False,True
+Standard Class,Consumer,Belleville,New Jersey,East,Office Supplies,Labels,9.82,2,0.0,4.8118,False,False,True,False,False,True,False
+Standard Class,Consumer,San Francisco,California,West,Technology,Accessories,67.8,4,0.0,4.068,False,False,False,False,True,False,True
+Standard Class,Consumer,San Francisco,California,West,Technology,Accessories,167.97,3,0.0,40.3128,False,False,False,False,True,False,True
+Standard Class,Consumer,Lakeville,Minnesota,Central,Office Supplies,Fasteners,35.0,7,0.0,16.8,False,False,False,False,False,True,False
+Standard Class,Consumer,Lakeville,Minnesota,Central,Office Supplies,Supplies,37.24,4,0.0,10.7996,False,False,False,False,False,True,False
+Standard Class,Consumer,Lakeville,Minnesota,Central,Office Supplies,Envelopes,15.28,2,0.0,7.4872,False,False,False,False,False,True,False
+Second Class,Consumer,Florence,Kentucky,South,Furniture,Chairs,301.96,2,0.0,90.588,False,False,False,True,False,False,False
+Second Class,Consumer,Florence,Kentucky,South,Office Supplies,Appliances,180.66,3,0.0,50.5848,False,False,False,True,False,True,False
+Second Class,Consumer,Florence,Kentucky,South,Technology,Phones,191.98,2,0.0,51.8346,False,False,False,True,False,False,True
+Second Class,Consumer,Florence,Kentucky,South,Technology,Phones,65.99,1,0.0,17.1574,False,False,False,True,False,False,True
+Standard Class,Corporate,Tampa,Florida,South,Office Supplies,Art,35.216,2,0.2,2.6412,True,False,False,True,False,True,False
+Standard Class,Corporate,Tampa,Florida,South,Office Supplies,Appliances,23.696,2,0.2,6.5164,True,False,False,True,False,True,False
+Standard Class,Corporate,Tampa,Florida,South,Technology,Machines,265.475,1,0.5,-111.4995,True,False,False,True,False,False,True
+Second Class,Consumer,Tyler,Texas,Central,Office Supplies,Binders,51.184,4,0.8,-79.3352,False,False,False,False,False,True,False
+Standard Class,Home Office,Columbia,Tennessee,South,Office Supplies,Paper,9.664,2,0.2,3.2616,False,True,False,True,False,True,False
+Standard Class,Corporate,Fort Worth,Texas,Central,Technology,Phones,21.072,3,0.2,1.5804,True,False,False,False,False,False,True
+Standard Class,Corporate,New York City,New York,East,Office Supplies,Art,60.45,3,0.0,16.3215,True,False,True,False,False,True,False
+Standard Class,Corporate,New York City,New York,East,Office Supplies,Art,11.52,4,0.0,3.3408,True,False,True,False,False,True,False
+Standard Class,Corporate,New York City,New York,East,Furniture,Bookcases,186.048,4,0.2,9.3024,True,False,True,False,False,False,False
+First Class,Corporate,Los Angeles,California,West,Office Supplies,Binders,37.44,4,0.2,11.7,True,False,False,False,True,True,False
+First Class,Corporate,Los Angeles,California,West,Office Supplies,Binders,26.976,4,0.2,8.7672,True,False,False,False,True,True,False
+First Class,Corporate,Los Angeles,California,West,Office Supplies,Supplies,11.36,2,0.0,3.2944,True,False,False,False,True,True,False
+First Class,Corporate,Los Angeles,California,West,Office Supplies,Labels,14.62,2,0.0,6.8714,True,False,False,False,True,True,False
+Standard Class,Consumer,Louisville,Kentucky,South,Technology,Phones,83.72,7,0.0,23.4416,False,False,False,True,False,False,True
+Standard Class,Consumer,Louisville,Kentucky,South,Furniture,Chairs,287.94,3,0.0,77.7438,False,False,False,True,False,False,False
+Standard Class,Consumer,Lorain,Ohio,East,Furniture,Furnishings,48.896,4,0.2,8.5568,False,False,True,False,False,False,False
+Standard Class,Corporate,Linden,New Jersey,East,Technology,Accessories,115.36,7,0.0,49.6048,True,False,True,False,False,False,True
+Second Class,Corporate,Salinas,California,West,Office Supplies,Art,5.16,2,0.0,1.3416,True,False,False,False,True,True,False
+Second Class,Corporate,Salinas,California,West,Office Supplies,Paper,38.88,6,0.0,18.6624,True,False,False,False,True,True,False
+Standard Class,Consumer,Jackson,Mississippi,South,Office Supplies,Art,185.88,6,0.0,50.1876,False,False,False,True,False,True,False
+Standard Class,Consumer,New York City,New York,East,Furniture,Furnishings,44.46,2,0.0,14.6718,False,False,True,False,False,False,False
+Standard Class,Consumer,New York City,New York,East,Office Supplies,Storage,242.94,3,0.0,9.7176,False,False,True,False,False,True,False
+Standard Class,Consumer,New York City,New York,East,Office Supplies,Paper,39.96,2,0.0,18.7812,False,False,True,False,False,True,False
+Standard Class,Consumer,New York City,New York,East,Office Supplies,Supplies,102.3,10,0.0,26.598,False,False,True,False,False,True,False
+Standard Class,Consumer,New York City,New York,East,Office Supplies,Storage,21.36,2,0.0,5.7672,False,False,True,False,False,True,False
+Standard Class,Home Office,New Brunswick,New Jersey,East,Office Supplies,Paper,7.61,1,0.0,3.5767,False,True,True,False,False,True,False
+Standard Class,Home Office,New Brunswick,New Jersey,East,Office Supplies,Fasteners,7.16,2,0.0,3.58,False,True,True,False,False,True,False
+Standard Class,Consumer,San Francisco,California,West,Office Supplies,Supplies,7.36,2,0.0,0.1472,False,False,False,False,True,True,False
+Standard Class,Consumer,San Francisco,California,West,Office Supplies,Art,23.1,2,0.0,10.626,False,False,False,False,True,True,False
+Second Class,Corporate,Jacksonville,Florida,South,Technology,Accessories,191.472,6,0.2,40.6878,True,False,False,True,False,False,True
+Second Class,Corporate,Jacksonville,Florida,South,Office Supplies,Art,5.248,2,0.2,0.5904,True,False,False,True,False,True,False
+Second Class,Corporate,Jacksonville,Florida,South,Technology,Phones,59.184,2,0.2,5.1786,True,False,False,True,False,False,True
+Standard Class,Corporate,Springfield,Virginia,South,Office Supplies,Labels,2.89,1,0.0,1.3583,True,False,False,True,False,True,False
+Standard Class,Corporate,Springfield,Virginia,South,Furniture,Furnishings,51.94,1,0.0,21.2954,True,False,False,True,False,False,False
+First Class,Corporate,Philadelphia,Pennsylvania,East,Office Supplies,Labels,15.936,4,0.2,5.1792,True,False,True,False,False,True,False
+Standard Class,Corporate,Lancaster,Pennsylvania,East,Office Supplies,Binders,44.91,6,0.7,-35.928,True,False,True,False,False,True,False
+First Class,Home Office,Philadelphia,Pennsylvania,East,Office Supplies,Binders,1141.47,5,0.7,-760.98,False,True,True,False,False,True,False
+First Class,Home Office,Philadelphia,Pennsylvania,East,Technology,Phones,280.782,3,0.4,-46.797,False,True,True,False,False,False,True
+First Class,Consumer,Concord,New Hampshire,East,Office Supplies,Paper,34.44,3,0.0,17.22,False,False,True,False,False,True,False
+Standard Class,Consumer,New York City,New York,East,Office Supplies,Paper,11.36,2,0.0,5.2256,False,False,True,False,False,True,False
+Standard Class,Consumer,New York City,New York,East,Office Supplies,Binders,106.344,7,0.2,37.2204,False,False,True,False,False,True,False
+Standard Class,Consumer,Charlotte,North Carolina,South,Office Supplies,Paper,192.16,5,0.2,67.256,False,False,False,True,False,True,False
+Standard Class,Home Office,Concord,New Hampshire,East,Furniture,Furnishings,322.59,3,0.0,64.518,False,True,True,False,False,False,False
+Standard Class,Home Office,Concord,New Hampshire,East,Technology,Accessories,29.99,1,0.0,13.1956,False,True,True,False,False,False,True
+Standard Class,Home Office,Concord,New Hampshire,East,Technology,Accessories,371.97,3,0.0,66.9546,False,True,True,False,False,False,True
+Standard Class,Home Office,Philadelphia,Pennsylvania,East,Office Supplies,Binders,5.892,4,0.7,-4.1244,False,True,True,False,False,True,False
+Second Class,Home Office,New York City,New York,East,Office Supplies,Binders,68.472,3,0.2,23.1093,False,True,True,False,False,True,False
+Second Class,Home Office,New York City,New York,East,Furniture,Chairs,1242.9,5,0.1,262.39,False,True,True,False,False,False,False
+Standard Class,Consumer,Springfield,Virginia,South,Office Supplies,Storage,30.84,2,0.0,8.3268,False,False,False,True,False,True,False
+Same Day,Consumer,San Francisco,California,West,Office Supplies,Art,13.48,4,0.0,5.9312,False,False,False,False,True,True,False
+First Class,Home Office,Detroit,Michigan,Central,Furniture,Furnishings,31.4,5,0.0,10.048,False,True,False,False,False,False,False
+Standard Class,Consumer,Rochester,New York,East,Furniture,Furnishings,17.46,2,0.0,5.9364,False,False,True,False,False,False,False
+Second Class,Corporate,Los Angeles,California,West,Office Supplies,Binders,13.944,3,0.2,4.5318,True,False,False,False,True,True,False
+Standard Class,Consumer,San Diego,California,West,Office Supplies,Storage,83.76,12,0.0,1.6752,False,False,False,False,True,True,False
+Standard Class,Home Office,Columbia,Maryland,East,Office Supplies,Binders,37.66,7,0.0,18.4534,False,True,True,False,False,True,False
+Standard Class,Corporate,San Francisco,California,West,Office Supplies,Paper,34.68,6,0.0,16.9932,True,False,False,False,True,True,False
+Standard Class,Consumer,New Rochelle,New York,East,Technology,Accessories,149.95,5,0.0,14.995,False,False,True,False,False,False,True
+Standard Class,Consumer,New Rochelle,New York,East,Office Supplies,Binders,51.312,3,0.2,18.6006,False,False,True,False,False,True,False
+First Class,Home Office,Detroit,Michigan,Central,Office Supplies,Paper,4.54,1,0.0,2.043,False,True,False,False,False,True,False
+First Class,Home Office,Detroit,Michigan,Central,Office Supplies,Art,15.92,4,0.0,5.4128,False,True,False,False,False,True,False
+First Class,Home Office,Detroit,Michigan,Central,Technology,Phones,543.92,8,0.0,135.98,False,True,False,False,False,False,True
+First Class,Corporate,San Francisco,California,West,Office Supplies,Storage,155.82,7,0.0,42.0714,True,False,False,False,True,True,False
+First Class,Corporate,San Francisco,California,West,Office Supplies,Binders,70.008,3,0.2,24.5028,True,False,False,False,True,True,False
+Second Class,Consumer,Houston,Texas,Central,Office Supplies,Envelopes,15.648,2,0.2,5.0856,False,False,False,False,False,True,False
+Standard Class,Consumer,Detroit,Michigan,Central,Office Supplies,Labels,103.6,7,0.0,51.8,False,False,False,False,False,True,False
+Second Class,Corporate,Auburn,New York,East,Office Supplies,Paper,46.96,8,0.0,22.5408,True,False,True,False,False,True,False
+First Class,Corporate,Springfield,Ohio,East,Office Supplies,Binders,8.904,2,0.7,-6.5296,True,False,True,False,False,True,False
+First Class,Consumer,Garland,Texas,Central,Office Supplies,Labels,10.44,5,0.2,3.393,False,False,False,False,False,True,False
+First Class,Consumer,Garland,Texas,Central,Office Supplies,Binders,18.336,4,0.8,-32.088,False,False,False,False,False,True,False
+First Class,Consumer,Chicago,Illinois,Central,Technology,Phones,323.976,3,0.2,20.2485,False,False,False,False,False,False,True
+Standard Class,Consumer,Los Angeles,California,West,Office Supplies,Paper,20.04,3,0.0,9.6192,False,False,False,False,True,True,False
+Standard Class,Consumer,Los Angeles,California,West,Office Supplies,Storage,64.96,2,0.0,2.5984,False,False,False,False,True,True,False
+Standard Class,Consumer,Los Angeles,California,West,Office Supplies,Paper,12.96,2,0.0,6.2208,False,False,False,False,True,True,False
+Standard Class,Consumer,New York City,New York,East,Furniture,Bookcases,323.136,4,0.2,12.1176,False,False,True,False,False,False,False
+Standard Class,Consumer,New York City,New York,East,Technology,Phones,90.93,7,0.0,2.7279,False,False,True,False,False,False,True
+Standard Class,Consumer,New York City,New York,East,Office Supplies,Binders,52.776,3,0.2,19.791,False,False,True,False,False,True,False
+Standard Class,Home Office,Jackson,Michigan,Central,Technology,Phones,1199.8,4,0.0,323.946,False,True,False,False,False,False,True
+Standard Class,Home Office,Jackson,Michigan,Central,Technology,Accessories,1928.78,7,0.0,829.3754,False,True,False,False,False,False,True
+Standard Class,Home Office,Jackson,Michigan,Central,Office Supplies,Storage,352.38,2,0.0,81.0474,False,True,False,False,False,True,False
+Standard Class,Home Office,Norwich,Connecticut,East,Furniture,Furnishings,22.2,6,0.0,9.102,False,True,True,False,False,False,False
+First Class,Corporate,Milwaukee,Wisconsin,Central,Furniture,Furnishings,46.94,1,0.0,19.2454,True,False,False,False,False,False,False
+First Class,Corporate,Milwaukee,Wisconsin,Central,Technology,Accessories,143.73,9,0.0,56.0547,True,False,False,False,False,False,True
+Standard Class,Corporate,San Antonio,Texas,Central,Furniture,Tables,99.918,2,0.3,-18.5562,True,False,False,False,False,False,False
+Standard Class,Corporate,San Antonio,Texas,Central,Furniture,Chairs,797.944,4,0.3,-56.996,True,False,False,False,False,False,False
+Standard Class,Corporate,San Antonio,Texas,Central,Office Supplies,Binders,8.568,3,0.8,-14.5656,True,False,False,False,False,True,False
+Standard Class,Corporate,Dallas,Texas,Central,Office Supplies,Envelopes,149.352,3,0.2,50.4063,True,False,False,False,False,True,False
+Standard Class,Corporate,Dallas,Texas,Central,Office Supplies,Storage,12.992,1,0.2,-0.812,True,False,False,False,False,True,False
+Standard Class,Consumer,Alexandria,Virginia,South,Office Supplies,Storage,24.56,2,0.0,6.8768,False,False,False,True,False,True,False
+Standard Class,Consumer,New York City,New York,East,Technology,Accessories,85.14,3,0.0,34.9074,False,False,True,False,False,False,True
+Standard Class,Consumer,New York City,New York,East,Technology,Phones,21.99,1,0.0,10.5552,False,False,True,False,False,False,True
+Standard Class,Consumer,New York City,New York,East,Office Supplies,Appliances,406.6,5,0.0,113.848,False,False,True,False,False,True,False
+Standard Class,Corporate,New York City,New York,East,Office Supplies,Binders,841.568,2,0.2,294.5488,True,False,True,False,False,True,False
+First Class,Consumer,Philadelphia,Pennsylvania,East,Office Supplies,Paper,15.552,3,0.2,5.4432,False,False,True,False,False,True,False
+First Class,Consumer,Philadelphia,Pennsylvania,East,Technology,Accessories,252.0,5,0.2,53.55,False,False,True,False,False,False,True
+Standard Class,Home Office,Springfield,Virginia,South,Office Supplies,Art,46.2,4,0.0,12.936,False,True,False,True,False,True,False
+Standard Class,Home Office,Springfield,Virginia,South,Office Supplies,Appliances,28.84,2,0.0,9.5172,False,True,False,True,False,True,False
+First Class,Consumer,Toledo,Ohio,East,Office Supplies,Art,14.592,3,0.2,2.5536,False,False,True,False,False,True,False
+First Class,Consumer,Toledo,Ohio,East,Office Supplies,Art,89.856,3,0.2,21.3408,False,False,True,False,False,True,False
+First Class,Consumer,Toledo,Ohio,East,Office Supplies,Paper,13.872,3,0.2,5.0286,False,False,True,False,False,True,False
+Standard Class,Consumer,Philadelphia,Pennsylvania,East,Office Supplies,Paper,12.192,3,0.2,4.1148,False,False,True,False,False,True,False
+Standard Class,Home Office,Philadelphia,Pennsylvania,East,Office Supplies,Paper,45.056,8,0.2,15.2064,False,True,True,False,False,True,False
+Standard Class,Home Office,Philadelphia,Pennsylvania,East,Office Supplies,Binders,29.718,6,0.7,-21.7932,False,True,True,False,False,True,False
+Standard Class,Home Office,Philadelphia,Pennsylvania,East,Office Supplies,Paper,15.552,3,0.2,5.4432,False,True,True,False,False,True,False
+Standard Class,Home Office,Philadelphia,Pennsylvania,East,Office Supplies,Appliances,447.696,2,0.2,33.5772,False,True,True,False,False,True,False
+First Class,Corporate,Farmington,New Mexico,West,Technology,Accessories,159.99,1,0.0,54.3966,True,False,False,False,True,False,True
+Standard Class,Corporate,Riverside,California,West,Office Supplies,Paper,12.96,2,0.0,6.2208,True,False,False,False,True,True,False
+Standard Class,Corporate,Riverside,California,West,Office Supplies,Appliances,134.48,4,0.0,34.9648,True,False,False,False,True,True,False
+First Class,Corporate,San Francisco,California,West,Office Supplies,Paper,17.12,2,0.0,8.0464,True,False,False,False,True,True,False
+Standard Class,Corporate,Torrance,California,West,Office Supplies,Binders,6.096,2,0.2,2.2098,True,False,False,False,True,True,False
+Standard Class,Corporate,Torrance,California,West,Furniture,Tables,1114.272,4,0.2,41.7852,True,False,False,False,True,False,False
+Standard Class,Consumer,Seattle,Washington,West,Office Supplies,Paper,32.4,5,0.0,15.552,False,False,False,False,True,True,False
+Standard Class,Consumer,Seattle,Washington,West,Office Supplies,Storage,540.57,3,0.0,140.5482,False,False,False,False,True,True,False
+Standard Class,Consumer,Seattle,Washington,West,Office Supplies,Binders,167.76,5,0.2,62.91,False,False,False,False,True,True,False
+First Class,Consumer,Mesa,Arizona,West,Furniture,Tables,393.165,3,0.5,-204.4458,False,False,False,False,True,False,False
+Standard Class,Home Office,Philadelphia,Pennsylvania,East,Furniture,Furnishings,516.488,7,0.2,-12.9122,False,True,True,False,False,False,False
+Standard Class,Home Office,Philadelphia,Pennsylvania,East,Furniture,Furnishings,1007.232,6,0.2,75.5424,False,True,True,False,False,False,False
+Standard Class,Home Office,Philadelphia,Pennsylvania,East,Furniture,Tables,2065.32,12,0.4,-619.596,False,True,True,False,False,False,False
+Standard Class,Home Office,Philadelphia,Pennsylvania,East,Office Supplies,Paper,15.552,3,0.2,5.4432,False,True,True,False,False,True,False
+Standard Class,Home Office,Philadelphia,Pennsylvania,East,Office Supplies,Paper,25.344,6,0.2,7.92,False,True,True,False,False,True,False
+Standard Class,Consumer,Philadelphia,Pennsylvania,East,Furniture,Furnishings,25.472,4,0.2,7.6416,False,False,True,False,False,False,False
+Standard Class,Consumer,Round Rock,Texas,Central,Office Supplies,Art,27.168,2,0.2,2.7168,False,False,False,False,False,True,False
+Standard Class,Consumer,Round Rock,Texas,Central,Furniture,Bookcases,78.8528,2,0.32,-11.596,False,False,False,False,False,False,False
+Standard Class,Consumer,Jackson,Mississippi,South,Office Supplies,Storage,173.8,5,0.0,43.45,False,False,False,True,False,True,False
+Second Class,Consumer,Phoenix,Arizona,West,Technology,Phones,29.592,1,0.2,2.5893,False,False,False,False,True,False,True
+Second Class,Consumer,Phoenix,Arizona,West,Office Supplies,Binders,4.752,2,0.7,-3.168,False,False,False,False,True,True,False
+Second Class,Consumer,Phoenix,Arizona,West,Office Supplies,Paper,15.552,3,0.2,5.6376,False,False,False,False,True,True,False
+Same Day,Consumer,Oceanside,California,West,Furniture,Furnishings,204.6,2,0.0,53.196,False,False,False,False,True,False,False
+Standard Class,Corporate,San Francisco,California,West,Furniture,Chairs,321.568,2,0.2,28.1372,True,False,False,False,True,False,False
+Standard Class,Home Office,Fayetteville,Arkansas,South,Office Supplies,Binders,6.24,2,0.0,3.0576,False,True,False,True,False,True,False
+First Class,Corporate,San Francisco,California,West,Office Supplies,Envelopes,21.88,2,0.0,10.94,True,False,False,False,True,True,False
+Second Class,Consumer,Boca Raton,Florida,South,Office Supplies,Labels,4.608,2,0.2,1.6704,False,False,False,True,False,True,False
+First Class,Home Office,New York City,New York,East,Office Supplies,Labels,9.82,2,0.0,4.8118,False,True,True,False,False,True,False
+First Class,Home Office,New York City,New York,East,Office Supplies,Art,35.97,3,0.0,9.7119,False,True,True,False,False,True,False
+First Class,Home Office,New York City,New York,East,Office Supplies,Paper,12.96,2,0.0,6.2208,False,True,True,False,False,True,False
+First Class,Home Office,New York City,New York,East,Office Supplies,Paper,191.6,4,0.0,91.968,False,True,True,False,False,True,False
+First Class,Home Office,New York City,New York,East,Office Supplies,Labels,8.64,3,0.0,4.2336,False,True,True,False,False,True,False
+First Class,Home Office,New York City,New York,East,Office Supplies,Storage,501.81,3,0.0,0.0,False,True,True,False,False,True,False
+Second Class,Consumer,Philadelphia,Pennsylvania,East,Furniture,Furnishings,127.104,6,0.2,28.5984,False,False,True,False,False,False,False
+Second Class,Consumer,Philadelphia,Pennsylvania,East,Technology,Phones,124.2,3,0.4,-31.05,False,False,True,False,False,False,True
+Second Class,Consumer,Philadelphia,Pennsylvania,East,Office Supplies,Binders,18.588,2,0.7,-13.6312,False,False,True,False,False,True,False
+Second Class,Consumer,Philadelphia,Pennsylvania,East,Office Supplies,Labels,30.072,3,0.2,10.1493,False,False,True,False,False,True,False
+Second Class,Home Office,New York City,New York,East,Technology,Phones,160.93,7,0.0,3.2186,False,True,True,False,False,False,True
+Second Class,Home Office,New York City,New York,East,Office Supplies,Binders,75.792,3,0.2,25.5798,False,True,True,False,False,True,False
+Standard Class,Consumer,Portland,Oregon,West,Office Supplies,Binders,1.08,2,0.7,-0.792,False,False,False,False,True,True,False
+First Class,Corporate,Detroit,Michigan,Central,Technology,Machines,3059.982,2,0.1,679.996,True,False,False,False,False,False,True
+First Class,Consumer,Wilmington,North Carolina,South,Office Supplies,Binders,3.282,2,0.7,-2.6256,False,False,False,True,False,True,False
+First Class,Corporate,Columbus,Indiana,Central,Office Supplies,Paper,34.02,3,0.0,16.6698,True,False,False,False,False,True,False
+Standard Class,Consumer,New York City,New York,East,Furniture,Chairs,599.292,6,0.1,93.2232,False,False,True,False,False,False,False
+Second Class,Consumer,Louisville,Colorado,West,Office Supplies,Art,3.392,1,0.2,0.8056,False,False,False,False,True,True,False
+Second Class,Consumer,Louisville,Colorado,West,Technology,Phones,559.984,2,0.2,55.9984,False,False,False,False,True,False,True
+Second Class,Consumer,Louisville,Colorado,West,Furniture,Chairs,603.92,5,0.2,75.49,False,False,False,False,True,False,False
+Standard Class,Home Office,Pasadena,Texas,Central,Office Supplies,Labels,7.968,2,0.2,2.5896,False,True,False,False,False,True,False
+Standard Class,Home Office,Pasadena,Texas,Central,Office Supplies,Envelopes,27.968,4,0.2,9.4392,False,True,False,False,False,True,False
+Standard Class,Home Office,Pasadena,Texas,Central,Technology,Machines,336.51,3,0.4,44.868,False,True,False,False,False,False,True
+Same Day,Consumer,Houston,Texas,Central,Office Supplies,Binders,1.112,2,0.8,-1.8904,False,False,False,False,False,True,False
+Standard Class,Corporate,Auburn,New York,East,Furniture,Furnishings,520.05,5,0.0,72.807,True,False,True,False,False,False,False
+Standard Class,Corporate,Auburn,New York,East,Office Supplies,Art,17.97,3,0.0,5.2113,True,False,True,False,False,True,False
+Second Class,Home Office,Jacksonville,Florida,South,Furniture,Chairs,1166.92,5,0.2,131.2785,False,True,False,True,False,False,False
+First Class,Consumer,New York City,New York,East,Office Supplies,Binders,14.624,2,0.2,5.484,False,False,True,False,False,True,False
+First Class,Consumer,San Jose,California,West,Office Supplies,Fasteners,10.23,3,0.0,4.9104,False,False,False,False,True,True,False
+First Class,Consumer,San Jose,California,West,Office Supplies,Paper,154.9,5,0.0,69.705,False,False,False,False,True,True,False
+Standard Class,Corporate,Virginia Beach,Virginia,South,Office Supplies,Binders,2715.93,7,0.0,1276.487,True,False,False,True,False,True,False
+Standard Class,Corporate,Virginia Beach,Virginia,South,Technology,Phones,617.97,3,0.0,173.0316,True,False,False,True,False,False,True
+Standard Class,Consumer,Henderson,Kentucky,South,Office Supplies,Envelopes,10.67,1,0.0,4.9082,False,False,False,True,False,True,False
+Standard Class,Consumer,Henderson,Kentucky,South,Office Supplies,Storage,36.63,3,0.0,9.8901,False,False,False,True,False,True,False
+Standard Class,Consumer,Henderson,Kentucky,South,Furniture,Furnishings,24.1,5,0.0,9.158,False,False,False,True,False,False,False

@@ -19,6 +19,7 @@ interface FilePreviewProps {
 export interface FileMetadata {
   id: string
   user_id: string
+  name?: string
   filename: string
   original_filename: string
   file_size: number

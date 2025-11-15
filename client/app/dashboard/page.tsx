@@ -271,7 +271,7 @@ export default function Dashboard() {
                   <Card key={file.id}>
                     <CardHeader className="pb-2">
                       <div className="flex justify-between">
-                        <CardTitle>{file.original_filename}</CardTitle>
+                        <CardTitle>{file.name || file.original_filename}</CardTitle>
                         <div className="text-xs text-muted-foreground">
                           {formatDate(file.upload_date)}
                         </div>

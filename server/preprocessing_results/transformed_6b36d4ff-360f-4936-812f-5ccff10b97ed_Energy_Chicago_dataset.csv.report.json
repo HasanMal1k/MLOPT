@@ -1,0 +1,199 @@
+{
+  "data_types": {
+    "Month": {
+      "original": "object",
+      "converted_to": "string"
+    },
+    "Reporting Status": {
+      "original": "object",
+      "converted_to": "string"
+    },
+    "Chicago Energy Rating": {
+      "original": "float64",
+      "converted_to": "float"
+    },
+    "Exempt From Chicago Energy Rating": {
+      "original": "bool",
+      "converted_to": "string"
+    },
+    "Community Area": {
+      "original": "object",
+      "converted_to": "string"
+    },
+    "Gross Floor Area - Buildings (sq ft)": {
+      "original": "float64",
+      "converted_to": "float"
+    },
+    "Year Built": {
+      "original": "float64",
+      "converted_to": "float"
+    },
+    "Site EUI (kBtu/sq ft)": {
+      "original": "float64",
+      "converted_to": "float"
+    },
+    "Source EUI (kBtu/sq ft)": {
+      "original": "float64",
+      "converted_to": "float"
+    },
+    "Weather Normalized Site EUI (kBtu/sq ft)": {
+      "original": "float64",
+      "converted_to": "float"
+    },
+    "Total GHG Emissions (Metric Tons CO2e)": {
+      "original": "float64",
+      "converted_to": "float"
+    },
+    "GHG Intensity (kg CO2e/sq ft)": {
+      "original": "float64",
+      "converted_to": "float"
+    },
+    "Latitude": {
+      "original": "float64",
+      "converted_to": "float"
+    },
+    "Longitude": {
+      "original": "float64",
+      "converted_to": "float"
+    },
+    "Location": {
+      "original": "object",
+      "converted_to": "string"
+    },
+    "Gross Floor Area - Buildings (sq ft)_log": {
+      "original": "float64",
+      "converted_to": "float"
+    },
+    "Gross Floor Area - Buildings (sq ft)_sqrt": {
+      "original": "float64",
+      "converted_to": "float"
+    },
+    "# of Buildings_log": {
+      "original": "float64",
+      "converted_to": "float"
+    },
+    "# of Buildings_sqrt": {
+      "original": "float64",
+      "converted_to": "float"
+    },
+    "Electricity Use (kBtu)_log": {
+      "original": "float64",
+      "converted_to": "float"
+    },
+    "Electricity Use (kBtu)_sqrt": {
+      "original": "float64",
+      "converted_to": "float"
+    },
+    "Natural Gas Use (kBtu)_log": {
+      "original": "float64",
+      "converted_to": "float"
+    },
+    "Natural Gas Use (kBtu)_sqrt": {
+      "original": "float64",
+      "converted_to": "float"
+    },
+    "Site EUI (kBtu/sq ft)_log": {
+      "original": "float64",
+      "converted_to": "float"
+    },
+    "Site EUI (kBtu/sq ft)_sqrt": {
+      "original": "float64",
+      "converted_to": "float"
+    },
+    "Source EUI (kBtu/sq ft)_log": {
+      "original": "float64",
+      "converted_to": "float"
+    },
+    "Source EUI (kBtu/sq ft)_sqrt": {
+      "original": "float64",
+      "converted_to": "float"
+    },
+    "Weather Normalized Site EUI (kBtu/sq ft)_log": {
+      "original": "float64",
+      "converted_to": "float"
+    },
+    "Weather Normalized Site EUI (kBtu/sq ft)_sqrt": {
+      "original": "float64",
+      "converted_to": "float"
+    },
+    "Weather Normalized Source EUI (kBtu/sq ft)_log": {
+      "original": "float64",
+      "converted_to": "float"
+    },
+    "Weather Normalized Source EUI (kBtu/sq ft)_sqrt": {
+      "original": "float64",
+      "converted_to": "float"
+    },
+    "Total GHG Emissions (Metric Tons CO2e)_log": {
+      "original": "float64",
+      "converted_to": "float"
+    },
+    "Total GHG Emissions (Metric Tons CO2e)_sqrt": {
+      "original": "float64",
+      "converted_to": "float"
+    },
+    "GHG Intensity (kg CO2e/sq ft)_sqrt": {
+      "original": "float64",
+      "converted_to": "float"
+    },
+    "Reporting Status_Not Submitted": {
+      "original": "bool",
+      "converted_to": "string"
+    },
+    "Reporting Status_Submitted Data": {
+      "original": "bool",
+      "converted_to": "string"
+    }
+  },
+  "columns_dropped": [
+    "ID",
+    "Property Name",
+    "Address",
+    "ZIP Code",
+    "Primary Property Type",
+    "# of Buildings",
+    "ENERGY STAR Score",
+    "Electricity Use (kBtu)",
+    "Natural Gas Use (kBtu)",
+    "Weather Normalized Source EUI (kBtu/sq ft)"
+  ],
+  "transformations_applied": [
+    "Dropped columns: ID, Property Name, Address, ZIP Code, Primary Property Type, # of Buildings, ENERGY STAR Score, Electricity Use (kBtu), Natural Gas Use (kBtu), Weather Normalized Source EUI (kBtu/sq ft)",
+    "Converted Month to string",
+    "Converted Reporting Status to string",
+    "Converted Chicago Energy Rating to float",
+    "Converted Exempt From Chicago Energy Rating to string",
+    "Converted Community Area to string",
+    "Converted Gross Floor Area - Buildings (sq ft) to float",
+    "Converted Year Built to float",
+    "Converted Site EUI (kBtu/sq ft) to float",
+    "Converted Source EUI (kBtu/sq ft) to float",
+    "Converted Weather Normalized Site EUI (kBtu/sq ft) to float",
+    "Converted Total GHG Emissions (Metric Tons CO2e) to float",
+    "Converted GHG Intensity (kg CO2e/sq ft) to float",
+    "Converted Latitude to float",
+    "Converted Longitude to float",
+    "Converted Location to string",
+    "Converted Gross Floor Area - Buildings (sq ft)_log to float",
+    "Converted Gross Floor Area - Buildings (sq ft)_sqrt to float",
+    "Converted # of Buildings_log to float",
+    "Converted # of Buildings_sqrt to float",
+    "Converted Electricity Use (kBtu)_log to float",
+    "Converted Electricity Use (kBtu)_sqrt to float",
+    "Converted Natural Gas Use (kBtu)_log to float",
+    "Converted Natural Gas Use (kBtu)_sqrt to float",
+    "Converted Site EUI (kBtu/sq ft)_log to float",
+    "Converted Site EUI (kBtu/sq ft)_sqrt to float",
+    "Converted Source EUI (kBtu/sq ft)_log to float",
+    "Converted Source EUI (kBtu/sq ft)_sqrt to float",
+    "Converted Weather Normalized Site EUI (kBtu/sq ft)_log to float",
+    "Converted Weather Normalized Site EUI (kBtu/sq ft)_sqrt to float",
+    "Converted Weather Normalized Source EUI (kBtu/sq ft)_log to float",
+    "Converted Weather Normalized Source EUI (kBtu/sq ft)_sqrt to float",
+    "Converted Total GHG Emissions (Metric Tons CO2e)_log to float",
+    "Converted Total GHG Emissions (Metric Tons CO2e)_sqrt to float",
+    "Converted GHG Intensity (kg CO2e/sq ft)_sqrt to float",
+    "Converted Reporting Status_Not Submitted to string",
+    "Converted Reporting Status_Submitted Data to string"
+  ]
+}

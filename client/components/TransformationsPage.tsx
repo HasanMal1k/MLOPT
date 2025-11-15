@@ -211,7 +211,7 @@ export default function TransformationsPage() {
       
       toast({
         title: "File loaded",
-        description: `Successfully loaded ${file.original_filename}`
+        description: `Successfully loaded ${file.name || file.original_filename}`
       })
       
     } catch (error) {
@@ -288,7 +288,7 @@ export default function TransformationsPage() {
   // Generate live preview automatically when transformations change
   const generateLivePreview = useCallback(async () => {
     console.log('=== generateLivePreview called ===')
-    console.log('Selected file:', selectedFile?.original_filename)
+    console.log('Selected file:', selectedFile?.name || selectedFile?.original_filename)
     console.log('Total transformations:', getTotalTransformations())
     console.log('Transformation config:', transformationConfig)
     
@@ -366,7 +366,7 @@ export default function TransformationsPage() {
   // Debounce live preview generation
   useEffect(() => {
     console.log('useEffect triggered - transformationConfig changed:', transformationConfig)
-    console.log('Current step:', currentStep, 'Selected file:', selectedFile?.original_filename)
+    console.log('Current step:', currentStep, 'Selected file:', selectedFile?.name || selectedFile?.original_filename)
     
     // Reduce delay to 300ms for faster feedback
     const timeoutId = setTimeout(() => {
@@ -571,7 +571,7 @@ export default function TransformationsPage() {
                       <div className="flex items-center gap-4 flex-1">
                         <FileText className="h-5 w-5 text-gray-600" />
                         <div className="flex-1 min-w-0">
-                          <div className="font-medium truncate">{file.original_filename}</div>
+                          <div className="font-medium truncate">{file.name || file.original_filename}</div>
                           <div className="text-sm text-muted-foreground">
                             Uploaded {new Date(file.upload_date).toLocaleDateString()}
                           </div>
@@ -632,7 +632,7 @@ export default function TransformationsPage() {
               Back to Files
             </Button>
             <div>
-              <h1 className="text-2xl font-bold">Transform: {selectedFile?.original_filename}</h1>
+              <h1 className="text-2xl font-bold">Transform: {selectedFile?.name || selectedFile?.original_filename}</h1>
               <p className="text-sm text-muted-foreground mt-1">
                 Select transformations to apply to your dataset
               </p>
@@ -1098,7 +1098,7 @@ export default function TransformationsPage() {
                 <div>
                   <p className="font-medium">Your transformed file is ready!</p>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Applied {getTotalTransformations()} transformations to {selectedFile?.original_filename}
+                    Applied {getTotalTransformations()} transformations to {selectedFile?.name || selectedFile?.original_filename}
                   </p>
                 </div>
                 <div className="flex gap-3">

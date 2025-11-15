@@ -421,7 +421,8 @@ export default function UploadWizard({ isDragActive }: UploadWizardProps) {
         originalFiles: files,
         processedFiles: timeSeriesProcessedFiles,
         preprocessingResults: { ...preprocessingResults, ...timeSeriesResults },
-        customCleaningResults: []
+        customCleaningResults: [],
+        customFileNames: customFileNames
       }
     }
     
@@ -430,7 +431,8 @@ export default function UploadWizard({ isDragActive }: UploadWizardProps) {
       originalFiles: files,
       processedFiles: customCleanedFiles.length > 0 ? customCleanedFiles : preprocessedFiles,
       preprocessingResults,
-      customCleaningResults
+      customCleaningResults,
+      customFileNames: customFileNames
     }
   }
 
@@ -561,7 +563,6 @@ export default function UploadWizard({ isDragActive }: UploadWizardProps) {
         {currentStep === 7 && (
           <FinalUpload
             {...getFinalUploadData()}
-            customFileNames={customFileNames}
             onBack={() => setCurrentStep(6)} // Back to file naming
             onComplete={handleFinalUploadComplete}
           />

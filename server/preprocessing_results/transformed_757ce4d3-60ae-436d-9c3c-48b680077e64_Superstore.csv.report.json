@@ -1,0 +1,125 @@
+{
+  "data_types": {
+    "Ship Mode": {
+      "original": "object",
+      "converted_to": "string"
+    },
+    "Segment": {
+      "original": "object",
+      "converted_to": "string"
+    },
+    "City": {
+      "original": "object",
+      "converted_to": "string"
+    },
+    "State": {
+      "original": "object",
+      "converted_to": "string"
+    },
+    "Region": {
+      "original": "object",
+      "converted_to": "string"
+    },
+    "Category": {
+      "original": "object",
+      "converted_to": "string"
+    },
+    "Sub-Category": {
+      "original": "object",
+      "converted_to": "string"
+    },
+    "Sales": {
+      "original": "float64",
+      "converted_to": "float"
+    },
+    "Quantity": {
+      "original": "int64",
+      "converted_to": "int"
+    },
+    "Discount": {
+      "original": "float64",
+      "converted_to": "float"
+    },
+    "Profit": {
+      "original": "float64",
+      "converted_to": "float"
+    },
+    "Segment_Corporate": {
+      "original": "bool",
+      "converted_to": "string"
+    },
+    "Segment_Home Office": {
+      "original": "bool",
+      "converted_to": "string"
+    },
+    "Region_East": {
+      "original": "bool",
+      "converted_to": "string"
+    },
+    "Region_South": {
+      "original": "bool",
+      "converted_to": "string"
+    },
+    "Region_West": {
+      "original": "bool",
+      "converted_to": "string"
+    },
+    "Category_Office Supplies": {
+      "original": "bool",
+      "converted_to": "string"
+    },
+    "Category_Technology": {
+      "original": "bool",
+      "converted_to": "string"
+    }
+  },
+  "columns_dropped": [
+    "Row ID",
+    "Order ID",
+    "Order Date",
+    "Ship Date",
+    "Customer ID",
+    "Customer Name",
+    "Postal Code",
+    "Product ID",
+    "Product Name",
+    "Order Date_year",
+    "Order Date_month",
+    "Order Date_day",
+    "Order Date_dayofweek",
+    "Order Date_quarter",
+    "Ship Date_year",
+    "Ship Date_month",
+    "Ship Date_day",
+    "Ship Date_dayofweek",
+    "Ship Date_quarter",
+    "Sales_log",
+    "Sales_sqrt",
+    "Quantity_sqrt",
+    "Discount_sqrt",
+    "Ship Mode_Same Day",
+    "Ship Mode_Second Class",
+    "Ship Mode_Standard Class"
+  ],
+  "transformations_applied": [
+    "Dropped columns: Row ID, Order ID, Order Date, Ship Date, Customer ID, Customer Name, Postal Code, Product ID, Product Name, Order Date_year, Order Date_month, Order Date_day, Order Date_dayofweek, Order Date_quarter, Ship Date_year, Ship Date_month, Ship Date_day, Ship Date_dayofweek, Ship Date_quarter, Sales_log, Sales_sqrt, Quantity_sqrt, Discount_sqrt, Ship Mode_Same Day, Ship Mode_Second Class, Ship Mode_Standard Class",
+    "Converted Ship Mode to string",
+    "Converted Segment to string",
+    "Converted City to string",
+    "Converted State to string",
+    "Converted Region to string",
+    "Converted Category to string",
+    "Converted Sub-Category to string",
+    "Converted Sales to float",
+    "Converted Quantity to int",
+    "Converted Discount to float",
+    "Converted Profit to float",
+    "Converted Segment_Corporate to string",
+    "Converted Segment_Home Office to string",
+    "Converted Region_East to string",
+    "Converted Region_South to string",
+    "Converted Region_West to string",
+    "Converted Category_Office Supplies to string",
+    "Converted Category_Technology to string"
+  ]
+}
