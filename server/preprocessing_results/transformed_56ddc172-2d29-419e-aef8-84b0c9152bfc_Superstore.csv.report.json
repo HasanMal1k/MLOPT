@@ -1,0 +1,97 @@
+{
+  "data_types": {
+    "Sales": {
+      "original": "float64",
+      "converted_to": "float"
+    },
+    "Quantity": {
+      "original": "int64",
+      "converted_to": "int"
+    },
+    "Discount": {
+      "original": "float64",
+      "converted_to": "float"
+    },
+    "Profit": {
+      "original": "float64",
+      "converted_to": "float"
+    },
+    "Sales_log": {
+      "original": "float64",
+      "converted_to": "float"
+    },
+    "Sales_sqrt": {
+      "original": "float64",
+      "converted_to": "float"
+    },
+    "Quantity_sqrt": {
+      "original": "float64",
+      "converted_to": "float"
+    },
+    "Discount_sqrt": {
+      "original": "float64",
+      "converted_to": "float"
+    },
+    "Ship Mode_Same Day": {
+      "original": "bool",
+      "converted_to": "string"
+    },
+    "Ship Mode_Second Class": {
+      "original": "bool",
+      "converted_to": "string"
+    },
+    "Ship Mode_Standard Class": {
+      "original": "bool",
+      "converted_to": "string"
+    }
+  },
+  "columns_dropped": [
+    "Row ID",
+    "Order ID",
+    "Order Date",
+    "Ship Date",
+    "Ship Mode",
+    "Customer ID",
+    "Customer Name",
+    "Segment",
+    "City",
+    "State",
+    "Postal Code",
+    "Region",
+    "Product ID",
+    "Category",
+    "Sub-Category",
+    "Product Name",
+    "Order Date_year",
+    "Order Date_month",
+    "Order Date_day",
+    "Order Date_dayofweek",
+    "Order Date_quarter",
+    "Ship Date_year",
+    "Ship Date_month",
+    "Ship Date_day",
+    "Ship Date_dayofweek",
+    "Ship Date_quarter",
+    "Segment_Corporate",
+    "Segment_Home Office",
+    "Region_East",
+    "Region_South",
+    "Region_West",
+    "Category_Office Supplies",
+    "Category_Technology"
+  ],
+  "transformations_applied": [
+    "Dropped columns: Row ID, Order ID, Order Date, Ship Date, Ship Mode, Customer ID, Customer Name, Segment, City, State, Postal Code, Region, Product ID, Category, Sub-Category, Product Name, Order Date_year, Order Date_month, Order Date_day, Order Date_dayofweek, Order Date_quarter, Ship Date_year, Ship Date_month, Ship Date_day, Ship Date_dayofweek, Ship Date_quarter, Segment_Corporate, Segment_Home Office, Region_East, Region_South, Region_West, Category_Office Supplies, Category_Technology",
+    "Converted Sales to float",
+    "Converted Quantity to int",
+    "Converted Discount to float",
+    "Converted Profit to float",
+    "Converted Sales_log to float",
+    "Converted Sales_sqrt to float",
+    "Converted Quantity_sqrt to float",
+    "Converted Discount_sqrt to float",
+    "Converted Ship Mode_Same Day to string",
+    "Converted Ship Mode_Second Class to string",
+    "Converted Ship Mode_Standard Class to string"
+  ]
+}

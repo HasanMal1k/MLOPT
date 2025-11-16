@@ -839,6 +839,12 @@ async def run_regular_ml_training(config_id: str, config: dict):
         if config["task_type"] == "regression":
             # Get all available regression models
             available_models = regression_module.models()
+            
+            # EXCLUDE PROBLEMATIC MODELS
+            excluded_models = ['xgboost', 'et']  # Extreme Gradient Boosting and Extra Trees (known to hang)
+            logger.info(f"⚠️ Excluding problematic models: {excluded_models}")
+            available_models = available_models[~available_models.index.isin(excluded_models)]
+            
             logger.info(f"Training {len(available_models)} regression models with streaming results...")
             
             all_results = []
@@ -941,6 +947,12 @@ async def run_regular_ml_training(config_id: str, config: dict):
         else:
             # Get all available classification models
             available_models = classification_module.models()
+            
+            # EXCLUDE PROBLEMATIC MODELS
+            excluded_models = ['xgboost', 'et']  # Extreme Gradient Boosting and Extra Trees (known to hang)
+            logger.info(f"⚠️ Excluding problematic models: {excluded_models}")
+            available_models = available_models[~available_models.index.isin(excluded_models)]
+            
             logger.info(f"Training {len(available_models)} classification models with streaming results...")
             
             all_results = []
