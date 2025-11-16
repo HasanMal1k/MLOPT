@@ -782,28 +782,45 @@ async def run_regular_ml_training(config_id: str, config: dict):
         
         training_tasks[config_id]["status"] = "setting_up"
         
-        # FORCE PyCaret setup with minimal configuration - no fancy preprocessing
-        logger.info("Setting up PyCaret with minimal configuration...")
+        # Log dataset information BEFORE setup
+        logger.info(f"=" * 80)
+        logger.info(f"PRE-SETUP DATASET INFORMATION:")
+        logger.info(f"  - Dataset Shape: {data.shape}")
+        logger.info(f"  - Target Column: {config['target_column']}")
+        logger.info(f"  - Target Data Type: {data[config['target_column']].dtype}")
+        logger.info(f"  - Target Unique Values: {data[config['target_column']].nunique()}")
+        logger.info(f"  - Target Value Counts:\n{data[config['target_column']].value_counts()}")
+        logger.info(f"  - Feature Columns: {[col for col in data.columns if col != config['target_column']]}")
+        logger.info(f"=" * 80)
+        
+        # PyCaret setup with proper configuration
+        logger.info("Setting up PyCaret...")
         
         if config["task_type"] == "regression":
-            # Minimal regression setup
+            # Regression setup
             setup_result = regression_module.setup(
                 data=data,
                 target=config["target_column"],
-                train_size=0.8,  # Fixed train size
-                session_id=123,  # Fixed session
-                verbose=False,   # Suppress output
-                # Remove all problematic parameters
+                train_size=0.8,
+                session_id=123,
+                verbose=False,
+                html=False
             )
         else:
-            # Minimal classification setup  
+            # Classification setup with proper handling
             setup_result = classification_module.setup(
                 data=data,
                 target=config["target_column"],
-                train_size=0.8,  # Fixed train size
-                session_id=123,  # Fixed session
-                verbose=False,   # Suppress output
-                # Remove all problematic parameters
+                train_size=0.8,
+                session_id=123,
+                verbose=False,
+                html=False,
+                fix_imbalance=False,  # Don't modify class distribution
+                remove_outliers=False,  # Don't remove outliers
+                normalize=False,  # Don't normalize (can cause issues)
+                transformation=False,  # Don't transform features
+                pca=False,  # Don't use PCA
+                feature_selection=False  # Don't auto-select features
             )
         
         training_tasks[config_id]["status"] = "training"
@@ -886,6 +903,12 @@ async def run_regular_ml_training(config_id: str, config: dict):
                     # Get metrics for this model
                     metrics = regression_module.pull()
                     if not metrics.empty:
+                        # DEBUG: Log all available columns and their values
+                        logger.info(f"  📋 Available metric columns: {list(metrics.columns)}")
+                        logger.info(f"  📊 All metrics for {model_name}:")
+                        for col in metrics.columns:
+                            logger.info(f"     - {col}: {metrics.iloc[-1][col]}")
+                        
                         result = metrics.iloc[-1].to_dict()
                         result['Model'] = model_name
                         result['TT (Sec)'] = round(training_time, 2)
@@ -994,6 +1017,12 @@ async def run_regular_ml_training(config_id: str, config: dict):
                     # Get metrics for this model
                     metrics = classification_module.pull()
                     if not metrics.empty:
+                        # DEBUG: Log all available columns and their values
+                        logger.info(f"  📋 Available metric columns: {list(metrics.columns)}")
+                        logger.info(f"  📊 All metrics for {model_name}:")
+                        for col in metrics.columns:
+                            logger.info(f"     - {col}: {metrics.iloc[-1][col]}")
+                        
                         result = metrics.iloc[-1].to_dict()
                         result['Model'] = model_name
                         result['TT (Sec)'] = round(training_time, 2)

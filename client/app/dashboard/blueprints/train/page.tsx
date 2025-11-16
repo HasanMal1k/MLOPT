@@ -1909,7 +1909,14 @@ export default function MLTrainingPage() {
                                 </div>
                                 <div className="flex flex-col items-end">
                                   <div className="text-sm font-semibold text-blue-600">
-                                    {(model[displayMetric] ?? 0).toFixed(4)}
+                                    {(() => {
+                                      const value = model[displayMetric] ?? 0
+                                      // Classification metrics (0-1 range) should be shown as percentages
+                                      const isPercentageMetric = ['Accuracy', 'AUC', 'F1', 'Precision', 'Recall'].includes(displayMetric)
+                                      return isPercentageMetric 
+                                        ? `${(value * 100).toFixed(2)}%`
+                                        : value.toFixed(4)
+                                    })()}
                                   </div>
                                   <div className="text-xs text-muted-foreground">
                                     {metricDisplayName}
@@ -2184,7 +2191,9 @@ export default function MLTrainingPage() {
                               const metricDisplayName = metricNames[displayMetric] || displayMetric
                               
                               // Format based on metric type
-                              const formattedValue = ['Accuracy', 'AUC', 'F1', 'Precision', 'Recall'].includes(displayMetric)
+                              // Classification metrics (0-1 range) should be shown as percentages
+                              const isPercentageMetric = ['Accuracy', 'AUC', 'F1', 'Precision', 'Recall'].includes(displayMetric)
+                              const formattedValue = isPercentageMetric
                                 ? `${(metricValue * 100).toFixed(2)}%`
                                 : metricValue.toFixed(4)
                               
@@ -2296,7 +2305,9 @@ export default function MLTrainingPage() {
                                   const metricValue = model[displayMetric] ?? 0
                                   
                                   // Format based on metric type
-                                  const formattedValue = ['Accuracy', 'AUC', 'F1', 'Precision', 'Recall'].includes(displayMetric)
+                                  // Classification metrics (0-1 range) should be shown as percentages
+                                  const isPercentageMetric = ['Accuracy', 'AUC', 'F1', 'Precision', 'Recall'].includes(displayMetric)
+                                  const formattedValue = isPercentageMetric
                                     ? `${(metricValue * 100).toFixed(1)}%`
                                     : metricValue.toFixed(3)
                                   
