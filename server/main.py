@@ -1029,6 +1029,44 @@ async def serve_transformed_file(filename: str):
         raise HTTPException(status_code=500, detail=f"Error serving file: {str(e)}")
 
 
+@app.post("/analyze-quality/")
+async def analyze_file_quality(file: UploadFile = File(...), task_type: str = Form("auto")):
+    """
+    Analyze file quality and recommend models
+    
+    Args:
+        file: CSV or Excel file
+        task_type: "classification", "regression", "time_series", or "auto"
+    
+    Returns:
+        Quality score, rating, characteristics, and recommended models
+    """
+    try:
+        from data_quality import analyze_dataset
+        from io import BytesIO, StringIO
+        
+        # Read file into DataFrame
+        contents = await file.read()
+        
+        if file.filename.endswith('.csv'):
+            df = pd.read_csv(StringIO(contents.decode('utf-8')))
+        elif file.filename.endswith(('.xlsx', '.xls')):
+            df = pd.read_excel(BytesIO(contents))
+        else:
+            raise HTTPException(status_code=400, detail="Unsupported file format")
+        
+        # Analyze dataset
+        analysis = analyze_dataset(df, task_type=task_type)
+        
+        logger.info(f"Quality analysis for {file.filename}: Score={analysis['quality_score']}, Rating={analysis['quality_rating']}")
+        
+        return JSONResponse(clean_for_json(analysis))
+        
+    except Exception as e:
+        logger.error(f"Quality analysis error: {e}")
+        raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
+
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)

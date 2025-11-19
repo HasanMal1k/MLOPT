@@ -244,37 +244,40 @@ export default function BlueprintsPage() {
   }
 
   const getMLReadinessBadge = (dataset: ExtendedFileMetadata) => {
-    const numericColumns = dataset.column_names.filter(col => 
-      dataset.statistics?.[col]?.dtype?.includes('int') || 
-      dataset.statistics?.[col]?.dtype?.includes('float')
-    ).length
+    // Use actual quality rating from database
+    const rating = (dataset as any).quality_rating || 'Fair';
+    const score = (dataset as any).quality_score || 50;
     
-    const totalColumns = dataset.column_names.length
-    const dataSize = dataset.row_count
-    
-    if (dataSize > 1000 && numericColumns >= 2 && totalColumns >= 3) {
+    if (rating === 'Excellent') {
       return <Badge className="bg-green-500 text-white">
         <Zap className="h-3 w-3 mr-1" />
-        Excellent
+        Excellent ({Math.round(score)})
       </Badge>
-    } else if (dataSize > 100 && numericColumns >= 1 && totalColumns >= 2) {
+    } else if (rating === 'Good') {
       return <Badge className="bg-blue-500 text-white">
         <Activity className="h-3 w-3 mr-1" />
-        Good
+        Good ({Math.round(score)})
       </Badge>
-    } else if (dataSize > 10 && totalColumns >= 2) {
+    } else if (rating === 'Fair') {
       return <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
         <GitBranch className="h-3 w-3 mr-1" />
-        Basic
+        Fair ({Math.round(score)})
       </Badge>
     } else {
       return <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
-        Limited
+        Poor ({Math.round(score)})
       </Badge>
     }
   }
 
   const getRecommendedModels = (dataset: ExtendedFileMetadata) => {
+    // Use actual recommended models from database if available
+    const recommendedModels = (dataset as any).recommended_models;
+    if (recommendedModels && Array.isArray(recommendedModels) && recommendedModels.length > 0) {
+      return recommendedModels.map((m: any) => m.model || m);
+    }
+    
+    // Fallback to simple heuristic if not calculated
     const numericColumns = dataset.column_names.filter(col => 
       dataset.statistics?.[col]?.dtype?.includes('int') || 
       dataset.statistics?.[col]?.dtype?.includes('float')
@@ -283,7 +286,7 @@ export default function BlueprintsPage() {
     const categoricalColumns = dataset.column_names.length - numericColumns
     
     if (dataset.dataset_type === 'time_series') {
-      return ['Linear Regression', 'Random Forest', 'XGBoost', 'ARIMA']
+      return ['Prophet', 'ARIMA', 'XGBoost', 'LSTM']
     } else if (numericColumns > categoricalColumns) {
       return ['Random Forest', 'XGBoost', 'Linear Models', 'SVM']
     } else {
@@ -293,7 +296,8 @@ export default function BlueprintsPage() {
 
   const mlReadyDatasets = getMLReadyDatasets()
   const totalMLReady = mlReadyDatasets.length
-  const excellentDatasets = mlReadyDatasets.filter(d => d.row_count > 1000 && d.column_names.length >= 3).length
+  // Use actual quality ratings from database
+  const excellentDatasets = mlReadyDatasets.filter(d => (d as any).quality_rating === 'Excellent').length
   const largeDatasets = mlReadyDatasets.filter(d => d.row_count > 1000).length
 
   return (

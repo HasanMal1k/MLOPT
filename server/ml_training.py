@@ -764,6 +764,21 @@ async def run_regular_ml_training(config_id: str, config: dict):
         data = pd.read_csv(data_file)
         
         logger.info(f"Training data shape: {data.shape}")
+        logger.info(f"Training data columns: {list(data.columns)}")
+        logger.info(f"Target column: {config['target_column']}")
+        logger.info(f"Data dtypes:\n{data.dtypes}")
+        logger.info(f"Target value distribution:\n{data[config['target_column']].value_counts()}")
+        
+        # Check for duplicate or suspicious columns
+        col_names = [c.lower().strip() for c in data.columns]
+        if len(col_names) != len(set(col_names)):
+            logger.warning("⚠️ Duplicate column names detected after normalization!")
+        
+        # Check for preprocessing artifacts
+        suspicious_cols = [c for c in data.columns if any(marker in c.lower() for marker in ['_encoded', '_scaled', '_transformed', '_norm', 'onehot', 'target_'])]
+        if suspicious_cols:
+            logger.warning(f"⚠️ Found suspicious preprocessing columns: {suspicious_cols}")
+            logger.warning("⚠️ This may indicate data leakage or corrupted input!")
         
         training_tasks[config_id]["status"] = "setting_up"
         
@@ -1729,6 +1744,49 @@ async def configure_training_with_file(
             
             # Keep only selected features + target
             data = data[selected_features_list + [target_column]]
+            logger.info(f"✅ Filtered to {len(selected_features_list)} selected features + target")
+        
+        # 🔍 DATA VALIDATION: Check for preprocessing artifacts
+        logger.info(f"📊 Data validation before training:")
+        logger.info(f"  - Shape: {data.shape}")
+        logger.info(f"  - Columns: {list(data.columns)}")
+        logger.info(f"  - Target: {target_column}")
+        
+        # Check for suspicious column names that indicate preprocessing
+        suspicious_patterns = ['_encoded', '_scaled', '_transformed', '_norm', 'onehot', 'target_', 'Unnamed']
+        suspicious_cols = [c for c in data.columns if any(marker in c for marker in suspicious_patterns)]
+        
+        if suspicious_cols:
+            logger.warning(f"⚠️ WARNING: Found suspicious preprocessing columns: {suspicious_cols}")
+            logger.warning(f"⚠️ This may cause 0.0 accuracy! Consider removing these columns.")
+            
+            # Automatically remove "Unnamed" index columns
+            unnamed_cols = [c for c in data.columns if 'Unnamed' in c or c.startswith('Unnamed')]
+            if unnamed_cols:
+                logger.info(f"🗑️ Auto-removing index columns: {unnamed_cols}")
+                data = data.drop(columns=unnamed_cols)
+                logger.info(f"  - New shape: {data.shape}")
+        
+        # Check for duplicate column names
+        if len(data.columns) != len(set(data.columns)):
+            duplicates = [c for c in data.columns if list(data.columns).count(c) > 1]
+            logger.error(f"❌ ERROR: Duplicate column names found: {set(duplicates)}")
+            raise HTTPException(status_code=400, detail=f"Duplicate columns found: {set(duplicates)}")
+        
+        # Check target column validity
+        if task_type == "classification":
+            n_classes = data[target_column].nunique()
+            logger.info(f"  - Classification task: {n_classes} classes")
+            if n_classes < 2:
+                raise HTTPException(status_code=400, detail="Classification requires at least 2 classes")
+            if n_classes > 50:
+                logger.warning(f"⚠️ WARNING: {n_classes} classes detected. This is very high for classification!")
+        elif task_type == "regression":
+            if data[target_column].dtype == 'object':
+                raise HTTPException(status_code=400, detail="Regression target must be numeric")
+            logger.info(f"  - Regression task: target range [{data[target_column].min():.2f}, {data[target_column].max():.2f}]")
+        
+        logger.info(f"✅ Data validation passed")
         
         # Generate unique config ID
         config_id = str(uuid.uuid4())

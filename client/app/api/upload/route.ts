@@ -72,6 +72,29 @@ export async function POST(request: Request) {
     // Extract metadata
     const metadata = await extractMetadata(file);
     
+    // NEW: Calculate quality score and model recommendations
+    let qualityAnalysis = null;
+    try {
+      const qualityFormData = new FormData();
+      qualityFormData.append('file', file);
+      qualityFormData.append('task_type', 'auto'); // Auto-detect task type
+      
+      const qualityResponse = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000'}/analyze-quality/`, {
+        method: 'POST',
+        body: qualityFormData
+      });
+      
+      if (qualityResponse.ok) {
+        qualityAnalysis = await qualityResponse.json();
+        console.log(`Quality analysis complete: Score=${qualityAnalysis.quality_score}, Rating=${qualityAnalysis.quality_rating}`);
+      } else {
+        console.warn('Quality analysis failed, using defaults');
+      }
+    } catch (qualityError) {
+      console.warn('Could not analyze quality:', qualityError);
+      // Continue with upload even if quality analysis fails
+    }
+    
     // Prepare preprocessing info based on dataset type
     let preprocessingInfo;
     
@@ -145,7 +168,17 @@ export async function POST(request: Request) {
           excluded_columns: timeSeriesConfig.columnsToExclude || [],
           processing_statistics: timeSeriesStatistics,
           processed_date: new Date().toISOString()
-        } : null
+        } : null,
+        // NEW: Add quality metrics
+        quality_score: qualityAnalysis?.quality_score || null,
+        quality_rating: qualityAnalysis?.quality_rating || null,
+        data_characteristics: qualityAnalysis?.data_characteristics || null,
+        recommended_models: qualityAnalysis?.recommended_models ? 
+          qualityAnalysis.recommended_models.map((m: any) => ({ 
+            model: m.model, 
+            score: m.score, 
+            reasons: m.reasons 
+          })) : null
       })
       .select();
     
