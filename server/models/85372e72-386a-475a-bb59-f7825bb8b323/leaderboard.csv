@@ -1,3 +1,0 @@
-Model,status,MAE,RMSE,MSE,R2,TT (Sec),SMAPE
-Moving Average,ok,45.2784,51.2451,2626.063,0.0,0.1,24.22
-Linear Regression,ok,4.1057,5.7624,33.2058,0.9475143187674638,0.2,2.09
