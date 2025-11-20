@@ -872,6 +872,11 @@ async def run_regular_ml_training(config_id: str, config: dict):
                 model_name = row['Name']
                 model_id_map[model_name] = model_id
                 
+                # Skip LightGBM if it's in the list (known to be extremely slow on some datasets)
+                if model_id == 'lightgbm':
+                    logger.warning(f"⏭️ SKIPPING {model_name} - Known performance issues with small datasets")
+                    continue
+                
                 try:
                     logger.info(f"[{idx}/{len(available_models)}] 🔄 TRAINING {model_name} (ID: {model_id})...")
                     training_tasks[config_id]["current_model"] = model_name
@@ -879,24 +884,44 @@ async def run_regular_ml_training(config_id: str, config: dict):
                     
                     # Train single model using index as ID
                     import time
+                    import signal
                     start_time = time.time()
                     
                     logger.info(f"  ➤ Creating model with {cv_folds}-fold cross-validation...")
                     
-                    # Apply hyperparameter tuning if enabled
-                    if hyperparameter_tuning:
-                        model = regression_module.tune_model(
-                            regression_module.create_model(model_id, fold=cv_folds, verbose=False),
-                            n_iter=tuning_iterations,
-                            optimize=sort_metric if sort_metric != 'auto' else 'R2',
-                            verbose=False
-                        )
-                    else:
-                        model = regression_module.create_model(
-                            model_id,
-                            fold=cv_folds,
-                            verbose=False
-                        )
+                    # Set timeout for slow models (30 seconds per model)
+                    def timeout_handler(signum, frame):
+                        raise TimeoutError(f"Model {model_name} exceeded 30 second timeout")
+                    
+                    # Try to set timeout (works on Unix/Linux, not Windows)
+                    timeout_set = False
+                    try:
+                        signal.signal(signal.SIGALRM, timeout_handler)
+                        signal.alarm(30)  # 30 second timeout
+                        timeout_set = True
+                    except (AttributeError, ValueError):
+                        # Windows doesn't support SIGALRM
+                        logger.debug(f"Timeout not available on this platform (Windows)")
+                    
+                    try:
+                        # Apply hyperparameter tuning if enabled
+                        if hyperparameter_tuning:
+                            model = regression_module.tune_model(
+                                regression_module.create_model(model_id, fold=cv_folds, verbose=False),
+                                n_iter=tuning_iterations,
+                                optimize=sort_metric if sort_metric != 'auto' else 'R2',
+                                verbose=False
+                            )
+                        else:
+                            model = regression_module.create_model(
+                                model_id,
+                                fold=cv_folds,
+                                verbose=False
+                            )
+                    finally:
+                        # Cancel alarm if it was set
+                        if timeout_set:
+                            signal.alarm(0)
                     
                     training_time = time.time() - start_time
                     
@@ -972,7 +997,7 @@ async def run_regular_ml_training(config_id: str, config: dict):
             available_models = classification_module.models()
             
             # EXCLUDE PROBLEMATIC MODELS
-            excluded_models = ['xgboost', 'et']  # Extreme Gradient Boosting and Extra Trees (known to hang)
+            excluded_models = ['xgboost', 'et', 'lightgbm']  # Known to be extremely slow or hang
             logger.info(f"⚠️ Excluding problematic models: {excluded_models}")
             available_models = available_models[~available_models.index.isin(excluded_models)]
             
@@ -1101,36 +1126,67 @@ async def run_regular_ml_training(config_id: str, config: dict):
             final_best_model = best_model
         
         training_tasks[config_id]["status"] = "saving_models"
-        logger.info(f"💾 SAVING models to disk...")
+        logger.info(f"💾 SAVING ALL TRAINED MODELS to disk...")
         
         # Create models directory
         models_dir = Path("models") / config_id
         models_dir.mkdir(parents=True, exist_ok=True)
         
-        # Save the finalized best model
-        saved_count = 1  # Count the best model
-        logger.info(f"💾 Saving best model: {best_model_name}...")
-        try:
-            if config["task_type"] == "regression":
-                regression_module.save_model(final_best_model, str(models_dir / 'best_model'))
-                logger.info(f"✅ Saved best regression model: {best_model_name}")
-        except Exception as save_error:
-            logger.error(f"❌ Failed to save best model: {save_error}")
+        # Save ALL trained models (not just the best one)
+        saved_count = 0
+        saved_models = []
+        failed_saves = []
         
-        if config["task_type"] == "regression":
-            # ℹ️ Note: Skipping re-training of top 5 models to prevent hanging
-            # The leaderboard contains all model results, best model is saved
-            logger.info(f"ℹ️  Top {min(5, len(leaderboard))} models available in leaderboard")
-        else:
-            try:
-                classification_module.save_model(final_best_model, str(models_dir / 'best_model'))
-                logger.info(f"✅ Saved best classification model: {best_model_name}")
-            except Exception as save_error:
-                logger.error(f"❌ Failed to save best model: {save_error}")
+        logger.info(f"💾 Attempting to save {len(all_results)} trained models...")
+        
+        for result in all_results:
+            model_name = result.get('Model')
+            model_id_for_this = model_id_map.get(model_name)
             
-            # ℹ️ Note: Skipping re-training of top 5 models to prevent hanging
-            # The leaderboard contains all model results, best model is saved
-            logger.info(f"ℹ️  Top {min(5, len(leaderboard))} models available in leaderboard")
+            if not model_id_for_this:
+                logger.warning(f"⚠️ No model ID found for {model_name}, skipping save")
+                failed_saves.append(model_name)
+                continue
+            
+            try:
+                logger.info(f"  💾 Saving {model_name} (ID: {model_id_for_this})...")
+                
+                # Re-create and save the model
+                if config["task_type"] == "regression":
+                    model_to_save = regression_module.create_model(model_id_for_this, fold=cv_folds, verbose=False)
+                    # Finalize on full dataset (quick operation)
+                    try:
+                        model_to_save = regression_module.finalize_model(model_to_save)
+                    except:
+                        pass  # Continue with non-finalized if finalization fails
+                    # Save with model name as filename
+                    regression_module.save_model(model_to_save, str(models_dir / model_name.replace(' ', '_')))
+                else:
+                    model_to_save = classification_module.create_model(model_id_for_this, fold=cv_folds, verbose=False)
+                    # Finalize on full dataset
+                    try:
+                        model_to_save = classification_module.finalize_model(model_to_save)
+                    except:
+                        pass  # Continue with non-finalized if finalization fails
+                    # Save with model name as filename
+                    classification_module.save_model(model_to_save, str(models_dir / model_name.replace(' ', '_')))
+                
+                saved_count += 1
+                saved_models.append(model_name)
+                logger.info(f"  ✅ Saved {model_name}")
+                
+            except Exception as save_error:
+                logger.error(f"  ❌ Failed to save {model_name}: {save_error}")
+                failed_saves.append(model_name)
+                continue
+        
+        logger.info(f"=" * 80)
+        logger.info(f"💾 MODEL SAVING SUMMARY:")
+        logger.info(f"  ✅ Successfully saved: {saved_count}/{len(all_results)} models")
+        logger.info(f"  📁 Saved models: {saved_models[:10]}")  # Show first 10
+        if failed_saves:
+            logger.info(f"  ❌ Failed to save: {len(failed_saves)} models - {failed_saves}")
+        logger.info(f"=" * 80)
         
         # Save leaderboard
         logger.info(f"💾 Saving leaderboard to CSV...")
