@@ -15,6 +15,8 @@ import shutil
 import pandas as pd
 import numpy as np
 import chardet
+import traceback
+import re
 from typing import Dict, List, Tuple, Any, Optional, Union
 import numpy as np
 # Import your modules
@@ -449,36 +451,73 @@ async def serve_processed_file(filename: str):
 @app.get("/download/{filename}")
 async def download_processed_file(filename: str):
     """
-    Download a processed file with proper headers
+    Download a processed file with proper headers.
+    Searches for the file with various naming patterns.
     """
     try:
-        # Check both with and without 'processed_' prefix
-        possible_paths = [
-            PROCESSED_FOLDER / filename,
-            PROCESSED_FOLDER / f"processed_{filename}",
-        ]
+        # Extract the base name without timestamp prefix (e.g., "titanic" from "1763614800890-titanic.csv")
+        import re
+        base_name = re.sub(r'^\d+-', '', filename)  # Remove timestamp prefix
+        base_name_no_ext = Path(base_name).stem  # Remove extension
         
+        logger.info(f"Searching for processed file matching: {filename} (base: {base_name_no_ext})")
+        
+        # Search patterns in order of priority
         file_path = None
-        for path in possible_paths:
-            if path.exists() and path.is_file():
-                file_path = path
-                break
+        
+        # 1. Try exact match
+        if (PROCESSED_FOLDER / filename).exists():
+            file_path = PROCESSED_FOLDER / filename
+            logger.info(f"Found exact match: {file_path}")
+        
+        # 2. Try with processed_ prefix
+        elif (PROCESSED_FOLDER / f"processed_{filename}").exists():
+            file_path = PROCESSED_FOLDER / f"processed_{filename}"
+            logger.info(f"Found with processed_ prefix: {file_path}")
+        
+        # 3. Search for files containing the base name (most common case)
+        else:
+            # List all files in processed folder
+            processed_files = list(PROCESSED_FOLDER.glob("*.csv"))
+            logger.info(f"Searching through {len(processed_files)} processed files for pattern: {base_name_no_ext}")
+            
+            # Find files that match the base name pattern
+            matching_files = [
+                f for f in processed_files 
+                if base_name_no_ext.lower() in f.name.lower()
+            ]
+            
+            if matching_files:
+                # Sort by modification time (most recent first)
+                matching_files.sort(key=lambda x: x.stat().st_mtime, reverse=True)
+                file_path = matching_files[0]
+                logger.info(f"Found matching file: {file_path.name}")
+            else:
+                logger.error(f"No files found matching: {base_name_no_ext}")
+                logger.info(f"Available files: {[f.name for f in processed_files[:5]]}")
         
         if not file_path:
-            raise HTTPException(status_code=404, detail=f"File {filename} not found")
+            raise HTTPException(
+                status_code=404, 
+                detail=f"Processed file not found for: {filename}. Try processing the file first."
+            )
         
+        # Return the file with the original filename for download
         return FileResponse(
             path=str(file_path),
-            filename=filename,
+            filename=f"processed_{base_name}",
             media_type='text/csv',
             headers={
-                "Content-Disposition": f"attachment; filename={filename}",
+                "Content-Disposition": f"attachment; filename=processed_{base_name}",
                 "Access-Control-Allow-Origin": "*"
             }
         )
         
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error downloading file {filename}: {e}")
+        logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=f"Error downloading file: {str(e)}")
 
 @app.get("/preprocessing_results/{filename}")

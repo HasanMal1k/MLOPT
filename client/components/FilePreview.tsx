@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose, DialogDescription } from "@/components/ui/dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { X, BarChart, ArrowLeft, ArrowRight, Maximize2, Minimize2 } from "lucide-react"
+import { X, BarChart, ArrowLeft, ArrowRight, Maximize2, Minimize2, Download } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import TransformationsView from "./TransformationsView"
@@ -79,6 +79,25 @@ export default function FilePreview({ fileMetadata, isOpen, onClose }: FilePrevi
     setIsEdaReportOpen(true)
   }
 
+  const handleDownload = async () => {
+    try {
+      const response = await fetch(`http://localhost:8000/download/${fileMetadata.filename}`)
+      if (!response.ok) throw new Error('Download failed')
+      
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = fileMetadata.filename
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+    } catch (error) {
+      console.error('Error downloading file:', error)
+    }
+  }
+
   // Format cell content with proper truncation
   const formatCellContent = (value: any, maxLength = 30): string => {
     if (value === null || value === undefined) return ""
@@ -108,6 +127,18 @@ export default function FilePreview({ fileMetadata, isOpen, onClose }: FilePrevi
               </DialogDescription>
             </div>
             <div className="flex items-center gap-2">
+              {isPreprocessed && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleDownload}
+                  className="h-8 px-3 text-white hover:bg-white/10 hover:text-white"
+                  title="Download preprocessed data"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Download
+                </Button>
+              )}
               <Button
                 variant="ghost"
                 size="sm"

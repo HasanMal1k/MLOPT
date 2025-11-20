@@ -1,0 +1,95 @@
+{
+  "data_types": {
+    "Survived": {
+      "original": "int64",
+      "converted_to": "int"
+    },
+    "Pclass": {
+      "original": "int64",
+      "converted_to": "int"
+    },
+    "Name": {
+      "original": "object",
+      "converted_to": "string"
+    },
+    "Sex": {
+      "original": "object",
+      "converted_to": "string"
+    },
+    "Age": {
+      "original": "float64",
+      "converted_to": "float"
+    },
+    "SibSp": {
+      "original": "int64",
+      "converted_to": "int"
+    },
+    "Parch": {
+      "original": "int64",
+      "converted_to": "int"
+    },
+    "Ticket": {
+      "original": "object",
+      "converted_to": "string"
+    },
+    "Fare": {
+      "original": "float64",
+      "converted_to": "float"
+    },
+    "Cabin": {
+      "original": "object",
+      "converted_to": "string"
+    },
+    "Embarked": {
+      "original": "object",
+      "converted_to": "string"
+    },
+    "SibSp_sqrt": {
+      "original": "float64",
+      "converted_to": "float"
+    },
+    "Parch_sqrt": {
+      "original": "float64",
+      "converted_to": "float"
+    },
+    "Fare_sqrt": {
+      "original": "float64",
+      "converted_to": "float"
+    },
+    "Sex_male": {
+      "original": "bool",
+      "converted_to": "string"
+    },
+    "Embarked_Q": {
+      "original": "bool",
+      "converted_to": "string"
+    },
+    "Embarked_S": {
+      "original": "bool",
+      "converted_to": "string"
+    }
+  },
+  "columns_dropped": [
+    "PassengerId"
+  ],
+  "transformations_applied": [
+    "Dropped columns: PassengerId",
+    "Converted Survived to int",
+    "Converted Pclass to int",
+    "Converted Name to string",
+    "Converted Sex to string",
+    "Converted Age to float",
+    "Converted SibSp to int",
+    "Converted Parch to int",
+    "Converted Ticket to string",
+    "Converted Fare to float",
+    "Converted Cabin to string",
+    "Converted Embarked to string",
+    "Converted SibSp_sqrt to float",
+    "Converted Parch_sqrt to float",
+    "Converted Fare_sqrt to float",
+    "Converted Sex_male to string",
+    "Converted Embarked_Q to string",
+    "Converted Embarked_S to string"
+  ]
+}

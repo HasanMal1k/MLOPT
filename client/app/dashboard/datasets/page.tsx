@@ -460,6 +460,33 @@ export default function DatasetsPage() {
                             <Eye className="h-4 w-4 mr-2" />
                             Preview
                           </DropdownMenuItem>
+                          {dataset.preprocessing_info?.is_preprocessed && (
+                            <DropdownMenuItem onClick={() => {
+                              fetch(`http://localhost:8000/download/${dataset.filename}`)
+                                .then(res => res.blob())
+                                .then(blob => {
+                                  const url = window.URL.createObjectURL(blob)
+                                  const a = document.createElement('a')
+                                  a.href = url
+                                  a.download = dataset.filename
+                                  document.body.appendChild(a)
+                                  a.click()
+                                  window.URL.revokeObjectURL(url)
+                                  document.body.removeChild(a)
+                                })
+                                .catch(err => {
+                                  console.error('Download error:', err)
+                                  toast({
+                                    variant: "destructive",
+                                    title: "Error",
+                                    description: "Failed to download file"
+                                  })
+                                })
+                            }}>
+                              <Download className="h-4 w-4 mr-2" />
+                              Download Processed
+                            </DropdownMenuItem>
+                          )}
                           <DropdownMenuItem asChild>
                             <Link href={`/dashboard/transformations?file=${dataset.id}`}>
                               <Settings className="h-4 w-4 mr-2" />

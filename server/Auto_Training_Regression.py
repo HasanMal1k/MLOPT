@@ -1,5 +1,5 @@
 # regression_autotrain.py
-from pycaret.regression import *        # Regression task
+from pycaret.regression import setup      # Regression task
 from pycaret.regression import save_model, load_model
 
 import pandas as pd
@@ -24,6 +24,7 @@ regression_setup = setup(
     outliers_threshold=0.05,
     feature_selection=True,
     polynomial_features=False,
+    memory=False
     # silent=True    # uncomment to suppress prompts (useful in scripts)
 )
 

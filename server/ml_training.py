@@ -903,21 +903,35 @@ async def run_regular_ml_training(config_id: str, config: dict):
                     # Get metrics for this model
                     metrics = regression_module.pull()
                     if not metrics.empty:
-                        # DEBUG: Log all available columns and their values
-                        logger.info(f"  📋 Available metric columns: {list(metrics.columns)}")
-                        logger.info(f"  📊 All metrics for {model_name}:")
-                        for col in metrics.columns:
-                            logger.info(f"     - {col}: {metrics.iloc[-1][col]}")
+                        # DEBUG: Log DataFrame shape and structure
+                        logger.info(f"  📋 Metrics DataFrame shape: {metrics.shape}")
+                        logger.info(f"  📋 Metrics columns: {list(metrics.columns)}")
+                        logger.info(f"  📋 Row index names: {list(metrics.index)}")
                         
-                        result = metrics.iloc[-1].to_dict()
+                        # CRITICAL FIX: Get Mean row by name, not by position
+                        if "Mean" in metrics.index:
+                            mean_row = metrics.loc["Mean"]
+                            logger.info(f"  ✅ Using 'Mean' row by name")
+                        else:
+                            logger.warning("  ⚠️ No 'Mean' row found — using iloc[-2] fallback")
+                            mean_row = metrics.iloc[-2]  # fallback
+                        
+                        logger.info(f"  📊 Mean row:\n{mean_row}")
+                        
+                        result = mean_row.to_dict()
                         result['Model'] = model_name
                         result['TT (Sec)'] = round(training_time, 2)
                         
+                        # Correct safe metric extraction
+                        r2_value = result.get('R2')
+                        mae_value = result.get('MAE')
+                        rmse_value = result.get('RMSE')
+                        
                         # Log detailed training info
                         logger.info(f"  ✅ COMPLETED in {training_time:.3f}s")
-                        logger.info(f"     - R² Score: {result.get('R2', 0):.4f}")
-                        logger.info(f"     - MAE: {result.get('MAE', 0):.4f}")
-                        logger.info(f"     - RMSE: {result.get('RMSE', 0):.4f}")
+                        logger.info(f"     - R² Score: {r2_value}")
+                        logger.info(f"     - MAE: {mae_value}")
+                        logger.info(f"     - RMSE: {rmse_value}")
                         
                         all_results.append(result)
                         
@@ -1019,19 +1033,32 @@ async def run_regular_ml_training(config_id: str, config: dict):
                     if not metrics.empty:
                         # DEBUG: Log all available columns and their values
                         logger.info(f"  📋 Available metric columns: {list(metrics.columns)}")
-                        logger.info(f"  📊 All metrics for {model_name}:")
-                        for col in metrics.columns:
-                            logger.info(f"     - {col}: {metrics.iloc[-1][col]}")
+                        logger.info(f"  📋 Row index names: {list(metrics.index)}")
                         
-                        result = metrics.iloc[-1].to_dict()
+                        # CRITICAL FIX: Get Mean row by name, not by position
+                        if "Mean" in metrics.index:
+                            mean_row = metrics.loc["Mean"]
+                            logger.info(f"  ✅ Using 'Mean' row by name")
+                        else:
+                            logger.warning("  ⚠️ No 'Mean' row found — using iloc[-2] fallback")
+                            mean_row = metrics.iloc[-2]  # fallback
+                        
+                        logger.info(f"  📊 Mean row:\n{mean_row}")
+                        
+                        result = mean_row.to_dict()
                         result['Model'] = model_name
                         result['TT (Sec)'] = round(training_time, 2)
                         
+                        # Correct safe metric extraction
+                        accuracy_value = result.get('Accuracy')
+                        auc_value = result.get('AUC')
+                        f1_value = result.get('F1')
+                        
                         # Log detailed training info
                         logger.info(f"  ✅ COMPLETED in {training_time:.3f}s")
-                        logger.info(f"     - Accuracy: {result.get('Accuracy', 0):.4f}")
-                        logger.info(f"     - AUC: {result.get('AUC', 0):.4f}")
-                        logger.info(f"     - F1: {result.get('F1', 0):.4f}")
+                        logger.info(f"     - Accuracy: {accuracy_value}")
+                        logger.info(f"     - AUC: {auc_value}")
+                        logger.info(f"     - F1: {f1_value}")
                         
                         all_results.append(result)
                         
