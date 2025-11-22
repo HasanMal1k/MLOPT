@@ -1,0 +1,1000 @@
+Ship Mode,Segment,City,State,Sub-Category,Sales,Quantity,Discount,Profit,Quantity_sqrt,Discount_sqrt,Ship Mode_Same Day,Ship Mode_Second Class,Ship Mode_Standard Class,Segment_Corporate,Segment_Home Office,Region_East,Region_South,Region_West
+Second Class,Consumer,Henderson,Kentucky,Bookcases,261.96,2,0.0,41.9136,1.4142135,0.0,False,True,False,False,False,False,True,False
+Second Class,Consumer,Henderson,Kentucky,Chairs,731.94,3,0.0,219.582,1.7320508,0.0,False,True,False,False,False,False,True,False
+Second Class,Corporate,Los Angeles,California,Labels,14.62,2,0.0,6.8714,1.4142135,0.0,False,True,False,True,False,False,False,True
+Standard Class,Consumer,Fort Lauderdale,Florida,Tables,957.5775,5,0.45,-383.031,2.236068,0.6708204,False,False,True,False,False,False,True,False
+Standard Class,Consumer,Fort Lauderdale,Florida,Storage,22.368,2,0.2,2.5164,1.4142135,0.4472136,False,False,True,False,False,False,True,False
+Standard Class,Consumer,Los Angeles,California,Furnishings,48.86,7,0.0,14.1694,2.6457512,0.0,False,False,True,False,False,False,False,True
+Standard Class,Consumer,Los Angeles,California,Art,7.28,4,0.0,1.9656,2.0,0.0,False,False,True,False,False,False,False,True
+Standard Class,Consumer,Los Angeles,California,Phones,907.152,6,0.2,90.7152,2.4494898,0.4472136,False,False,True,False,False,False,False,True
+Standard Class,Consumer,Los Angeles,California,Binders,18.504,3,0.2,5.7825,1.7320508,0.4472136,False,False,True,False,False,False,False,True
+Standard Class,Consumer,Los Angeles,California,Appliances,114.9,5,0.0,34.47,2.236068,0.0,False,False,True,False,False,False,False,True
+Standard Class,Consumer,Los Angeles,California,Tables,1706.184,9,0.2,85.3092,3.0,0.4472136,False,False,True,False,False,False,False,True
+Standard Class,Consumer,Los Angeles,California,Phones,911.424,4,0.2,68.3568,2.0,0.4472136,False,False,True,False,False,False,False,True
+Standard Class,Consumer,Concord,North Carolina,Paper,15.552,3,0.2,5.4432,1.7320508,0.4472136,False,False,True,False,False,False,True,False
+Standard Class,Consumer,Seattle,Washington,Binders,407.976,3,0.2,132.5922,1.7320508,0.4472136,False,False,True,False,False,False,False,True
+Standard Class,Home Office,Fort Worth,Texas,Appliances,68.81,5,0.8,-123.858,2.236068,0.8944272,False,False,True,False,True,False,False,False
+Standard Class,Home Office,Fort Worth,Texas,Binders,2.544,3,0.8,-3.816,1.7320508,0.8944272,False,False,True,False,True,False,False,False
+Standard Class,Consumer,Madison,Wisconsin,Storage,665.88,6,0.0,13.3176,2.4494898,0.0,False,False,True,False,False,False,False,False
+Second Class,Consumer,West Jordan,Utah,Storage,55.5,2,0.0,9.99,1.4142135,0.0,False,True,False,False,False,False,False,True
+Second Class,Consumer,San Francisco,California,Art,8.56,2,0.0,2.4824,1.4142135,0.0,False,True,False,False,False,False,False,True
+Second Class,Consumer,San Francisco,California,Phones,213.48,3,0.2,16.011,1.7320508,0.4472136,False,True,False,False,False,False,False,True
+Second Class,Consumer,San Francisco,California,Binders,22.72,4,0.2,7.384,2.0,0.4472136,False,True,False,False,False,False,False,True
+Standard Class,Corporate,Fremont,Nebraska,Art,19.46,7,0.0,5.0596,2.6457512,0.0,False,False,True,True,False,False,False,False
+Standard Class,Corporate,Fremont,Nebraska,Appliances,60.34,7,0.0,15.6884,2.6457512,0.0,False,False,True,True,False,False,False,False
+Second Class,Consumer,Philadelphia,Pennsylvania,Chairs,71.372,2,0.3,-1.0196,1.4142135,0.5477226,False,True,False,False,False,True,False,False
+Standard Class,Consumer,Orem,Utah,Tables,1044.63,3,0.0,240.2649,1.7320508,0.0,False,False,True,False,False,False,False,True
+Second Class,Consumer,Los Angeles,California,Binders,11.648,2,0.2,4.2224,1.4142135,0.4472136,False,True,False,False,False,False,False,True
+Second Class,Consumer,Los Angeles,California,Accessories,90.57,3,0.0,11.7741,1.7320508,0.0,False,True,False,False,False,False,False,True
+Standard Class,Consumer,Philadelphia,Pennsylvania,Bookcases,3083.43,7,0.5,-1665.0522,2.6457512,0.70710677,False,False,True,False,False,True,False,False
+Standard Class,Consumer,Philadelphia,Pennsylvania,Binders,9.618,2,0.7,-7.0532,1.4142135,0.83666,False,False,True,False,False,True,False,False
+Standard Class,Consumer,Philadelphia,Pennsylvania,Furnishings,124.2,3,0.2,15.525,1.7320508,0.4472136,False,False,True,False,False,True,False,False
+Standard Class,Consumer,Philadelphia,Pennsylvania,Envelopes,3.264,2,0.2,1.1016,1.4142135,0.4472136,False,False,True,False,False,True,False,False
+Standard Class,Consumer,Philadelphia,Pennsylvania,Art,86.304,6,0.2,9.7092,2.4494898,0.4472136,False,False,True,False,False,True,False,False
+Standard Class,Consumer,Philadelphia,Pennsylvania,Binders,6.858,6,0.7,-5.715,2.4494898,0.83666,False,False,True,False,False,True,False,False
+Standard Class,Consumer,Philadelphia,Pennsylvania,Art,15.76,2,0.2,3.546,1.4142135,0.4472136,False,False,True,False,False,True,False,False
+Second Class,Home Office,Houston,Texas,Paper,29.472,3,0.2,9.9468,1.7320508,0.4472136,False,True,False,False,True,False,False,False
+First Class,Corporate,Richardson,Texas,Phones,1097.544,7,0.2,123.4737,2.6457512,0.4472136,False,False,False,True,False,False,False,False
+First Class,Corporate,Richardson,Texas,Furnishings,190.92,5,0.6,-147.963,2.236068,0.7745967,False,False,False,True,False,False,False,False
+Standard Class,Home Office,Houston,Texas,Envelopes,113.328,9,0.2,35.415,3.0,0.4472136,False,False,True,False,True,False,False,False
+Standard Class,Home Office,Houston,Texas,Bookcases,532.3992,3,0.32,-46.9764,1.7320508,0.56568545,False,False,True,False,True,False,False,False
+Standard Class,Home Office,Houston,Texas,Chairs,212.058,3,0.3,-15.147,1.7320508,0.5477226,False,False,True,False,True,False,False,False
+Standard Class,Home Office,Houston,Texas,Phones,371.168,4,0.2,41.7564,2.0,0.4472136,False,False,True,False,True,False,False,False
+Standard Class,Corporate,Naperville,Illinois,Phones,147.168,4,0.2,16.5564,2.0,0.4472136,False,False,True,True,False,False,False,False
+Standard Class,Corporate,Los Angeles,California,Storage,77.88,2,0.0,3.894,1.4142135,0.0,False,False,True,True,False,False,False,True
+Standard Class,Corporate,Melbourne,Florida,Storage,95.616,2,0.2,9.5616,1.4142135,0.4472136,False,False,True,True,False,False,True,False
+First Class,Corporate,Eagan,Minnesota,Accessories,45.98,2,0.0,19.7714,1.4142135,0.0,False,False,False,True,False,False,False,False
+First Class,Corporate,Eagan,Minnesota,Binders,17.46,2,0.0,8.2062,1.4142135,0.0,False,False,False,True,False,False,False,False
+Second Class,Consumer,Westland,Michigan,Storage,211.96,4,0.0,8.4784,2.0,0.0,False,True,False,False,False,False,False,False
+Standard Class,Consumer,Dover,Delaware,Accessories,45.0,3,0.0,4.95,1.7320508,0.0,False,False,True,False,False,True,False,False
+Standard Class,Consumer,Dover,Delaware,Phones,21.8,2,0.0,6.104,1.4142135,0.0,False,False,True,False,False,True,False,False
+Standard Class,Consumer,New Albany,Indiana,Binders,38.22,6,0.0,17.9634,2.4494898,0.0,False,False,True,False,False,False,False,False
+Standard Class,Consumer,New Albany,Indiana,Labels,75.18,6,0.0,35.3346,2.4494898,0.0,False,False,True,False,False,False,False,False
+Standard Class,Consumer,New Albany,Indiana,Furnishings,6.16,2,0.0,2.9568,1.4142135,0.0,False,False,True,False,False,False,False,False
+Standard Class,Consumer,New Albany,Indiana,Chairs,89.99,1,0.0,17.0981,1.0,0.0,False,False,True,False,False,False,False,False
+Standard Class,Corporate,New York City,New York,Fasteners,15.26,7,0.0,6.2566,2.6457512,0.0,False,False,True,True,False,True,False,False
+Standard Class,Corporate,New York City,New York,Phones,1029.95,5,0.0,298.6855,2.236068,0.0,False,False,True,True,False,True,False,False
+First Class,Consumer,Troy,New York,Storage,208.56,6,0.0,52.14,2.4494898,0.0,False,False,False,False,False,True,False,False
+First Class,Consumer,Troy,New York,Paper,32.4,5,0.0,15.552,2.236068,0.0,False,False,False,False,False,True,False,False
+First Class,Consumer,Troy,New York,Chairs,319.41,5,0.1,7.098,2.236068,0.31622776,False,False,False,False,False,True,False,False
+First Class,Consumer,Troy,New York,Paper,14.56,2,0.0,6.9888,1.4142135,0.0,False,False,False,False,False,True,False,False
+First Class,Consumer,Troy,New York,Accessories,30.0,2,0.0,3.3,1.4142135,0.0,False,False,False,False,False,True,False,False
+First Class,Consumer,Troy,New York,Binders,48.48,4,0.2,16.362,2.0,0.4472136,False,False,False,False,False,True,False,False
+First Class,Consumer,Troy,New York,Art,1.68,1,0.0,0.84,1.0,0.0,False,False,False,False,False,True,False,False
+Standard Class,Consumer,Los Angeles,California,Accessories,13.98,2,0.0,6.1512,1.4142135,0.0,False,False,True,False,False,False,False,True
+Standard Class,Consumer,Los Angeles,California,Binders,25.824,6,0.2,9.3612,2.4494898,0.4472136,False,False,True,False,False,False,False,True
+Standard Class,Consumer,Los Angeles,California,Paper,146.73,3,0.0,68.9631,1.7320508,0.0,False,False,True,False,False,False,False,True
+Standard Class,Consumer,Los Angeles,California,Furnishings,79.76,4,0.0,22.3328,2.0,0.0,False,False,True,False,False,False,False,True
+Standard Class,Home Office,Chicago,Illinois,Chairs,213.115,5,0.3,-15.2225,2.236068,0.5477226,False,False,True,False,True,False,False,False
+Standard Class,Corporate,Gilbert,Arizona,Art,1113.024,8,0.2,111.3024,2.828427,0.4472136,False,False,True,True,False,False,False,True
+Standard Class,Corporate,Gilbert,Arizona,Phones,167.968,4,0.2,62.988,2.0,0.4472136,False,False,True,True,False,False,False,True
+First Class,Consumer,Springfield,Virginia,Paper,75.88,2,0.0,35.6636,1.4142135,0.0,False,False,False,False,False,False,True,False
+Standard Class,Consumer,New York City,New York,Binders,4.616,1,0.2,1.731,1.0,0.4472136,False,False,True,False,False,True,False,False
+Second Class,Consumer,Jackson,Michigan,Paper,19.05,3,0.0,8.763,1.7320508,0.0,False,True,False,False,False,False,False,False
+Standard Class,Consumer,Memphis,Tennessee,Chairs,831.936,8,0.2,-114.3912,2.828427,0.4472136,False,False,True,False,False,False,True,False
+Standard Class,Consumer,Memphis,Tennessee,Furnishings,97.04,2,0.2,1.213,1.4142135,0.4472136,False,False,True,False,False,False,True,False
+Standard Class,Consumer,Memphis,Tennessee,Storage,72.784,1,0.2,-18.196,1.0,0.4472136,False,False,True,False,False,False,True,False
+First Class,Corporate,Houston,Texas,Binders,1.248,3,0.8,-1.9344,1.7320508,0.8944272,False,False,False,True,False,False,False,False
+First Class,Corporate,Houston,Texas,Furnishings,9.708,3,0.6,-5.8248,1.7320508,0.7745967,False,False,False,True,False,False,False,False
+First Class,Corporate,Houston,Texas,Storage,27.24,3,0.2,2.724,1.7320508,0.4472136,False,False,False,True,False,False,False,False
+Second Class,Consumer,Houston,Texas,Furnishings,19.3,5,0.6,-14.475,2.236068,0.7745967,False,True,False,False,False,False,False,False
+First Class,Corporate,Decatur,Alabama,Appliances,208.16,1,0.0,56.2032,1.0,0.0,False,False,False,True,False,False,True,False
+First Class,Corporate,Decatur,Alabama,Binders,16.74,3,0.0,8.0352,1.7320508,0.0,False,False,False,True,False,False,True,False
+Standard Class,Consumer,San Francisco,California,Art,14.9,5,0.0,4.172,2.236068,0.0,False,False,True,False,False,False,False,True
+Standard Class,Consumer,San Francisco,California,Storage,21.39,1,0.0,6.2031,1.0,0.0,False,False,True,False,False,False,False,True
+Standard Class,Corporate,Durham,North Carolina,Envelopes,200.984,7,0.2,62.8075,2.6457512,0.4472136,False,False,True,True,False,False,True,False
+First Class,Home Office,Chicago,Illinois,Storage,230.376,3,0.2,-48.9549,1.7320508,0.4472136,False,False,False,False,True,False,False,False
+Second Class,Consumer,Columbia,South Carolina,Chairs,301.96,2,0.0,33.2156,1.4142135,0.0,False,True,False,False,False,False,True,False
+Standard Class,Consumer,Rochester,Minnesota,Accessories,19.99,1,0.0,6.7966,1.0,0.0,False,False,True,False,False,False,False,False
+Standard Class,Consumer,Rochester,Minnesota,Labels,6.16,2,0.0,2.9568,1.4142135,0.0,False,False,True,False,False,False,False,False
+Second Class,Home Office,Houston,Texas,Storage,158.368,7,0.2,13.8572,2.6457512,0.4472136,False,True,False,False,True,False,False,False
+Standard Class,Corporate,Los Angeles,California,Art,20.1,3,0.0,6.633,1.7320508,0.0,False,False,True,True,False,False,False,True
+Standard Class,Corporate,Los Angeles,California,Phones,73.584,2,0.2,8.2782,1.4142135,0.4472136,False,False,True,True,False,False,False,True
+Standard Class,Corporate,Los Angeles,California,Paper,6.48,1,0.0,3.1104,1.0,0.0,False,False,True,True,False,False,False,True
+Second Class,Consumer,Minneapolis,Minnesota,Paper,12.96,2,0.0,6.2208,1.4142135,0.0,False,True,False,False,False,False,False,False
+Second Class,Consumer,Minneapolis,Minnesota,Furnishings,53.34,3,0.0,16.5354,1.7320508,0.0,False,True,False,False,False,False,False,False
+Second Class,Consumer,Minneapolis,Minnesota,Binders,32.96,2,0.0,16.1504,1.4142135,0.0,False,True,False,False,False,False,False,False
+Standard Class,Home Office,Portland,Oregon,Binders,5.682,1,0.7,-3.788,1.0,0.83666,False,False,True,False,True,False,False,True
+Second Class,Home Office,New York City,New York,Furnishings,96.53,7,0.0,40.5426,2.6457512,0.0,False,True,False,False,True,True,False,False
+First Class,Consumer,San Francisco,California,Binders,51.312,3,0.2,17.9592,1.7320508,0.4472136,False,False,False,False,False,False,False,True
+Standard Class,Corporate,Saint Paul,Minnesota,Appliances,77.88,6,0.0,22.5852,2.4494898,0.0,False,False,True,True,False,False,False,False
+Standard Class,Home Office,Chicago,Illinois,Paper,64.624,7,0.2,22.6184,2.6457512,0.4472136,False,False,True,False,True,False,False,False
+Standard Class,Home Office,Chicago,Illinois,Accessories,95.976,3,0.2,-10.7973,1.7320508,0.4472136,False,False,True,False,True,False,False,False
+Standard Class,Home Office,Chicago,Illinois,Binders,1.788,3,0.8,-3.0396,1.7320508,0.8944272,False,False,True,False,True,False,False,False
+Second Class,Consumer,Rochester,Minnesota,Paper,23.92,4,0.0,11.7208,2.0,0.0,False,True,False,False,False,False,False,False
+Standard Class,Consumer,Aurora,Colorado,Accessories,238.896,6,0.2,-26.8758,2.4494898,0.4472136,False,False,True,False,False,False,False,True
+Standard Class,Consumer,Aurora,Colorado,Furnishings,102.36,3,0.2,-3.8385,1.7320508,0.4472136,False,False,True,False,False,False,False,True
+Standard Class,Consumer,Aurora,Colorado,Binders,36.882,3,0.7,-25.8174,1.7320508,0.83666,False,False,True,False,False,False,False,True
+Standard Class,Consumer,Charlotte,North Carolina,Accessories,74.112,8,0.2,17.6016,2.828427,0.4472136,False,False,True,False,False,False,True,False
+Standard Class,Consumer,Charlotte,North Carolina,Phones,27.992,1,0.2,2.0994,1.0,0.4472136,False,False,True,False,False,False,True,False
+Standard Class,Consumer,Charlotte,North Carolina,Art,3.304,1,0.2,1.0738,1.0,0.4472136,False,False,True,False,False,False,True,False
+Standard Class,Home Office,Orland Park,Illinois,Accessories,339.96,5,0.2,67.992,2.236068,0.4472136,False,False,True,False,True,False,False,False
+Standard Class,Corporate,New York City,New York,Furnishings,41.96,2,0.0,10.9096,1.4142135,0.0,False,False,True,True,False,True,False,False
+Standard Class,Consumer,Urbandale,Iowa,Art,75.96,2,0.0,22.788,1.4142135,0.0,False,False,True,False,False,False,False,False
+Standard Class,Consumer,Urbandale,Iowa,Binders,27.24,6,0.0,13.3476,2.4494898,0.0,False,False,True,False,False,False,False,False
+Second Class,Consumer,Columbus,Ohio,Fasteners,40.096,14,0.2,14.5348,3.7416575,0.4472136,False,True,False,False,False,True,False,False
+Second Class,Consumer,Columbus,Ohio,Envelopes,4.72,2,0.2,1.652,1.4142135,0.4472136,False,True,False,False,False,True,False,False
+Second Class,Consumer,Columbus,Ohio,Paper,23.976,3,0.2,7.4925,1.7320508,0.4472136,False,True,False,False,False,True,False,False
+Second Class,Consumer,Columbus,Ohio,Envelopes,130.464,6,0.2,44.0316,2.4494898,0.4472136,False,True,False,False,False,True,False,False
+Standard Class,Consumer,Seattle,Washington,Tables,787.53,3,0.0,165.3813,1.7320508,0.0,False,False,True,False,False,False,False,True
+Standard Class,Corporate,Bristol,Tennessee,Binders,157.794,1,0.7,-115.7156,1.0,0.83666,False,False,True,True,False,False,True,False
+First Class,Consumer,Wilmington,Delaware,Furnishings,47.04,3,0.0,18.3456,1.7320508,0.0,False,False,False,False,False,True,False,False
+First Class,Consumer,Wilmington,Delaware,Binders,30.84,4,0.0,13.878,2.0,0.0,False,False,False,False,False,True,False,False
+First Class,Consumer,Wilmington,Delaware,Storage,226.56,6,0.0,63.4368,2.4494898,0.0,False,False,False,False,False,True,False,False
+First Class,Consumer,Wilmington,Delaware,Envelopes,115.02,9,0.0,51.759,3.0,0.0,False,False,False,False,False,True,False,False
+First Class,Consumer,Wilmington,Delaware,Phones,68.04,7,0.0,19.7316,2.6457512,0.0,False,False,False,False,False,True,False,False
+Second Class,Home Office,Houston,Texas,Chairs,600.558,3,0.3,-8.5794,1.7320508,0.5477226,False,True,False,False,True,False,False,False
+Standard Class,Consumer,Bloomington,Illinois,Tables,617.7,6,0.5,-407.682,2.4494898,0.70710677,False,False,True,False,False,False,False,False
+Standard Class,Consumer,Phoenix,Arizona,Binders,2.388,2,0.7,-1.8308,1.4142135,0.83666,False,False,True,False,False,False,False,True
+Standard Class,Consumer,Phoenix,Arizona,Storage,243.992,7,0.2,30.499,2.6457512,0.4472136,False,False,True,False,False,False,False,True
+Second Class,Home Office,Los Angeles,California,Chairs,81.424,2,0.2,-9.1602,1.4142135,0.4472136,False,True,False,False,True,False,False,True
+Second Class,Home Office,Los Angeles,California,Furnishings,238.56,3,0.0,26.2416,1.7320508,0.0,False,True,False,False,True,False,False,True
+First Class,Corporate,Columbus,Ohio,Phones,59.97,5,0.4,-11.994,2.236068,0.6324555,False,False,False,True,False,True,False,False
+First Class,Corporate,Columbus,Ohio,Paper,78.304,2,0.2,29.364,1.4142135,0.4472136,False,False,False,True,False,True,False,False
+First Class,Corporate,Columbus,Ohio,Fasteners,21.456,9,0.2,6.9732,3.0,0.4472136,False,False,False,True,False,True,False,False
+Standard Class,Consumer,Roseville,California,Paper,20.04,3,0.0,9.6192,1.7320508,0.0,False,False,True,False,False,False,False,True
+Standard Class,Consumer,Roseville,California,Paper,35.44,1,0.0,16.6568,1.0,0.0,False,False,True,False,False,False,False,True
+Standard Class,Consumer,Roseville,California,Art,11.52,4,0.0,3.456,2.0,0.0,False,False,True,False,False,False,False,True
+Standard Class,Consumer,Roseville,California,Fasteners,4.02,2,0.0,1.9698,1.4142135,0.0,False,False,True,False,False,False,False,True
+Standard Class,Consumer,Roseville,California,Binders,76.176,3,0.2,26.6616,1.7320508,0.4472136,False,False,True,False,False,False,False,True
+Standard Class,Consumer,Roseville,California,Supplies,65.88,6,0.0,18.4464,2.4494898,0.0,False,False,True,False,False,False,False,True
+Standard Class,Consumer,Roseville,California,Furnishings,43.12,14,0.0,20.6976,3.7416575,0.0,False,False,True,False,False,False,False,True
+Second Class,Corporate,Philadelphia,Pennsylvania,Furnishings,82.8,2,0.2,10.35,1.4142135,0.4472136,False,True,False,True,False,True,False,False
+Standard Class,Corporate,San Francisco,California,Art,8.82,3,0.0,2.3814,1.7320508,0.0,False,False,True,True,False,False,False,True
+Standard Class,Corporate,San Francisco,California,Envelopes,10.86,3,0.0,5.1042,1.7320508,0.0,False,False,True,True,False,False,False,True
+Standard Class,Corporate,San Francisco,California,Paper,143.7,3,0.0,68.976,1.7320508,0.0,False,False,True,True,False,False,False,True
+Standard Class,Consumer,Independence,Missouri,Appliances,839.43,3,0.0,218.2518,1.7320508,0.0,False,False,True,False,False,False,False,False
+Standard Class,Consumer,Pasadena,California,Storage,671.93,7,0.0,20.1579,2.6457512,0.0,False,False,True,False,False,False,False,True
+Standard Class,Home Office,Newark,Ohio,Furnishings,93.888,4,0.2,12.9096,2.0,0.4472136,False,False,True,False,True,True,False,False
+Standard Class,Corporate,Franklin,Wisconsin,Phones,384.45,11,0.0,103.8015,3.3166249,0.0,False,False,True,True,False,False,False,False
+Standard Class,Corporate,Franklin,Wisconsin,Phones,149.97,3,0.0,5.9988,1.7320508,0.0,False,False,True,True,False,False,False,False
+Standard Class,Corporate,Franklin,Wisconsin,Chairs,1951.84,8,0.0,585.552,2.828427,0.0,False,False,True,True,False,False,False,False
+Standard Class,Corporate,Franklin,Wisconsin,Binders,171.55,5,0.0,80.6285,2.236068,0.0,False,False,True,True,False,False,False,False
+First Class,Home Office,Scottsdale,Arizona,Appliances,157.92,5,0.2,17.766,2.236068,0.4472136,False,False,False,False,True,False,False,True
+First Class,Home Office,Scottsdale,Arizona,Phones,203.184,2,0.2,15.2388,1.4142135,0.4472136,False,False,False,False,True,False,False,True
+First Class,Corporate,San Jose,California,Paper,58.38,7,0.0,26.271,2.6457512,0.0,False,False,False,True,False,False,False,True
+First Class,Corporate,San Jose,California,Paper,105.52,4,0.0,48.5392,2.0,0.0,False,False,False,True,False,False,False,True
+First Class,Corporate,San Jose,California,Storage,80.88,6,0.0,21.0288,2.4494898,0.0,False,False,False,True,False,False,False,True
+Standard Class,Home Office,Seattle,Washington,Art,6.63,3,0.0,1.7901,1.7320508,0.0,False,False,True,False,True,False,False,True
+Second Class,Consumer,Seattle,Washington,Chairs,457.568,2,0.2,51.4764,1.4142135,0.4472136,False,True,False,False,False,False,False,True
+Standard Class,Consumer,Edmond,Oklahoma,Labels,14.62,2,0.0,6.8714,1.4142135,0.0,False,False,True,False,False,False,False,False
+Standard Class,Consumer,Edmond,Oklahoma,Phones,944.93,7,0.0,236.2325,2.6457512,0.0,False,False,True,False,False,False,False,False
+First Class,Consumer,Los Angeles,California,Paper,5.98,1,0.0,2.691,1.0,0.0,False,False,False,False,False,False,False,True
+Second Class,Consumer,Philadelphia,Pennsylvania,Accessories,54.384,2,0.2,1.3596,1.4142135,0.4472136,False,True,False,False,False,True,False,False
+Standard Class,Consumer,Carlsbad,New Mexico,Envelopes,28.4,5,0.0,13.348,2.236068,0.0,False,False,True,False,False,False,False,True
+Standard Class,Consumer,Seattle,Washington,Binders,27.68,2,0.2,9.688,1.4142135,0.4472136,False,False,True,False,False,False,False,True
+Standard Class,Consumer,San Antonio,Texas,Art,9.936,3,0.2,2.7324,1.7320508,0.4472136,False,False,True,False,False,False,False,False
+Standard Class,Consumer,San Antonio,Texas,Machines,8159.952,8,0.4,-1359.992,2.828427,0.6324555,False,False,True,False,False,False,False,False
+Standard Class,Consumer,San Antonio,Texas,Storage,275.928,3,0.2,-58.6347,1.7320508,0.4472136,False,False,True,False,False,False,False,False
+Standard Class,Consumer,San Antonio,Texas,Chairs,1740.06,9,0.3,-24.858,3.0,0.5477226,False,False,True,False,False,False,False,False
+Standard Class,Consumer,San Antonio,Texas,Art,32.064,6,0.2,6.8136,2.4494898,0.4472136,False,False,True,False,False,False,False,False
+Standard Class,Consumer,San Antonio,Texas,Appliances,177.98,5,0.8,-453.849,2.236068,0.8944272,False,False,True,False,False,False,False,False
+Standard Class,Consumer,San Antonio,Texas,Phones,143.976,3,0.2,8.9985,1.7320508,0.4472136,False,False,True,False,False,False,False,False
+Standard Class,Consumer,Los Angeles,California,Paper,20.94,3,0.0,9.8418,1.7320508,0.0,False,False,True,False,False,False,False,True
+Standard Class,Consumer,Los Angeles,California,Paper,110.96,2,0.0,53.2608,1.4142135,0.0,False,False,True,False,False,False,False,True
+Standard Class,Consumer,Los Angeles,California,Chairs,340.144,7,0.2,21.259,2.6457512,0.4472136,False,False,True,False,False,False,False,True
+Standard Class,Corporate,Chicago,Illinois,Appliances,52.448,2,0.8,-131.12,1.4142135,0.8944272,False,False,True,True,False,False,False,False
+Standard Class,Corporate,Chicago,Illinois,Labels,20.16,4,0.2,6.552,2.0,0.4472136,False,False,True,True,False,False,False,False
+Second Class,Consumer,Houston,Texas,Appliances,97.264,4,0.8,-243.16,2.0,0.8944272,False,True,False,False,False,False,False,False
+Second Class,Consumer,Newark,Ohio,Chairs,396.802,7,0.3,-11.3372,2.6457512,0.5477226,False,True,False,False,False,True,False,False
+Second Class,Consumer,Newark,Ohio,Supplies,15.88,5,0.2,-3.7715,2.236068,0.4472136,False,True,False,False,False,True,False,False
+Standard Class,Home Office,New York City,New York,Art,3.28,1,0.0,1.4104,1.0,0.0,False,False,True,False,True,True,False,False
+Second Class,Corporate,Decatur,Illinois,Storage,24.816,2,0.2,1.8612,1.4142135,0.4472136,False,True,False,True,False,False,False,False
+Second Class,Corporate,Decatur,Illinois,Accessories,408.744,7,0.2,76.6395,2.6457512,0.4472136,False,True,False,True,False,False,False,False
+Second Class,Home Office,Monroe,Louisiana,Phones,503.96,4,0.0,131.0296,2.0,0.0,False,True,False,False,True,False,True,False
+Second Class,Home Office,Monroe,Louisiana,Phones,149.95,5,0.0,41.986,2.236068,0.0,False,True,False,False,True,False,True,False
+Second Class,Home Office,Monroe,Louisiana,Accessories,29.0,2,0.0,7.25,1.4142135,0.0,False,True,False,False,True,False,True,False
+Standard Class,Consumer,Fairfield,Connecticut,Binders,7.16,2,0.0,3.4368,1.4142135,0.0,False,False,True,False,False,True,False,False
+Standard Class,Home Office,Los Angeles,California,Accessories,176.8,8,0.0,22.984,2.828427,0.0,False,False,True,False,True,False,False,True
+Standard Class,Corporate,Grand Prairie,Texas,Storage,37.224,3,0.2,3.7224,1.7320508,0.4472136,False,False,True,True,False,False,False,False
+Standard Class,Corporate,Grand Prairie,Texas,Paper,20.016,3,0.2,6.255,1.7320508,0.4472136,False,False,True,True,False,False,False,False
+First Class,Home Office,New York City,New York,Bookcases,899.136,4,0.2,112.392,2.0,0.4472136,False,False,False,False,True,True,False,False
+First Class,Home Office,New York City,New York,Phones,71.76,6,0.0,20.0928,2.4494898,0.0,False,False,False,False,True,True,False,False
+First Class,Home Office,New York City,New York,Paper,51.84,8,0.0,24.8832,2.828427,0.0,False,False,False,False,True,True,False,False
+First Class,Home Office,New York City,New York,Bookcases,626.352,3,0.2,46.9764,1.7320508,0.4472136,False,False,False,False,True,True,False,False
+First Class,Home Office,New York City,New York,Art,19.9,5,0.0,6.567,2.236068,0.0,False,False,False,False,True,True,False,False
+Standard Class,Corporate,Redlands,California,Envelopes,14.28,7,0.0,6.7116,2.6457512,0.0,False,False,True,True,False,False,False,True
+Standard Class,Consumer,Hamilton,Ohio,Art,7.408,2,0.2,1.2038,1.4142135,0.4472136,False,False,True,False,False,True,False,False
+Standard Class,Consumer,Hamilton,Ohio,Art,6.048,3,0.2,1.5876,1.7320508,0.4472136,False,False,True,False,False,True,False,False
+Standard Class,Home Office,Westfield,New Jersey,Storage,46.26,3,0.0,12.0276,1.7320508,0.0,False,False,True,False,True,True,False,False
+Standard Class,Corporate,Philadelphia,Pennsylvania,Binders,2.946,2,0.7,-2.2586,1.4142135,0.83666,False,False,True,True,False,True,False,False
+Standard Class,Corporate,Philadelphia,Pennsylvania,Paper,16.056,3,0.2,5.8203,1.7320508,0.4472136,False,False,True,True,False,True,False,False
+Standard Class,Consumer,Akron,Ohio,Paper,21.744,3,0.2,6.795,1.7320508,0.4472136,False,False,True,False,False,True,False,False
+First Class,Consumer,Denver,Colorado,Tables,218.75,2,0.5,-161.875,1.4142135,0.70710677,False,False,False,False,False,False,False,True
+First Class,Consumer,Denver,Colorado,Appliances,2.6,1,0.2,0.2925,1.0,0.4472136,False,False,False,False,False,False,False,True
+Second Class,Consumer,Dallas,Texas,Appliances,66.284,2,0.8,-178.9668,1.4142135,0.8944272,False,True,False,False,False,False,False,False
+Standard Class,Corporate,Franklin,Tennessee,Furnishings,35.168,7,0.2,9.6712,2.6457512,0.4472136,False,False,True,True,False,False,True,False
+Standard Class,Consumer,Whittier,California,Phones,444.768,4,0.2,44.4768,2.0,0.4472136,False,False,True,False,False,False,False,True
+Standard Class,Consumer,Saginaw,Michigan,Storage,83.92,4,0.0,5.8744,2.0,0.0,False,False,True,False,False,False,False,False
+Standard Class,Consumer,Saginaw,Michigan,Phones,131.98,2,0.0,35.6346,1.4142135,0.0,False,False,True,False,False,False,False,False
+Standard Class,Consumer,Saginaw,Michigan,Binders,15.92,4,0.0,7.4824,2.0,0.0,False,False,True,False,False,False,False,False
+Standard Class,Consumer,Saginaw,Michigan,Fasteners,52.29,9,0.0,16.2099,3.0,0.0,False,False,True,False,False,False,False,False
+Standard Class,Consumer,Saginaw,Michigan,Storage,91.99,1,0.0,3.6796,1.0,0.0,False,False,True,False,False,False,False,False
+Second Class,Corporate,Dallas,Texas,Accessories,20.8,2,0.2,6.5,1.4142135,0.4472136,False,True,False,True,False,False,False,False
+Standard Class,Corporate,Medina,Ohio,Labels,23.68,2,0.2,8.88,1.4142135,0.4472136,False,False,True,True,False,True,False,False
+Standard Class,Corporate,Medina,Ohio,Bookcases,452.45,5,0.5,-244.323,2.236068,0.70710677,False,False,True,True,False,True,False,False
+Standard Class,Corporate,Medina,Ohio,Phones,62.982,3,0.4,-14.6958,1.7320508,0.6324555,False,False,True,True,False,True,False,False
+Standard Class,Corporate,Medina,Ohio,Machines,1188.0,9,0.7,-950.4,3.0,0.83666,False,False,True,True,False,True,False,False
+Standard Class,Corporate,Medina,Ohio,Accessories,89.584,2,0.2,4.4792,1.4142135,0.4472136,False,False,True,True,False,True,False,False
+Standard Class,Consumer,Los Angeles,California,Storage,93.06,6,0.0,26.0568,2.4494898,0.0,False,False,True,False,False,False,False,True
+Standard Class,Consumer,Los Angeles,California,Phones,302.376,3,0.2,22.6782,1.7320508,0.4472136,False,False,True,False,False,False,False,True
+First Class,Consumer,Dublin,Ohio,Fasteners,5.584,2,0.2,1.8148,1.4142135,0.4472136,False,False,False,False,False,True,False,False
+First Class,Consumer,Dublin,Ohio,Paper,22.704,6,0.2,8.2302,2.4494898,0.4472136,False,False,False,False,False,True,False,False
+First Class,Consumer,Dublin,Ohio,Binders,19.776,4,0.7,-13.8432,2.0,0.83666,False,False,False,False,False,True,False,False
+First Class,Consumer,Dublin,Ohio,Furnishings,72.704,4,0.2,19.0848,2.0,0.4472136,False,False,False,False,False,True,False,False
+First Class,Consumer,Dublin,Ohio,Machines,479.988,4,0.7,-383.9904,2.0,0.83666,False,False,False,False,False,True,False,False
+First Class,Consumer,Dublin,Ohio,Art,27.168,2,0.2,2.7168,1.4142135,0.4472136,False,False,False,False,False,True,False,False
+Standard Class,Corporate,Detroit,Michigan,Art,2.2,1,0.0,0.968,1.0,0.0,False,False,True,True,False,False,False,False
+Standard Class,Corporate,Detroit,Michigan,Tables,622.45,5,0.0,136.939,2.236068,0.0,False,False,True,True,False,False,False,False
+Standard Class,Corporate,Detroit,Michigan,Storage,21.98,1,0.0,0.2198,1.0,0.0,False,False,True,True,False,False,False,False
+Standard Class,Consumer,Columbia,Tennessee,Chairs,161.568,2,0.2,-28.2744,1.4142135,0.4472136,False,False,True,False,False,False,True,False
+Standard Class,Consumer,Columbia,Tennessee,Chairs,389.696,8,0.2,43.8408,2.828427,0.4472136,False,False,True,False,False,False,True,False
+Standard Class,Corporate,Charlotte,North Carolina,Binders,18.648,7,0.7,-12.432,2.6457512,0.83666,False,False,True,True,False,False,True,False
+Standard Class,Home Office,Tampa,Florida,Tables,233.86,2,0.45,-102.048,1.4142135,0.6708204,False,False,True,False,True,False,True,False
+Standard Class,Home Office,Tampa,Florida,Tables,620.6145,3,0.45,-248.2458,1.7320508,0.6708204,False,False,True,False,True,False,True,False
+Standard Class,Home Office,Tampa,Florida,Binders,5.328,2,0.7,-3.552,1.4142135,0.83666,False,False,True,False,True,False,True,False
+Standard Class,Home Office,Tampa,Florida,Furnishings,258.072,3,0.2,0.0,1.7320508,0.4472136,False,False,True,False,True,False,True,False
+Standard Class,Home Office,Tampa,Florida,Accessories,617.976,3,0.2,-7.7247,1.7320508,0.4472136,False,False,True,False,True,False,True,False
+Standard Class,Corporate,Santa Clara,California,Paper,10.56,2,0.0,4.752,1.4142135,0.0,False,False,True,True,False,False,False,True
+Second Class,Consumer,Chicago,Illinois,Paper,25.92,5,0.2,9.396,2.236068,0.4472136,False,True,False,False,False,False,False,False
+Second Class,Consumer,Chicago,Illinois,Furnishings,419.68,5,0.6,-356.728,2.236068,0.7745967,False,True,False,False,False,False,False,False
+Second Class,Consumer,Chicago,Illinois,Furnishings,11.688,3,0.6,-4.6752,1.7320508,0.7745967,False,True,False,False,False,False,False,False
+Second Class,Consumer,Chicago,Illinois,Phones,31.984,2,0.2,11.1944,1.4142135,0.4472136,False,True,False,False,False,False,False,False
+Second Class,Consumer,Chicago,Illinois,Tables,177.225,5,0.5,-120.513,2.236068,0.70710677,False,True,False,False,False,False,False,False
+Second Class,Consumer,Chicago,Illinois,Furnishings,4.044,3,0.6,-2.8308,1.7320508,0.7745967,False,True,False,False,False,False,False,False
+Second Class,Consumer,Chicago,Illinois,Art,7.408,2,0.2,1.2038,1.4142135,0.4472136,False,True,False,False,False,False,False,False
+Second Class,Home Office,Lakeville,Minnesota,Chairs,2001.86,7,0.0,580.5394,2.6457512,0.0,False,True,False,False,True,False,False,False
+Second Class,Home Office,Lakeville,Minnesota,Storage,166.72,2,0.0,41.68,1.4142135,0.0,False,True,False,False,True,False,False,False
+Second Class,Home Office,Lakeville,Minnesota,Paper,47.88,6,0.0,23.94,2.4494898,0.0,False,True,False,False,True,False,False,False
+Second Class,Home Office,Lakeville,Minnesota,Appliances,1503.25,5,0.0,496.0725,2.236068,0.0,False,True,False,False,True,False,False,False
+Second Class,Home Office,Lakeville,Minnesota,Paper,25.92,4,0.0,12.4416,2.0,0.0,False,True,False,False,True,False,False,False
+Second Class,Consumer,San Francisco,California,Chairs,321.568,2,0.2,28.1372,1.4142135,0.4472136,False,True,False,False,False,False,False,True
+Standard Class,Consumer,San Diego,California,Paper,7.61,1,0.0,3.5767,1.0,0.0,False,False,True,False,False,False,False,True
+Standard Class,Consumer,San Diego,California,Accessories,3347.37,13,0.0,636.0003,3.6055512,0.0,False,False,True,False,False,False,False,True
+First Class,Consumer,New York City,New York,Storage,80.58,6,0.0,22.5624,2.4494898,0.0,False,False,False,False,False,True,False,False
+First Class,Consumer,New York City,New York,Envelopes,361.92,4,0.0,162.864,2.0,0.0,False,False,False,False,False,True,False,False
+Standard Class,Corporate,Chicago,Illinois,Furnishings,12.132,9,0.6,-8.4924,3.0,0.7745967,False,False,True,True,False,False,False,False
+Standard Class,Corporate,Chicago,Illinois,Storage,82.368,2,0.2,-19.5624,1.4142135,0.4472136,False,False,True,True,False,False,False,False
+Standard Class,Corporate,Chicago,Illinois,Storage,53.92,5,0.2,4.044,2.236068,0.4472136,False,False,True,True,False,False,False,False
+Standard Class,Corporate,Chicago,Illinois,Phones,647.904,6,0.2,56.6916,2.4494898,0.4472136,False,False,True,True,False,False,False,False
+Second Class,Consumer,New York City,New York,Accessories,20.37,3,0.0,6.9258,1.7320508,0.0,False,True,False,False,False,True,False,False
+Second Class,Consumer,New York City,New York,Storage,221.55,3,0.0,6.6465,1.7320508,0.0,False,True,False,False,False,True,False,False
+Second Class,Consumer,New York City,New York,Binders,17.52,5,0.2,6.132,2.236068,0.4472136,False,True,False,False,False,True,False,False
+Standard Class,Corporate,Pasadena,Texas,Appliances,1.624,2,0.8,-4.466,1.4142135,0.8944272,False,False,True,True,False,False,False,False
+Second Class,Corporate,Houston,Texas,Machines,3059.982,3,0.4,-509.997,1.7320508,0.6324555,False,True,False,True,False,False,False,False
+Second Class,Corporate,Houston,Texas,Machines,2519.958,7,0.4,-251.9958,2.6457512,0.6324555,False,True,False,True,False,False,False,False
+Standard Class,Consumer,Chicago,Illinois,Phones,328.224,4,0.2,28.7196,2.0,0.4472136,False,False,True,False,False,False,False,False
+Standard Class,Consumer,Brentwood,California,Accessories,79.9,2,0.0,35.156,1.4142135,0.0,False,False,True,False,False,False,False,True
+Standard Class,Corporate,Chapel Hill,North Carolina,Art,14.016,3,0.2,4.7304,1.7320508,0.4472136,False,False,True,True,False,False,True,False
+Standard Class,Consumer,Morristown,New Jersey,Fasteners,7.56,6,0.0,0.3024,2.4494898,0.0,False,False,True,False,False,True,False,False
+Standard Class,Corporate,Cincinnati,Ohio,Storage,37.208,1,0.2,-7.4416,1.0,0.4472136,False,False,True,True,False,True,False,False
+Standard Class,Corporate,Cincinnati,Ohio,Envelopes,57.576,3,0.2,21.591,1.7320508,0.4472136,False,False,True,True,False,True,False,False
+Second Class,Corporate,San Francisco,California,Storage,725.84,4,0.0,210.4936,2.0,0.0,False,True,False,True,False,False,False,True
+First Class,Consumer,San Francisco,California,Accessories,209.93,7,0.0,92.3692,2.6457512,0.0,False,False,False,False,False,False,False,True
+First Class,Consumer,San Francisco,California,Furnishings,5.28,3,0.0,2.3232,1.7320508,0.0,False,False,False,False,False,False,False,True
+First Class,Consumer,San Francisco,California,Binders,10.92,3,0.2,4.095,1.7320508,0.4472136,False,False,False,False,False,False,False,True
+First Class,Corporate,Inglewood,California,Paper,8.82,2,0.0,4.0572,1.4142135,0.0,False,False,False,True,False,False,False,True
+First Class,Corporate,Inglewood,California,Art,5.98,1,0.0,1.5548,1.0,0.0,False,False,False,True,False,False,False,True
+Standard Class,Corporate,Philadelphia,Pennsylvania,Paper,11.648,2,0.2,4.0768,1.4142135,0.4472136,False,False,True,True,False,True,False,False
+Standard Class,Corporate,Philadelphia,Pennsylvania,Paper,18.176,4,0.2,5.9072,2.0,0.4472136,False,False,True,True,False,True,False,False
+Standard Class,Corporate,Philadelphia,Pennsylvania,Storage,59.712,6,0.2,5.9712,2.4494898,0.4472136,False,False,True,True,False,True,False,False
+Standard Class,Corporate,Philadelphia,Pennsylvania,Labels,24.84,3,0.2,8.694,1.7320508,0.4472136,False,False,True,True,False,True,False,False
+Second Class,Consumer,Houston,Texas,Binders,2.08,5,0.8,-3.432,2.236068,0.8944272,False,True,False,False,False,False,False,False
+Second Class,Consumer,Houston,Texas,Phones,1114.4,7,0.2,376.11,2.6457512,0.4472136,False,True,False,False,False,False,False,False
+Standard Class,Consumer,Los Angeles,California,Tables,1038.84,5,0.2,51.942,2.236068,0.4472136,False,False,True,False,False,False,False,True
+Standard Class,Consumer,Portland,Oregon,Paper,141.76,5,0.2,47.844,2.236068,0.4472136,False,False,True,False,False,False,False,True
+Standard Class,Consumer,Portland,Oregon,Accessories,239.8,5,0.2,47.96,2.236068,0.4472136,False,False,True,False,False,False,False,True
+Standard Class,Consumer,Portland,Oregon,Paper,31.104,6,0.2,10.8864,2.4494898,0.4472136,False,False,True,False,False,False,False,True
+Second Class,Corporate,Tamarac,Florida,Binders,254.058,7,0.7,-169.372,2.6457512,0.83666,False,True,False,True,False,False,True,False
+Second Class,Corporate,Tamarac,Florida,Appliances,194.528,2,0.2,24.316,1.4142135,0.4472136,False,True,False,True,False,False,True,False
+Second Class,Corporate,Tamarac,Florida,Supplies,961.48,5,0.2,-204.3145,2.236068,0.4472136,False,True,False,True,False,False,True,False
+Second Class,Home Office,Columbus,Ohio,Fasteners,19.096,7,0.2,6.6836,2.6457512,0.4472136,False,True,False,False,True,True,False,False
+Second Class,Home Office,Columbus,Ohio,Labels,18.496,8,0.2,6.2424,2.828427,0.4472136,False,True,False,False,True,True,False,False
+Second Class,Home Office,Columbus,Ohio,Accessories,255.984,2,0.2,54.3966,1.4142135,0.4472136,False,True,False,False,True,True,False,False
+Second Class,Home Office,Columbus,Ohio,Bookcases,86.97,3,0.5,-48.7032,1.7320508,0.70710677,False,True,False,False,True,True,False,False
+First Class,Corporate,Colorado Springs,Colorado,Furnishings,300.416,8,0.2,78.8592,2.828427,0.4472136,False,False,False,True,False,False,False,True
+First Class,Corporate,Colorado Springs,Colorado,Chairs,230.352,3,0.2,20.1558,1.7320508,0.4472136,False,False,False,True,False,False,False,True
+First Class,Corporate,Colorado Springs,Colorado,Furnishings,218.352,3,0.2,-24.5646,1.7320508,0.4472136,False,False,False,True,False,False,False,True
+First Class,Corporate,Colorado Springs,Colorado,Binders,78.6,5,0.7,-62.88,2.236068,0.83666,False,False,False,True,False,False,False,True
+First Class,Corporate,Colorado Springs,Colorado,Fasteners,27.552,3,0.2,9.2988,1.7320508,0.4472136,False,False,False,True,False,False,False,True
+Standard Class,Corporate,Belleville,New Jersey,Paper,32.4,5,0.0,15.552,2.236068,0.0,False,False,True,True,False,True,False,False
+Standard Class,Corporate,Belleville,New Jersey,Storage,1082.48,8,0.0,10.8248,2.828427,0.0,False,False,True,True,False,True,False,False
+Standard Class,Corporate,Belleville,New Jersey,Paper,56.91,3,0.0,27.3168,1.7320508,0.0,False,False,True,True,False,True,False,False
+Standard Class,Corporate,Belleville,New Jersey,Furnishings,77.6,4,0.0,38.024,2.0,0.0,False,False,True,True,False,True,False,False
+Standard Class,Corporate,Belleville,New Jersey,Binders,14.28,1,0.0,6.5688,1.0,0.0,False,False,True,True,False,True,False,False
+Standard Class,Consumer,Chicago,Illinois,Tables,219.075,3,0.5,-131.445,1.7320508,0.70710677,False,False,True,False,False,False,False,False
+Second Class,Corporate,New York City,New York,Furnishings,26.8,2,0.0,12.864,1.4142135,0.0,False,True,False,True,False,True,False,False
+Standard Class,Corporate,Taylor,Michigan,Art,9.84,3,0.0,2.8536,1.7320508,0.0,False,False,True,True,False,False,False,False
+Standard Class,Home Office,Lakewood,New Jersey,Binders,45.48,3,0.0,20.9208,1.7320508,0.0,False,False,True,False,True,True,False,False
+Standard Class,Home Office,Lakewood,New Jersey,Art,289.2,6,0.0,83.868,2.4494898,0.0,False,False,True,False,True,True,False,False
+First Class,Consumer,Arlington,Virginia,Art,4.89,1,0.0,2.0049,1.0,0.0,False,False,False,False,False,False,True,False
+Second Class,Corporate,Arvada,Colorado,Furnishings,15.136,4,0.2,3.5948,2.0,0.4472136,False,True,False,True,False,False,False,True
+Second Class,Corporate,Arvada,Colorado,Chairs,466.768,2,0.2,52.5114,1.4142135,0.4472136,False,True,False,True,False,False,False,True
+Second Class,Corporate,Arvada,Colorado,Furnishings,15.232,1,0.2,1.7136,1.0,0.4472136,False,True,False,True,False,False,False,True
+Second Class,Corporate,Arvada,Colorado,Labels,6.264,3,0.2,2.0358,1.7320508,0.4472136,False,True,False,True,False,False,False,True
+Standard Class,Corporate,Hackensack,New Jersey,Furnishings,87.54,3,0.0,37.6422,1.7320508,0.0,False,False,True,True,False,True,False,False
+Standard Class,Corporate,Saint Petersburg,Florida,Phones,178.384,2,0.2,22.298,1.4142135,0.4472136,False,False,True,True,False,False,True,False
+Standard Class,Corporate,Saint Petersburg,Florida,Paper,15.552,3,0.2,5.4432,1.7320508,0.4472136,False,False,True,True,False,False,True,False
+First Class,Corporate,Philadelphia,Pennsylvania,Art,99.136,4,0.2,8.6744,2.0,0.4472136,False,False,False,True,False,True,False,False
+Standard Class,Home Office,New York City,New York,Chairs,135.882,1,0.1,24.1568,1.0,0.31622776,False,False,True,False,True,True,False,False
+Standard Class,Home Office,New York City,New York,Machines,3991.98,2,0.0,1995.99,1.4142135,0.0,False,False,True,False,True,True,False,False
+Standard Class,Home Office,New York City,New York,Phones,275.94,6,0.0,80.0226,2.4494898,0.0,False,False,True,False,True,True,False,False
+Standard Class,Home Office,New York City,New York,Accessories,360.0,4,0.0,129.6,2.0,0.0,False,False,True,False,True,True,False,False
+Standard Class,Home Office,New York City,New York,Storage,43.57,1,0.0,13.071,1.0,0.0,False,False,True,False,True,True,False,False
+Standard Class,Corporate,Long Beach,California,Fasteners,7.16,2,0.0,3.58,1.4142135,0.0,False,False,True,True,False,False,False,True
+Standard Class,Corporate,Hesperia,California,Binders,251.52,6,0.2,81.744,2.4494898,0.4472136,False,False,True,True,False,False,False,True
+Standard Class,Corporate,Hesperia,California,Accessories,99.99,1,0.0,34.9965,1.0,0.0,False,False,True,True,False,False,False,True
+Second Class,Corporate,Murfreesboro,Tennessee,Furnishings,15.992,1,0.2,0.9995,1.0,0.4472136,False,True,False,True,False,False,True,False
+First Class,Consumer,Philadelphia,Pennsylvania,Phones,290.898,3,0.4,-67.8762,1.7320508,0.6324555,False,False,False,False,False,True,False,False
+First Class,Consumer,Philadelphia,Pennsylvania,Storage,54.224,2,0.2,3.389,1.4142135,0.4472136,False,False,False,False,False,True,False,False
+First Class,Consumer,Philadelphia,Pennsylvania,Chairs,786.744,4,0.3,-258.5016,2.0,0.5477226,False,False,False,False,False,True,False,False
+First Class,Consumer,Philadelphia,Pennsylvania,Labels,100.24,10,0.2,33.831,3.1622777,0.4472136,False,False,False,False,False,True,False,False
+First Class,Consumer,Philadelphia,Pennsylvania,Binders,37.764,6,0.7,-27.6936,2.4494898,0.83666,False,False,False,False,False,True,False,False
+Second Class,Consumer,Philadelphia,Pennsylvania,Phones,82.8,2,0.4,-20.7,1.4142135,0.6324555,False,True,False,False,False,True,False,False
+Second Class,Consumer,Philadelphia,Pennsylvania,Binders,20.724,2,0.7,-13.816,1.4142135,0.83666,False,True,False,False,False,True,False,False
+Second Class,Consumer,Philadelphia,Pennsylvania,Binders,4.896,3,0.7,-3.4272,1.7320508,0.83666,False,True,False,False,False,True,False,False
+Second Class,Consumer,Los Angeles,California,Binders,4.752,1,0.2,1.6038,1.0,0.4472136,False,True,False,False,False,False,False,True
+Second Class,Consumer,Los Angeles,California,Copiers,959.984,2,0.2,335.9944,1.4142135,0.4472136,False,True,False,False,False,False,False,True
+Second Class,Consumer,Los Angeles,California,Binders,14.368,4,0.2,4.49,2.0,0.4472136,False,True,False,False,False,False,False,True
+Standard Class,Corporate,San Francisco,California,Binders,7.712,2,0.2,2.7956,1.4142135,0.4472136,False,False,True,True,False,False,False,True
+Standard Class,Corporate,San Francisco,California,Tables,698.352,3,0.2,-17.4588,1.7320508,0.4472136,False,False,True,True,False,False,False,True
+Second Class,Consumer,Layton,Utah,Fasteners,4.96,4,0.0,2.3312,2.0,0.0,False,True,False,False,False,False,False,True
+Second Class,Corporate,Philadelphia,Pennsylvania,Art,17.856,4,0.2,1.116,2.0,0.4472136,False,True,False,True,False,True,False,False
+Second Class,Corporate,Philadelphia,Pennsylvania,Binders,509.97,10,0.7,-407.976,3.1622777,0.83666,False,True,False,True,False,True,False,False
+Second Class,Corporate,Philadelphia,Pennsylvania,Fasteners,30.992,13,0.2,10.0724,3.6055512,0.4472136,False,True,False,True,False,True,False,False
+Second Class,Corporate,Philadelphia,Pennsylvania,Phones,71.928,12,0.4,8.3916,3.4641016,0.6324555,False,True,False,True,False,True,False,False
+Standard Class,Consumer,Austin,Texas,Storage,88.8,4,0.2,-2.22,2.0,0.4472136,False,False,True,False,False,False,False,False
+Standard Class,Consumer,San Francisco,California,Phones,47.976,3,0.2,4.7976,1.7320508,0.4472136,False,False,True,False,False,False,False,True
+Standard Class,Consumer,Lowell,Massachusetts,Art,7.56,3,0.0,3.0996,1.7320508,0.0,False,False,True,False,False,True,False,False
+Standard Class,Consumer,Lowell,Massachusetts,Paper,24.56,2,0.0,11.5432,1.4142135,0.0,False,False,True,False,False,True,False,False
+Standard Class,Consumer,Lowell,Massachusetts,Art,12.96,2,0.0,4.1472,1.4142135,0.0,False,False,True,False,False,True,False,False
+First Class,Home Office,New York City,New York,Accessories,6.79,1,0.0,2.3086,1.0,0.0,False,False,False,False,True,True,False,False
+First Class,Home Office,New York City,New York,Paper,24.56,2,0.0,11.5432,1.4142135,0.0,False,False,False,False,True,True,False,False
+First Class,Home Office,New York City,New York,Binders,3.048,1,0.2,1.0668,1.0,0.4472136,False,False,False,False,True,True,False,False
+First Class,Home Office,New York City,New York,Paper,49.12,4,0.0,23.0864,2.0,0.0,False,False,False,False,True,True,False,False
+First Class,Home Office,New York City,New York,Binders,4355.168,4,0.2,1415.4296,2.0,0.4472136,False,False,False,False,True,True,False,False
+Standard Class,Consumer,New York City,New York,Bookcases,388.704,6,0.2,-4.8588,2.4494898,0.4472136,False,False,True,False,False,True,False,False
+Standard Class,Consumer,New York City,New York,Envelopes,8.26,2,0.0,3.7996,1.4142135,0.0,False,False,True,False,False,True,False,False
+Standard Class,Consumer,New York City,New York,Art,17.04,4,0.0,6.9864,2.0,0.0,False,False,True,False,False,True,False,False
+Standard Class,Consumer,New York City,New York,Paper,34.4,5,0.0,15.824,2.236068,0.0,False,False,True,False,False,True,False,False
+Standard Class,Corporate,Charlotte,North Carolina,Paper,36.24,5,0.2,11.325,2.236068,0.4472136,False,False,True,True,False,False,True,False
+First Class,Corporate,Columbus,Georgia,Appliances,647.84,8,0.0,168.4384,2.828427,0.0,False,False,False,True,False,False,True,False
+First Class,Corporate,Columbus,Georgia,Labels,20.7,2,0.0,9.936,1.4142135,0.0,False,False,False,True,False,False,True,False
+Standard Class,Consumer,New York City,New York,Labels,20.7,2,0.0,9.936,1.4142135,0.0,False,False,True,False,False,True,False,False
+Standard Class,Consumer,New York City,New York,Chairs,488.646,3,0.1,86.8704,1.7320508,0.31622776,False,False,True,False,False,True,False,False
+Standard Class,Consumer,New York City,New York,Art,5.56,2,0.0,1.4456,1.4142135,0.0,False,False,True,False,False,True,False,False
+Standard Class,Consumer,New York City,New York,Furnishings,47.12,8,0.0,20.7328,2.828427,0.0,False,False,True,False,False,True,False,False
+Standard Class,Consumer,San Francisco,California,Storage,211.96,4,0.0,8.4784,2.0,0.0,False,False,True,False,False,False,False,True
+Same Day,Corporate,Manchester,Connecticut,Binders,23.2,4,0.0,10.44,2.0,0.0,True,False,False,True,False,True,False,False
+Same Day,Corporate,Manchester,Connecticut,Supplies,7.36,2,0.0,0.1472,1.4142135,0.0,True,False,False,True,False,True,False,False
+Same Day,Corporate,Manchester,Connecticut,Storage,104.79,7,0.0,29.3412,2.6457512,0.0,True,False,False,True,False,True,False,False
+Same Day,Corporate,Manchester,Connecticut,Bookcases,1043.92,4,0.0,271.4192,2.0,0.0,True,False,False,True,False,True,False,False
+Standard Class,Consumer,Harlingen,Texas,Paper,25.92,5,0.2,9.396,2.236068,0.4472136,False,False,True,False,False,False,False,False
+Standard Class,Consumer,Harlingen,Texas,Storage,53.424,3,0.2,4.6746,1.7320508,0.4472136,False,False,True,False,False,False,False,False
+Standard Class,Consumer,Tucson,Arizona,Binders,8.16,5,0.7,-5.712,2.236068,0.83666,False,False,True,False,False,False,False,True
+Standard Class,Consumer,Tucson,Arizona,Accessories,1023.936,8,0.2,179.1888,2.828427,0.4472136,False,False,True,False,False,False,False,True
+Standard Class,Consumer,Tucson,Arizona,Art,9.24,1,0.2,0.924,1.0,0.4472136,False,False,True,False,False,False,False,True
+Standard Class,Consumer,Tucson,Arizona,Accessories,479.04,10,0.2,-29.94,3.1622777,0.4472136,False,False,True,False,False,False,False,True
+First Class,Corporate,Quincy,Illinois,Paper,99.136,4,0.2,30.98,2.0,0.4472136,False,False,False,True,False,False,False,False
+Standard Class,Corporate,Franklin,Massachusetts,Tables,1488.424,7,0.3,-297.6848,2.6457512,0.5477226,False,False,True,True,False,True,False,False
+Standard Class,Consumer,Houston,Texas,Appliances,8.652,3,0.8,-20.3322,1.7320508,0.8944272,False,False,True,False,False,False,False,False
+Standard Class,Consumer,Houston,Texas,Storage,23.832,3,0.2,2.6811,1.7320508,0.4472136,False,False,True,False,False,False,False,False
+Standard Class,Consumer,Houston,Texas,Binders,12.176,4,0.8,-18.8728,2.0,0.8944272,False,False,True,False,False,False,False,False
+First Class,Corporate,San Francisco,California,Paper,50.96,7,0.0,25.48,2.6457512,0.0,False,False,False,True,False,False,False,True
+First Class,Corporate,San Francisco,California,Binders,49.536,3,0.2,17.3376,1.7320508,0.4472136,False,False,False,True,False,False,False,True
+Second Class,Corporate,Taylor,Michigan,Accessories,41.9,2,0.0,8.799,1.4142135,0.0,False,True,False,True,False,False,False,False
+Standard Class,Consumer,Pembroke Pines,Florida,Tables,375.4575,3,0.45,-157.0095,1.7320508,0.6708204,False,False,True,False,False,False,True,False
+Standard Class,Consumer,Pembroke Pines,Florida,Accessories,83.976,3,0.2,-1.0497,1.7320508,0.4472136,False,False,True,False,False,False,True,False
+Standard Class,Corporate,Philadelphia,Pennsylvania,Machines,482.34,4,0.7,-337.638,2.0,0.83666,False,False,True,True,False,True,False,False
+Standard Class,Corporate,Philadelphia,Pennsylvania,Furnishings,2.96,1,0.2,0.777,1.0,0.4472136,False,False,True,True,False,True,False,False
+First Class,Consumer,Cincinnati,Ohio,Art,2.624,1,0.2,0.4264,1.0,0.4472136,False,False,False,False,False,True,False,False
+Standard Class,Consumer,New York City,New York,Binders,23.36,4,0.2,7.884,2.0,0.4472136,False,False,True,False,False,True,False,False
+Standard Class,Consumer,New York City,New York,Accessories,39.98,2,0.0,13.5932,1.4142135,0.0,False,False,True,False,False,True,False,False
+Second Class,Consumer,Des Moines,Washington,Phones,246.384,2,0.2,27.7182,1.4142135,0.4472136,False,True,False,False,False,False,False,True
+Second Class,Consumer,Des Moines,Washington,Copiers,1799.97,3,0.0,701.9883,1.7320508,0.0,False,True,False,False,False,False,False,True
+Second Class,Corporate,Peoria,Illinois,Binders,12.462,3,0.8,-20.5623,1.7320508,0.8944272,False,True,False,True,False,False,False,False
+Standard Class,Home Office,Las Vegas,Nevada,Binders,75.792,3,0.2,25.5798,1.7320508,0.4472136,False,False,True,False,True,False,False,True
+Second Class,Corporate,Warwick,Rhode Island,Storage,49.96,2,0.0,9.4924,1.4142135,0.0,False,True,False,True,False,True,False,False
+Second Class,Corporate,Warwick,Rhode Island,Paper,12.96,2,0.0,6.2208,1.4142135,0.0,False,True,False,True,False,True,False,False
+Standard Class,Home Office,Jackson,Michigan,Supplies,70.12,4,0.0,21.036,2.0,0.0,False,False,True,False,True,False,False,False
+Second Class,Consumer,Houston,Texas,Storage,35.952,3,0.2,3.5952,1.7320508,0.4472136,False,True,False,False,False,False,False,False
+Second Class,Consumer,Houston,Texas,Bookcases,2396.2656,4,0.32,-317.1528,2.0,0.56568545,False,True,False,False,False,False,False,False
+Second Class,Consumer,Houston,Texas,Storage,131.136,4,0.2,-32.784,2.0,0.4472136,False,True,False,False,False,False,False,False
+Second Class,Consumer,Houston,Texas,Accessories,57.584,2,0.2,0.7198,1.4142135,0.4472136,False,True,False,False,False,False,False,False
+First Class,Consumer,Miami,Florida,Paper,9.568,2,0.2,3.4684,1.4142135,0.4472136,False,False,False,False,False,False,True,False
+Standard Class,Corporate,Wilmington,North Carolina,Art,39.072,6,0.2,9.768,2.4494898,0.4472136,False,False,True,True,False,False,True,False
+Standard Class,Consumer,New York City,New York,Appliances,35.91,3,0.0,9.6957,1.7320508,0.0,False,False,True,False,False,True,False,False
+Standard Class,Consumer,San Francisco,California,Accessories,179.95,5,0.0,37.7895,2.236068,0.0,False,False,True,False,False,False,False,True
+Standard Class,Consumer,San Francisco,California,Copiers,1199.976,3,0.2,434.9913,1.7320508,0.4472136,False,False,True,False,False,False,False,True
+Standard Class,Consumer,San Francisco,California,Paper,27.15,5,0.0,13.3035,2.236068,0.0,False,False,True,False,False,False,False,True
+Standard Class,Consumer,San Francisco,California,Tables,1004.024,7,0.2,-112.9527,2.6457512,0.4472136,False,False,True,False,False,False,False,True
+Standard Class,Consumer,San Francisco,California,Paper,9.68,1,0.0,4.6464,1.0,0.0,False,False,True,False,False,False,False,True
+Standard Class,Consumer,San Francisco,California,Labels,28.35,9,0.0,13.608,3.0,0.0,False,False,True,False,False,False,False,True
+Standard Class,Consumer,San Francisco,California,Paper,55.98,1,0.0,27.4302,1.0,0.0,False,False,True,False,False,False,False,True
+Standard Class,Consumer,San Francisco,California,Bookcases,1336.829,13,0.15,31.4548,3.6055512,0.38729835,False,False,True,False,False,False,False,True
+Standard Class,Consumer,San Francisco,California,Chairs,113.568,2,0.2,-18.4548,1.4142135,0.4472136,False,False,True,False,False,False,False,True
+Standard Class,Corporate,Seattle,Washington,Paper,139.86,7,0.0,65.7342,2.6457512,0.0,False,False,True,True,False,False,False,True
+Standard Class,Corporate,Seattle,Washington,Chairs,307.136,4,0.2,26.8744,2.0,0.4472136,False,False,True,True,False,False,False,True
+Standard Class,Consumer,Huntington Beach,California,Art,95.92,8,0.0,25.8984,2.828427,0.0,False,False,True,False,False,False,False,True
+Standard Class,Consumer,Los Angeles,California,Chairs,383.8,5,0.2,38.38,2.236068,0.4472136,False,False,True,False,False,False,False,True
+Standard Class,Corporate,Richmond,Kentucky,Paper,5.78,1,0.0,2.8322,1.0,0.0,False,False,True,True,False,False,True,False
+Standard Class,Corporate,Los Angeles,California,Art,9.32,4,0.0,2.7028,2.0,0.0,False,False,True,True,False,False,False,True
+Standard Class,Corporate,Los Angeles,California,Envelopes,15.25,1,0.0,7.015,1.0,0.0,False,False,True,True,False,False,False,True
+First Class,Consumer,Louisville,Colorado,Accessories,196.752,6,0.2,56.5662,2.4494898,0.4472136,False,False,False,False,False,False,False,True
+Standard Class,Corporate,Lawrence,Massachusetts,Furnishings,56.56,4,0.0,14.7056,2.0,0.0,False,False,True,True,False,True,False,False
+Standard Class,Corporate,Lawrence,Massachusetts,Storage,32.7,3,0.0,8.502,1.7320508,0.0,False,False,True,True,False,True,False,False
+Second Class,Consumer,Jackson,Mississippi,Chairs,866.4,4,0.0,225.264,2.0,0.0,False,True,False,False,False,False,True,False
+Second Class,Corporate,Canton,Michigan,Furnishings,28.4,2,0.0,11.076,1.4142135,0.0,False,True,False,True,False,False,False,False
+Second Class,Corporate,Canton,Michigan,Binders,287.92,8,0.0,138.2016,2.828427,0.0,False,True,False,True,False,False,False,False
+First Class,Home Office,New Rochelle,New York,Machines,69.99,1,0.0,30.0957,1.0,0.0,False,False,False,False,True,True,False,False
+Standard Class,Corporate,San Antonio,Texas,Art,6.672,6,0.2,0.5004,2.4494898,0.4472136,False,False,True,True,False,False,False,False
+Standard Class,Home Office,Gastonia,North Carolina,Binders,189.588,2,0.7,-145.3508,1.4142135,0.83666,False,False,True,False,True,False,True,False
+Standard Class,Home Office,Gastonia,North Carolina,Accessories,408.744,7,0.2,76.6395,2.6457512,0.4472136,False,False,True,False,True,False,True,False
+Standard Class,Home Office,Gastonia,North Carolina,Accessories,291.96,5,0.2,54.7425,2.236068,0.4472136,False,False,True,False,True,False,True,False
+Standard Class,Home Office,Gastonia,North Carolina,Storage,4.768,2,0.2,-0.7748,1.4142135,0.4472136,False,False,True,False,True,False,True,False
+First Class,Consumer,Lowell,Massachusetts,Storage,714.3,5,0.0,207.147,2.236068,0.0,False,False,False,False,False,True,False,False
+Standard Class,Consumer,Jacksonville,Florida,Binders,4.812,2,0.7,-3.6892,1.4142135,0.83666,False,False,True,False,False,False,True,False
+Standard Class,Consumer,Jacksonville,Florida,Accessories,247.8,5,0.2,-18.585,2.236068,0.4472136,False,False,True,False,False,False,True,False
+Second Class,Home Office,Chicago,Illinois,Machines,1007.979,3,0.3,43.1991,1.7320508,0.5477226,False,True,False,False,True,False,False,False
+Second Class,Home Office,Chicago,Illinois,Paper,313.488,7,0.2,113.6394,2.6457512,0.4472136,False,True,False,False,True,False,False,False
+Standard Class,Corporate,Houston,Texas,Paper,31.872,8,0.2,11.5536,2.828427,0.4472136,False,False,True,True,False,False,False,False
+Second Class,Corporate,New York City,New York,Chairs,207.846,3,0.1,2.3094,1.7320508,0.31622776,False,True,False,True,False,True,False,False
+Second Class,Consumer,Detroit,Michigan,Furnishings,12.22,1,0.0,3.666,1.0,0.0,False,True,False,False,False,False,False,False
+Second Class,Consumer,Detroit,Michigan,Storage,194.94,3,0.0,23.3928,1.7320508,0.0,False,True,False,False,False,False,False,False
+Second Class,Consumer,Detroit,Michigan,Storage,70.95,3,0.0,20.5755,1.7320508,0.0,False,True,False,False,False,False,False,False
+Second Class,Consumer,Detroit,Michigan,Paper,91.36,4,0.0,42.0256,2.0,0.0,False,True,False,False,False,False,False,False
+Second Class,Consumer,Detroit,Michigan,Chairs,242.94,3,0.0,29.1528,1.7320508,0.0,False,True,False,False,False,False,False,False
+Second Class,Consumer,Detroit,Michigan,Labels,22.05,7,0.0,10.584,2.6457512,0.0,False,True,False,False,False,False,False,False
+Second Class,Consumer,Columbus,Indiana,Furnishings,2.91,1,0.0,1.3677,1.0,0.0,False,True,False,False,False,False,False,False
+Second Class,Consumer,Auburn,New York,Art,59.52,3,0.0,15.4752,1.7320508,0.0,False,True,False,False,False,True,False,False
+Second Class,Consumer,Auburn,New York,Storage,161.94,3,0.0,9.7164,1.7320508,0.0,False,True,False,False,False,True,False,False
+Second Class,Consumer,Auburn,New York,Art,263.88,6,0.0,71.2476,2.4494898,0.0,False,True,False,False,False,True,False,False
+Second Class,Consumer,Auburn,New York,Art,30.48,3,0.0,7.9248,1.7320508,0.0,False,True,False,False,False,True,False,False
+Second Class,Consumer,Auburn,New York,Art,9.84,3,0.0,2.8536,1.7320508,0.0,False,True,False,False,False,True,False,False
+Second Class,Consumer,Auburn,New York,Phones,35.12,4,0.0,9.1312,2.0,0.0,False,True,False,False,False,True,False,False
+Standard Class,Corporate,Akron,Ohio,Tables,284.364,2,0.4,-75.8304,1.4142135,0.6324555,False,False,True,True,False,True,False,False
+Standard Class,Corporate,Akron,Ohio,Storage,665.408,2,0.2,66.5408,1.4142135,0.4472136,False,False,True,True,False,True,False,False
+Standard Class,Corporate,Norman,Oklahoma,Accessories,63.88,4,0.0,24.9132,2.0,0.0,False,False,True,True,False,False,False,False
+Standard Class,Consumer,Concord,California,Chairs,129.568,2,0.2,-24.294,1.4142135,0.4472136,False,False,True,False,False,False,False,True
+Standard Class,Consumer,Decatur,Illinois,Chairs,747.558,3,0.3,-96.1146,1.7320508,0.5477226,False,False,True,False,False,False,False,False
+Standard Class,Consumer,Decatur,Illinois,Envelopes,8.928,2,0.2,3.348,1.4142135,0.4472136,False,False,True,False,False,False,False,False
+Standard Class,Consumer,Seattle,Washington,Appliances,103.92,4,0.0,36.372,2.0,0.0,False,False,True,False,False,False,False,True
+Standard Class,Consumer,Seattle,Washington,Accessories,899.91,9,0.0,377.9622,3.0,0.0,False,False,True,False,False,False,False,True
+Standard Class,Consumer,Seattle,Washington,Binders,51.312,3,0.2,18.6006,1.7320508,0.4472136,False,False,True,False,False,False,False,True
+Standard Class,Home Office,Phoenix,Arizona,Furnishings,23.56,5,0.2,7.068,2.236068,0.4472136,False,False,True,False,True,False,False,True
+Standard Class,Home Office,Phoenix,Arizona,Tables,1272.63,6,0.5,-814.4832,2.4494898,0.70710677,False,False,True,False,True,False,False,True
+Standard Class,Home Office,Phoenix,Arizona,Binders,28.485,5,0.7,-20.889,2.236068,0.83666,False,False,True,False,True,False,False,True
+Standard Class,Home Office,Phoenix,Arizona,Supplies,185.376,2,0.2,-34.758,1.4142135,0.4472136,False,False,True,False,True,False,False,True
+Standard Class,Home Office,Phoenix,Arizona,Appliances,78.272,2,0.2,5.8704,1.4142135,0.4472136,False,False,True,False,True,False,False,True
+Standard Class,Home Office,Park Ridge,Illinois,Furnishings,254.744,7,0.6,-312.0614,2.6457512,0.7745967,False,False,True,False,True,False,False,False
+Standard Class,Corporate,Amarillo,Texas,Bookcases,205.3328,2,0.32,-36.2352,1.4142135,0.56568545,False,False,True,True,False,False,False,False
+Second Class,Consumer,Chicago,Illinois,Binders,4.788,3,0.8,-7.9002,1.7320508,0.8944272,False,True,False,False,False,False,False,False
+Standard Class,Corporate,Lindenhurst,New York,Paper,55.48,1,0.0,26.6304,1.0,0.0,False,False,True,True,False,True,False,False
+Second Class,Consumer,San Francisco,California,Storage,340.92,3,0.0,3.4092,1.7320508,0.0,False,True,False,False,False,False,False,True
+Second Class,Consumer,San Francisco,California,Bookcases,222.666,2,0.15,10.4784,1.4142135,0.38729835,False,True,False,False,False,False,False,True
+Second Class,Consumer,San Francisco,California,Phones,703.968,4,0.2,87.996,2.0,0.4472136,False,True,False,False,False,False,False,True
+Second Class,Consumer,San Francisco,California,Storage,92.52,6,0.0,24.9804,2.4494898,0.0,False,True,False,False,False,False,False,True
+Second Class,Consumer,San Francisco,California,Paper,62.65,7,0.0,28.819,2.6457512,0.0,False,True,False,False,False,False,False,True
+Second Class,Consumer,San Francisco,California,Paper,94.85,5,0.0,45.528,2.236068,0.0,False,True,False,False,False,False,False,True
+Standard Class,Corporate,Los Angeles,California,Phones,95.76,6,0.2,7.182,2.4494898,0.4472136,False,False,True,True,False,False,False,True
+Standard Class,Consumer,Troy,New York,Furnishings,40.2,3,0.0,19.296,1.7320508,0.0,False,False,True,False,False,True,False,False
+Standard Class,Corporate,New York City,New York,Art,14.7,5,0.0,6.615,2.236068,0.0,False,False,True,True,False,True,False,False
+Standard Class,Corporate,New York City,New York,Storage,704.25,5,0.0,84.51,2.236068,0.0,False,False,True,True,False,True,False,False
+Standard Class,Consumer,San Diego,California,Accessories,9.09,3,0.0,1.9089,1.7320508,0.0,False,False,True,False,False,False,False,True
+Standard Class,Consumer,New York City,New York,Art,5.96,2,0.0,1.6688,1.4142135,0.0,False,False,True,False,False,True,False,False
+Standard Class,Consumer,New York City,New York,Accessories,159.98,2,0.0,57.5928,1.4142135,0.0,False,False,True,False,False,True,False,False
+First Class,Home Office,Los Angeles,California,Labels,29.6,2,0.0,14.8,1.4142135,0.0,False,False,False,False,True,False,False,True
+First Class,Home Office,Los Angeles,California,Bookcases,514.165,5,0.15,-30.245,2.236068,0.38729835,False,False,False,False,True,False,False,True
+First Class,Home Office,Los Angeles,California,Phones,279.96,5,0.2,17.4975,2.236068,0.4472136,False,False,False,False,True,False,False,True
+First Class,Consumer,Chicago,Illinois,Phones,2735.952,6,0.2,341.994,2.4494898,0.4472136,False,False,False,False,False,False,False,False
+Second Class,Home Office,Huntsville,Texas,Phones,7.992,1,0.2,0.5994,1.0,0.4472136,False,True,False,False,True,False,False,False
+Second Class,Home Office,Huntsville,Texas,Accessories,63.984,2,0.2,10.3974,1.4142135,0.4472136,False,True,False,False,True,False,False,False
+Second Class,Home Office,Huntsville,Texas,Art,70.368,2,0.2,6.1572,1.4142135,0.4472136,False,True,False,False,True,False,False,False
+Standard Class,Consumer,Rochester,New York,Storage,449.15,5,0.0,8.983,2.236068,0.0,False,False,True,False,False,True,False,False
+Standard Class,Consumer,Rochester,New York,Envelopes,11.07,3,0.0,5.0922,1.7320508,0.0,False,False,True,False,False,True,False,False
+Standard Class,Consumer,Seattle,Washington,Accessories,93.98,2,0.0,13.1572,1.4142135,0.0,False,False,True,False,False,False,False,True
+Second Class,Consumer,Memphis,Tennessee,Tables,189.882,3,0.4,-94.941,1.7320508,0.6324555,False,True,False,False,False,False,True,False
+Standard Class,Consumer,Fayetteville,Arkansas,Envelopes,105.42,2,0.0,51.6558,1.4142135,0.0,False,False,True,False,False,False,True,False
+Standard Class,Consumer,Costa Mesa,California,Binders,119.616,8,0.2,40.3704,2.828427,0.4472136,False,False,True,False,False,False,False,True
+Standard Class,Consumer,Costa Mesa,California,Furnishings,255.76,4,0.0,81.8432,2.0,0.0,False,False,True,False,False,False,False,True
+Standard Class,Consumer,Costa Mesa,California,Chairs,241.568,2,0.2,18.1176,1.4142135,0.4472136,False,False,True,False,False,False,False,True
+Standard Class,Consumer,Costa Mesa,California,Furnishings,69.3,9,0.0,22.869,3.0,0.0,False,False,True,False,False,False,False,True
+Standard Class,Corporate,Parker,Colorado,Binders,22.62,2,0.7,-15.08,1.4142135,0.83666,False,False,True,True,False,False,False,True
+Standard Class,Corporate,Parker,Colorado,Binders,14.952,2,0.7,-11.9616,1.4142135,0.83666,False,False,True,True,False,False,False,True
+Standard Class,Corporate,Parker,Colorado,Chairs,801.568,2,0.2,50.098,1.4142135,0.4472136,False,False,True,True,False,False,False,True
+Standard Class,Corporate,Parker,Colorado,Binders,2.376,3,0.7,-1.9008,1.7320508,0.83666,False,False,True,True,False,False,False,True
+Standard Class,Corporate,Parker,Colorado,Paper,32.792,1,0.2,11.8871,1.0,0.4472136,False,False,True,True,False,False,False,True
+Second Class,Corporate,New York City,New York,Binders,15.92,5,0.2,5.373,2.236068,0.4472136,False,True,False,True,False,True,False,False
+Standard Class,Consumer,Atlanta,Georgia,Art,2.74,1,0.0,0.7398,1.0,0.0,False,False,True,False,False,False,True,False
+Standard Class,Consumer,Atlanta,Georgia,Art,8.34,3,0.0,2.1684,1.7320508,0.0,False,False,True,False,False,False,True,False
+Standard Class,Consumer,Atlanta,Georgia,Storage,46.74,3,0.0,11.685,1.7320508,0.0,False,False,True,False,False,False,True,False
+Standard Class,Consumer,Atlanta,Georgia,Binders,6354.95,5,0.0,3177.475,2.236068,0.0,False,False,True,False,False,False,True,False
+First Class,Consumer,Gladstone,Missouri,Furnishings,126.3,3,0.0,40.416,1.7320508,0.0,False,False,False,False,False,False,False,False
+First Class,Consumer,Gladstone,Missouri,Accessories,38.04,2,0.0,12.1728,1.4142135,0.0,False,False,False,False,False,False,False,False
+First Class,Consumer,Newark,Ohio,Art,7.152,3,0.2,0.7152,1.7320508,0.4472136,False,False,False,False,False,True,False,False
+Standard Class,Consumer,Los Angeles,California,Art,6.63,3,0.0,1.7901,1.7320508,0.0,False,False,True,False,False,False,False,True
+Standard Class,Consumer,Los Angeles,California,Art,5.88,2,0.0,1.7052,1.4142135,0.0,False,False,True,False,False,False,False,True
+Standard Class,Home Office,Great Falls,Montana,Copiers,2999.95,5,0.0,1379.977,2.236068,0.0,False,False,True,False,True,False,False,True
+Standard Class,Home Office,Great Falls,Montana,Storage,51.45,3,0.0,13.8915,1.7320508,0.0,False,False,True,False,True,False,False,True
+Standard Class,Home Office,Great Falls,Montana,Paper,11.96,2,0.0,5.382,1.4142135,0.0,False,False,True,False,True,False,False,True
+Standard Class,Home Office,Great Falls,Montana,Storage,1126.02,3,0.0,56.301,1.7320508,0.0,False,False,True,False,True,False,False,True
+Standard Class,Consumer,Houston,Texas,Accessories,18.392,1,0.2,5.2877,1.0,0.4472136,False,False,True,False,False,False,False,False
+Standard Class,Consumer,Houston,Texas,Storage,129.568,2,0.2,-25.9136,1.4142135,0.4472136,False,False,True,False,False,False,False,False
+Standard Class,Consumer,Houston,Texas,Binders,14.112,9,0.8,-21.168,3.0,0.8944272,False,False,True,False,False,False,False,False
+First Class,Corporate,Detroit,Michigan,Tables,210.98,2,0.0,21.098,1.4142135,0.0,False,False,False,True,False,False,False,False
+First Class,Consumer,Los Angeles,California,Phones,55.176,3,0.2,-12.4146,1.7320508,0.4472136,False,False,False,False,False,False,False,True
+First Class,Consumer,Los Angeles,California,Accessories,66.26,2,0.0,27.1666,1.4142135,0.0,False,False,False,False,False,False,False,True
+Standard Class,Consumer,Lawrence,Massachusetts,Fasteners,22.2,5,0.0,10.434,2.236068,0.0,False,False,True,False,False,True,False,False
+Standard Class,Home Office,Lakeland,Florida,Chairs,683.952,3,0.2,42.747,1.7320508,0.4472136,False,False,True,False,True,False,True,False
+Standard Class,Home Office,Lakeland,Florida,Furnishings,45.696,3,0.2,5.1408,1.7320508,0.4472136,False,False,True,False,True,False,True,False
+Standard Class,Consumer,Philadelphia,Pennsylvania,Storage,36.336,3,0.2,-7.2672,1.7320508,0.4472136,False,False,True,False,False,True,False,False
+Standard Class,Consumer,Philadelphia,Pennsylvania,Supplies,666.248,1,0.2,-149.9058,1.0,0.4472136,False,False,True,False,False,True,False,False
+Standard Class,Consumer,Philadelphia,Pennsylvania,Envelopes,52.512,6,0.2,19.692,2.4494898,0.4472136,False,False,True,False,False,True,False,False
+Second Class,Corporate,Los Angeles,California,Chairs,190.72,1,0.2,11.92,1.0,0.4472136,False,True,False,True,False,False,False,True
+Standard Class,Consumer,Los Angeles,California,Furnishings,47.94,3,0.0,2.397,1.7320508,0.0,False,False,True,False,False,False,False,True
+Second Class,Consumer,Montgomery,Alabama,Phones,979.95,5,0.0,274.386,2.236068,0.0,False,True,False,False,False,False,True,False
+Second Class,Consumer,Montgomery,Alabama,Binders,22.75,5,0.0,11.375,2.236068,0.0,False,True,False,False,False,False,True,False
+Standard Class,Consumer,Mesa,Arizona,Storage,16.768,2,0.2,1.4672,1.4142135,0.4472136,False,False,True,False,False,False,False,True
+Second Class,Consumer,Chicago,Illinois,Binders,42.616,7,0.8,-68.1856,2.6457512,0.8944272,False,True,False,False,False,False,False,False
+Standard Class,Home Office,New York City,New York,Binders,10.752,4,0.2,3.36,2.0,0.4472136,False,False,True,False,True,True,False,False
+Standard Class,Consumer,Henderson,Kentucky,Appliances,152.94,3,0.0,41.2938,1.7320508,0.0,False,False,True,False,False,False,True,False
+Standard Class,Consumer,Henderson,Kentucky,Chairs,283.92,4,0.0,70.98,2.0,0.0,False,False,True,False,False,False,True,False
+First Class,Consumer,Green Bay,Wisconsin,Accessories,468.9,6,0.0,206.316,2.4494898,0.0,False,False,False,False,False,False,False,False
+First Class,Corporate,Tucson,Arizona,Phones,380.864,8,0.2,38.0864,2.828427,0.4472136,False,False,False,True,False,False,False,True
+Standard Class,Consumer,Springfield,Ohio,Storage,646.776,9,0.2,-145.5246,3.0,0.4472136,False,False,True,False,False,True,False,False
+Standard Class,Consumer,Fort Worth,Texas,Accessories,58.112,2,0.2,7.264,1.4142135,0.4472136,False,False,True,False,False,False,False,False
+Standard Class,Consumer,Fort Worth,Texas,Phones,100.792,1,0.2,6.2995,1.0,0.4472136,False,False,True,False,False,False,False,False
+Standard Class,Consumer,Fort Worth,Texas,Furnishings,66.112,4,0.6,-84.2928,2.0,0.7745967,False,False,True,False,False,False,False,False
+First Class,Home Office,New York City,New York,Binders,41.28,6,0.2,13.932,2.4494898,0.4472136,False,False,False,False,True,True,False,False
+First Class,Home Office,New York City,New York,Paper,13.36,2,0.0,6.4128,1.4142135,0.0,False,False,False,False,True,True,False,False
+Second Class,Corporate,Chicago,Illinois,Storage,250.272,9,0.2,15.642,3.0,0.4472136,False,True,False,True,False,False,False,False
+Second Class,Corporate,Chicago,Illinois,Binders,11.364,3,0.8,-17.046,1.7320508,0.8944272,False,True,False,True,False,False,False,False
+Second Class,Corporate,Chicago,Illinois,Supplies,8.72,5,0.2,-1.744,2.236068,0.4472136,False,True,False,True,False,False,False,False
+Second Class,Consumer,San Francisco,California,Chairs,1121.568,2,0.2,0.0,1.4142135,0.4472136,False,True,False,False,False,False,False,True
+First Class,Consumer,Jacksonville,Florida,Furnishings,34.504,1,0.2,6.0382,1.0,0.4472136,False,False,False,False,False,False,True,False
+Standard Class,Consumer,Houston,Texas,Fasteners,10.824,3,0.2,2.5707,1.7320508,0.4472136,False,False,True,False,False,False,False,False
+Second Class,Corporate,Anaheim,California,Storage,1295.78,2,0.0,310.9872,1.4142135,0.0,False,True,False,True,False,False,False,True
+Second Class,Consumer,Wilmington,North Carolina,Art,19.456,4,0.2,3.4048,2.0,0.4472136,False,True,False,False,False,False,True,False
+Standard Class,Consumer,Los Angeles,California,Labels,20.7,2,0.0,9.936,1.4142135,0.0,False,False,True,False,False,False,False,True
+Standard Class,Consumer,Los Angeles,California,Tables,1335.68,4,0.2,-217.048,2.0,0.4472136,False,False,True,False,False,False,False,True
+Standard Class,Consumer,Los Angeles,California,Paper,32.4,5,0.0,15.552,2.236068,0.0,False,False,True,False,False,False,False,True
+Second Class,Consumer,San Francisco,California,Furnishings,42.6,3,0.0,16.614,1.7320508,0.0,False,True,False,False,False,False,False,True
+Second Class,Consumer,San Francisco,California,Binders,84.056,7,0.2,27.3182,2.6457512,0.4472136,False,True,False,False,False,False,False,True
+Second Class,Consumer,Tampa,Florida,Appliances,13.0,5,0.2,1.3,2.236068,0.4472136,False,True,False,False,False,False,True,False
+Second Class,Consumer,Tampa,Florida,Furnishings,13.128,3,0.2,3.7743,1.7320508,0.4472136,False,True,False,False,False,False,True,False
+First Class,Consumer,Seattle,Washington,Fasteners,3.96,2,0.0,0.0,1.4142135,0.0,False,False,False,False,False,False,False,True
+First Class,Consumer,Seattle,Washington,Labels,2.61,1,0.0,1.2006,1.0,0.0,False,False,False,False,False,False,False,True
+First Class,Consumer,Los Angeles,California,Phones,374.376,3,0.2,46.797,1.7320508,0.4472136,False,False,False,False,False,False,False,True
+Standard Class,Corporate,Seattle,Washington,Paper,91.84,8,0.0,45.0016,2.828427,0.0,False,False,True,True,False,False,False,True
+Standard Class,Corporate,Seattle,Washington,Binders,81.088,7,0.2,27.3672,2.6457512,0.4472136,False,False,True,True,False,False,False,True
+Standard Class,Corporate,Seattle,Washington,Paper,19.44,3,0.0,9.3312,1.7320508,0.0,False,False,True,True,False,False,False,True
+Standard Class,Corporate,Seattle,Washington,Chairs,451.152,3,0.2,0.0,1.7320508,0.4472136,False,False,True,True,False,False,False,True
+Standard Class,Consumer,New York City,New York,Labels,72.45,7,0.0,34.776,2.6457512,0.0,False,False,True,False,False,True,False,False
+Standard Class,Consumer,New York City,New York,Fasteners,13.96,4,0.0,6.4216,2.0,0.0,False,False,True,False,False,True,False,False
+Standard Class,Consumer,New York City,New York,Binders,33.264,7,0.2,11.2266,2.6457512,0.4472136,False,False,True,False,False,True,False,False
+Standard Class,Consumer,New York City,New York,Phones,14.85,3,0.0,4.0095,1.7320508,0.0,False,False,True,False,False,True,False,False
+Standard Class,Consumer,Marysville,Washington,Art,8.82,3,0.0,2.3814,1.7320508,0.0,False,False,True,False,False,False,False,True
+Second Class,Consumer,Long Beach,California,Paper,160.72,14,0.0,78.7528,3.7416575,0.0,False,True,False,False,False,False,False,True
+Second Class,Consumer,Long Beach,California,Paper,19.92,4,0.0,9.7608,2.0,0.0,False,True,False,False,False,False,False,True
+Second Class,Consumer,Long Beach,California,Supplies,7.3,2,0.0,2.19,1.4142135,0.0,False,True,False,False,False,False,False,True
+Standard Class,Consumer,Chicago,Illinois,Storage,69.712,2,0.2,8.714,1.4142135,0.4472136,False,False,True,False,False,False,False,False
+Standard Class,Consumer,Chicago,Illinois,Furnishings,8.792,1,0.6,-5.7148,1.0,0.7745967,False,False,True,False,False,False,False,False
+Standard Class,Consumer,Los Angeles,California,Supplies,51.52,4,0.0,1.5456,2.0,0.0,False,False,True,False,False,False,False,True
+Standard Class,Consumer,Denver,Colorado,Phones,470.376,3,0.2,52.9173,1.7320508,0.4472136,False,False,True,False,False,False,False,True
+Standard Class,Consumer,Denver,Colorado,Phones,105.584,2,0.2,9.2386,1.4142135,0.4472136,False,False,True,False,False,False,False,True
+Standard Class,Consumer,Denver,Colorado,Appliances,31.152,3,0.2,3.5046,1.7320508,0.4472136,False,False,True,False,False,False,False,True
+Standard Class,Consumer,Denver,Colorado,Binders,6.783,7,0.7,-4.7481,2.6457512,0.83666,False,False,True,False,False,False,False,True
+Standard Class,Consumer,Denver,Colorado,Phones,406.368,4,0.2,30.4776,2.0,0.4472136,False,False,True,False,False,False,False,True
+Standard Class,Consumer,Richmond,Kentucky,Chairs,70.98,1,0.0,4.9686,1.0,0.0,False,False,True,False,False,False,True,False
+Standard Class,Consumer,Richmond,Kentucky,Labels,294.93,3,0.0,144.5157,1.7320508,0.0,False,False,True,False,False,False,True,False
+Standard Class,Consumer,Salem,Oregon,Phones,84.784,2,0.2,-20.1362,1.4142135,0.4472136,False,False,True,False,False,False,False,True
+Standard Class,Consumer,Salem,Oregon,Paper,20.736,4,0.2,7.2576,2.0,0.4472136,False,False,True,False,False,False,False,True
+Standard Class,Consumer,Salem,Oregon,Binders,16.821,3,0.7,-12.8961,1.7320508,0.83666,False,False,True,False,False,False,False,True
+Standard Class,Consumer,Salem,Oregon,Paper,10.368,2,0.2,3.6288,1.4142135,0.4472136,False,False,True,False,False,False,False,True
+Standard Class,Consumer,Laredo,Texas,Art,9.344,2,0.2,1.168,1.4142135,0.4472136,False,False,True,False,False,False,False,False
+Standard Class,Consumer,Laredo,Texas,Accessories,31.2,3,0.2,9.75,1.7320508,0.4472136,False,False,True,False,False,False,False,False
+Standard Class,Consumer,San Diego,California,Appliances,76.12,2,0.0,22.0748,1.4142135,0.0,False,False,True,False,False,False,False,True
+Standard Class,Consumer,San Diego,California,Copiers,1199.976,3,0.2,434.9913,1.7320508,0.4472136,False,False,True,False,False,False,False,True
+Standard Class,Consumer,San Diego,California,Phones,445.96,5,0.2,55.745,2.236068,0.4472136,False,False,True,False,False,False,False,True
+Standard Class,Consumer,San Diego,California,Furnishings,327.76,8,0.0,91.7728,2.828427,0.0,False,False,True,False,False,False,False,True
+First Class,Consumer,Philadelphia,Pennsylvania,Supplies,11.632,2,0.2,1.0178,1.4142135,0.4472136,False,False,False,False,False,True,False,False
+Standard Class,Consumer,Philadelphia,Pennsylvania,Phones,143.982,3,0.4,-28.7964,1.7320508,0.6324555,False,False,True,False,False,True,False,False
+Standard Class,Consumer,Philadelphia,Pennsylvania,Phones,494.376,4,0.4,-115.3544,2.0,0.6324555,False,False,True,False,False,True,False,False
+Standard Class,Consumer,Philadelphia,Pennsylvania,Supplies,5.84,2,0.2,0.73,1.4142135,0.4472136,False,False,True,False,False,True,False,False
+Standard Class,Consumer,Tampa,Florida,Storage,142.776,1,0.2,17.847,1.0,0.4472136,False,False,True,False,False,False,True,False
+Standard Class,Consumer,Tampa,Florida,Furnishings,45.696,3,0.2,5.1408,1.7320508,0.4472136,False,False,True,False,False,False,True,False
+Standard Class,Consumer,Tampa,Florida,Binders,7.218,3,0.7,-5.5338,1.7320508,0.83666,False,False,True,False,False,False,True,False
+Standard Class,Consumer,Tampa,Florida,Binders,43.188,4,0.7,-31.6712,2.0,0.83666,False,False,True,False,False,False,True,False
+Standard Class,Consumer,Tampa,Florida,Paper,131.904,3,0.2,47.8152,1.7320508,0.4472136,False,False,True,False,False,False,True,False
+Standard Class,Consumer,Philadelphia,Pennsylvania,Binders,3.282,2,0.7,-2.6256,1.4142135,0.83666,False,False,True,False,False,True,False,False
+Standard Class,Consumer,Philadelphia,Pennsylvania,Art,21.168,9,0.2,2.3814,3.0,0.4472136,False,False,True,False,False,True,False,False
+Standard Class,Consumer,Philadelphia,Pennsylvania,Phones,55.188,2,0.4,-10.1178,1.4142135,0.6324555,False,False,True,False,False,True,False,False
+First Class,Corporate,Dallas,Texas,Phones,369.576,3,0.2,41.5773,1.7320508,0.4472136,False,False,False,True,False,False,False,False
+First Class,Corporate,Dallas,Texas,Labels,15.712,4,0.2,5.6956,2.0,0.4472136,False,False,False,True,False,False,False,False
+Second Class,Corporate,Philadelphia,Pennsylvania,Paper,8.448,2,0.2,2.64,1.4142135,0.4472136,False,True,False,True,False,True,False,False
+Second Class,Corporate,Philadelphia,Pennsylvania,Phones,728.946,9,0.4,-157.9383,3.0,0.6324555,False,True,False,True,False,True,False,False
+Second Class,Consumer,Grove City,Ohio,Phones,119.94,10,0.4,15.992,3.1622777,0.6324555,False,True,False,False,False,True,False,False
+Second Class,Consumer,Grove City,Ohio,Binders,3.648,2,0.7,-2.7968,1.4142135,0.83666,False,True,False,False,False,True,False,False
+Second Class,Corporate,New York City,New York,Furnishings,40.48,2,0.0,15.7872,1.4142135,0.0,False,True,False,True,False,True,False,False
+Second Class,Corporate,New York City,New York,Furnishings,9.94,2,0.0,3.0814,1.4142135,0.0,False,True,False,True,False,True,False,False
+Second Class,Corporate,New York City,New York,Binders,107.424,9,0.2,33.57,3.0,0.4472136,False,True,False,True,False,True,False,False
+Second Class,Corporate,New York City,New York,Phones,37.91,1,0.0,10.9939,1.0,0.0,False,True,False,True,False,True,False,False
+Second Class,Corporate,New York City,New York,Furnishings,88.02,3,0.0,27.2862,1.7320508,0.0,False,True,False,True,False,True,False,False
+Standard Class,Consumer,Chicago,Illinois,Binders,8.69,5,0.8,-14.773,2.236068,0.8944272,False,False,True,False,False,False,False,False
+Standard Class,Corporate,Dearborn,Michigan,Chairs,301.96,2,0.0,87.5684,1.4142135,0.0,False,False,True,True,False,False,False,False
+Standard Class,Corporate,Dearborn,Michigan,Appliances,555.21,5,0.1,178.901,2.236068,0.31622776,False,False,True,True,False,False,False,False
+Standard Class,Corporate,Dearborn,Michigan,Storage,523.48,4,0.0,130.87,2.0,0.0,False,False,True,True,False,False,False,False
+Standard Class,Corporate,Dearborn,Michigan,Art,161.82,9,0.0,46.9278,3.0,0.0,False,False,True,True,False,False,False,False
+Standard Class,Home Office,New York City,New York,Furnishings,35.56,7,0.0,12.0904,2.6457512,0.0,False,False,True,False,True,True,False,False
+Standard Class,Consumer,Seattle,Washington,Appliances,97.16,2,0.0,28.1764,1.4142135,0.0,False,False,True,False,False,False,False,True
+Standard Class,Consumer,San Francisco,California,Binders,15.24,5,0.2,5.1435,2.236068,0.4472136,False,False,True,False,False,False,False,True
+Standard Class,Consumer,San Francisco,California,Paper,13.23,3,0.0,6.0858,1.7320508,0.0,False,False,True,False,False,False,False,True
+Second Class,Consumer,Aurora,Colorado,Storage,243.384,3,0.2,-51.7191,1.7320508,0.4472136,False,True,False,False,False,False,False,True
+Second Class,Consumer,Aurora,Colorado,Accessories,119.8,5,0.2,29.95,2.236068,0.4472136,False,True,False,False,False,False,False,True
+Second Class,Consumer,Aurora,Colorado,Phones,300.768,4,0.2,30.0768,2.0,0.4472136,False,True,False,False,False,False,False,True
+Second Class,Consumer,Miami,Florida,Accessories,17.88,3,0.2,2.4585,1.7320508,0.4472136,False,True,False,False,False,False,True,False
+Second Class,Consumer,Miami,Florida,Labels,235.944,3,0.2,85.5297,1.7320508,0.4472136,False,True,False,False,False,False,True,False
+Second Class,Corporate,Warner Robins,Georgia,Chairs,392.94,3,0.0,43.2234,1.7320508,0.0,False,True,False,True,False,False,True,False
+Standard Class,Consumer,Aurora,Colorado,Binders,18.882,3,0.7,-13.8468,1.7320508,0.83666,False,False,True,False,False,False,False,True
+Standard Class,Consumer,Aurora,Colorado,Appliances,122.328,3,0.2,12.2328,1.7320508,0.4472136,False,False,True,False,False,False,False,True
+Standard Class,Home Office,Vallejo,California,Furnishings,1049.2,5,0.0,272.792,2.236068,0.0,False,False,True,False,True,False,False,True
+Standard Class,Home Office,Vallejo,California,Binders,15.424,4,0.2,5.0128,2.0,0.4472136,False,False,True,False,True,False,False,True
+Standard Class,Corporate,Minneapolis,Minnesota,Furnishings,18.84,3,0.0,6.0288,1.7320508,0.0,False,False,True,True,False,False,False,False
+Second Class,Consumer,Mission Viejo,California,Storage,330.4,2,0.0,85.904,1.4142135,0.0,False,True,False,False,False,False,False,True
+Second Class,Consumer,Mission Viejo,California,Labels,26.25,7,0.0,12.6,2.6457512,0.0,False,True,False,False,False,False,False,True
+Standard Class,Consumer,Rochester Hills,Michigan,Accessories,132.52,4,0.0,54.3332,2.0,0.0,False,False,True,False,False,False,False,False
+Standard Class,Home Office,Plainfield,New Jersey,Paper,6.48,1,0.0,3.1752,1.0,0.0,False,False,True,False,True,True,False,False
+Standard Class,Home Office,Columbus,Indiana,Appliances,209.3,2,0.0,56.511,1.4142135,0.0,False,False,True,False,True,False,False,False
+Standard Class,Corporate,Sierra Vista,Arizona,Fasteners,31.56,5,0.2,9.8625,2.236068,0.4472136,False,False,True,True,False,False,False,True
+Standard Class,Corporate,Sierra Vista,Arizona,Appliances,30.144,2,0.2,3.0144,1.4142135,0.4472136,False,False,True,True,False,False,False,True
+Second Class,Corporate,Vancouver,Washington,Furnishings,14.8,4,0.0,6.068,2.0,0.0,False,True,False,True,False,False,False,True
+Second Class,Corporate,Vancouver,Washington,Phones,302.376,3,0.2,22.6782,1.7320508,0.4472136,False,True,False,True,False,False,False,True
+Second Class,Corporate,Vancouver,Washington,Accessories,316.0,4,0.0,31.6,2.0,0.0,False,True,False,True,False,False,False,True
+Standard Class,Home Office,New York City,New York,Paper,379.4,10,0.0,178.318,3.1622777,0.0,False,False,True,False,True,True,False,False
+Standard Class,Corporate,New York City,New York,Paper,97.82,2,0.0,45.9754,1.4142135,0.0,False,False,True,True,False,True,False,False
+Standard Class,Corporate,New York City,New York,Accessories,103.12,8,0.0,10.312,2.828427,0.0,False,False,True,True,False,True,False,False
+Standard Class,Consumer,Columbus,Ohio,Appliances,113.552,2,0.2,8.5164,1.4142135,0.4472136,False,False,True,False,False,True,False,False
+Standard Class,Consumer,Columbus,Ohio,Binders,3.318,2,0.7,-2.6544,1.4142135,0.83666,False,False,True,False,False,True,False,False
+Standard Class,Consumer,Columbus,Ohio,Envelopes,134.288,2,0.2,45.3222,1.4142135,0.4472136,False,False,True,False,False,True,False,False
+Same Day,Home Office,Aurora,Illinois,Chairs,701.372,2,0.3,-50.098,1.4142135,0.5477226,True,False,False,False,True,False,False,False
+Same Day,Home Office,Aurora,Illinois,Binders,2.308,2,0.8,-3.462,1.4142135,0.8944272,True,False,False,False,True,False,False,False
+Standard Class,Consumer,Arlington,Texas,Storage,999.432,7,0.2,124.929,2.6457512,0.4472136,False,False,True,False,False,False,False,False
+Standard Class,Consumer,Arlington,Texas,Storage,724.08,14,0.2,-135.765,3.7416575,0.4472136,False,False,True,False,False,False,False,False
+Standard Class,Consumer,Arlington,Texas,Tables,918.785,5,0.3,-118.1295,2.236068,0.5477226,False,False,True,False,False,False,False,False
+Standard Class,Consumer,Arlington,Texas,Binders,2.724,3,0.8,-4.2222,1.7320508,0.8944272,False,False,True,False,False,False,False,False
+Standard Class,Corporate,New York City,New York,Storage,459.95,5,0.0,18.398,2.236068,0.0,False,False,True,True,False,True,False,False
+Same Day,Consumer,Louisville,Kentucky,Fasteners,10.74,3,0.0,5.2626,1.7320508,0.0,True,False,False,False,False,False,True,False
+Second Class,Corporate,Dallas,Texas,Supplies,23.76,3,0.2,2.079,1.7320508,0.4472136,False,True,False,True,False,False,False,False
+Second Class,Corporate,Dallas,Texas,Paper,85.056,3,0.2,28.7064,1.7320508,0.4472136,False,True,False,True,False,False,False,False
+Second Class,Corporate,Dallas,Texas,Phones,381.576,3,0.2,28.6182,1.7320508,0.4472136,False,True,False,True,False,False,False,False
+First Class,Consumer,Cleveland,Ohio,Furnishings,30.36,5,0.2,8.7285,2.236068,0.4472136,False,False,False,False,False,True,False,False
+Standard Class,Home Office,Chicago,Illinois,Furnishings,23.976,3,0.6,-14.3856,1.7320508,0.7745967,False,False,True,False,True,False,False,False
+Standard Class,Home Office,Chicago,Illinois,Tables,108.925,1,0.5,-71.8905,1.0,0.70710677,False,False,True,False,True,False,False,False
+Standard Class,Home Office,Chicago,Illinois,Paper,36.352,8,0.2,11.36,2.828427,0.4472136,False,False,True,False,True,False,False,False
+Standard Class,Consumer,Quincy,Illinois,Art,19.56,5,0.2,1.7115,2.236068,0.4472136,False,False,True,False,False,False,False,False
+First Class,Consumer,Columbus,Indiana,Appliances,61.44,3,0.0,16.5888,1.7320508,0.0,False,False,False,False,False,False,False,False
+First Class,Consumer,Columbus,Indiana,Paper,38.9,5,0.0,17.505,2.236068,0.0,False,False,False,False,False,False,False,False
+First Class,Consumer,Columbus,Indiana,Accessories,99.39,3,0.0,40.7499,1.7320508,0.0,False,False,False,False,False,False,False,False
+Standard Class,Consumer,Tyler,Texas,Appliances,2.688,3,0.8,-7.392,1.7320508,0.8944272,False,False,True,False,False,False,False,False
+Standard Class,Consumer,Tyler,Texas,Accessories,27.816,3,0.2,4.5201,1.7320508,0.4472136,False,False,True,False,False,False,False,False
+Standard Class,Consumer,Tyler,Texas,Furnishings,82.524,3,0.6,-41.262,1.7320508,0.7745967,False,False,True,False,False,False,False,False
+Standard Class,Consumer,Tyler,Texas,Binders,182.994,3,0.8,-320.2395,1.7320508,0.8944272,False,False,True,False,False,False,False,False
+Standard Class,Consumer,New York City,New York,Binders,14.352,3,0.2,4.6644,1.7320508,0.4472136,False,False,True,False,False,True,False,False
+Standard Class,Consumer,New York City,New York,Storage,64.96,2,0.0,2.5984,1.4142135,0.0,False,False,True,False,False,True,False,False
+Standard Class,Consumer,New York City,New York,Storage,68.6,4,0.0,18.522,2.0,0.0,False,False,True,False,False,True,False,False
+Same Day,Corporate,Burlington,North Carolina,Machines,7999.98,4,0.5,-3839.9905,2.0,0.70710677,True,False,False,True,False,False,True,False
+Same Day,Corporate,Burlington,North Carolina,Appliances,167.44,2,0.2,14.651,1.4142135,0.4472136,True,False,False,True,False,False,True,False
+First Class,Consumer,Jackson,Mississippi,Accessories,479.97,3,0.0,163.1898,1.7320508,0.0,False,False,False,False,False,False,True,False
+First Class,Consumer,Jackson,Mississippi,Labels,14.62,2,0.0,6.8714,1.4142135,0.0,False,False,False,False,False,False,True,False
+First Class,Consumer,Jackson,Mississippi,Paper,19.44,3,0.0,9.3312,1.7320508,0.0,False,False,False,False,False,False,True,False
+Standard Class,Consumer,New York City,New York,Bookcases,191.984,2,0.2,4.7996,1.4142135,0.4472136,False,False,True,False,False,True,False,False
+Second Class,Consumer,Waynesboro,Virginia,Furnishings,104.01,1,0.0,14.5614,1.0,0.0,False,True,False,False,False,False,True,False
+Second Class,Consumer,Waynesboro,Virginia,Phones,284.82,1,0.0,74.0532,1.0,0.0,False,True,False,False,False,False,True,False
+Second Class,Consumer,Waynesboro,Virginia,Storage,36.84,3,0.0,10.3152,1.7320508,0.0,False,True,False,False,False,False,True,False
+Standard Class,Consumer,Los Angeles,California,Accessories,166.24,1,0.0,24.936,1.0,0.0,False,False,True,False,False,False,False,True
+Standard Class,Consumer,Los Angeles,California,Paper,33.4,5,0.0,16.032,2.236068,0.0,False,False,True,False,False,False,False,True
+First Class,Home Office,Chester,Pennsylvania,Art,198.272,8,0.2,17.3488,2.828427,0.4472136,False,False,False,False,True,True,False,False
+First Class,Home Office,Chester,Pennsylvania,Labels,47.36,4,0.2,17.76,2.0,0.4472136,False,False,False,False,True,True,False,False
+First Class,Home Office,Chester,Pennsylvania,Envelopes,200.984,7,0.2,62.8075,2.6457512,0.4472136,False,False,False,False,True,True,False,False
+First Class,Home Office,Chester,Pennsylvania,Labels,97.696,4,0.2,31.7512,2.0,0.4472136,False,False,False,False,True,True,False,False
+First Class,Home Office,Chester,Pennsylvania,Art,2.696,1,0.2,0.8088,1.0,0.4472136,False,False,False,False,True,True,False,False
+First Class,Home Office,Chester,Pennsylvania,Binders,18.588,2,0.7,-13.6312,1.4142135,0.83666,False,False,False,False,True,True,False,False
+First Class,Home Office,Chester,Pennsylvania,Binders,4.896,3,0.7,-3.4272,1.7320508,0.83666,False,False,False,False,True,True,False,False
+Standard Class,Corporate,Cleveland,Ohio,Furnishings,15.072,3,0.2,4.1448,1.7320508,0.4472136,False,False,True,True,False,True,False,False
+Second Class,Corporate,Seattle,Washington,Furnishings,209.88,3,0.0,35.6796,1.7320508,0.0,False,True,False,True,False,False,False,True
+Standard Class,Consumer,Long Beach,California,Tables,369.912,3,0.2,-13.8717,1.7320508,0.4472136,False,False,True,False,False,False,False,True
+Standard Class,Corporate,Cary,North Carolina,Paper,10.368,2,0.2,3.6288,1.4142135,0.4472136,False,False,True,True,False,False,True,False
+Standard Class,Corporate,Cary,North Carolina,Appliances,166.84,5,0.2,18.7695,2.236068,0.4472136,False,False,True,True,False,False,True,False
+Standard Class,Corporate,Cary,North Carolina,Accessories,15.216,1,0.2,2.2824,1.0,0.4472136,False,False,True,True,False,False,True,False
+First Class,Consumer,New York City,New York,Accessories,119.96,4,0.0,52.7824,2.0,0.0,False,False,False,False,False,True,False,False
+First Class,Consumer,New York City,New York,Bookcases,883.92,5,0.2,-110.49,2.236068,0.4472136,False,False,False,False,False,True,False,False
+First Class,Consumer,New York City,New York,Binders,46.72,8,0.2,15.768,2.828427,0.4472136,False,False,False,False,False,True,False,False
+First Class,Home Office,New York City,New York,Paper,55.48,1,0.0,26.6304,1.0,0.0,False,False,False,False,True,True,False,False
+Standard Class,Consumer,Palm Coast,Florida,Envelopes,24.448,4,0.2,8.8624,2.0,0.4472136,False,False,True,False,False,False,True,False
+Standard Class,Corporate,Mount Vernon,New York,Appliances,281.34,6,0.0,109.7226,2.4494898,0.0,False,False,True,True,False,True,False,False
+Standard Class,Corporate,Mount Vernon,New York,Phones,307.98,2,0.0,89.3142,1.4142135,0.0,False,False,True,True,False,True,False,False
+Standard Class,Corporate,Mount Vernon,New York,Accessories,299.97,3,0.0,113.9886,1.7320508,0.0,False,False,True,True,False,True,False,False
+Second Class,Corporate,Seattle,Washington,Binders,19.92,5,0.2,6.972,2.236068,0.4472136,False,True,False,True,False,False,False,True
+First Class,Consumer,Dover,Delaware,Furnishings,9.94,2,0.0,3.0814,1.4142135,0.0,False,False,False,False,False,True,False,False
+Standard Class,Consumer,Newark,Ohio,Furnishings,103.056,3,0.2,24.4758,1.7320508,0.4472136,False,False,True,False,False,True,False,False
+Standard Class,Home Office,Orem,Utah,Binders,59.808,3,0.2,19.4376,1.7320508,0.4472136,False,False,True,False,True,False,False,True
+Standard Class,Home Office,Orem,Utah,Furnishings,73.32,6,0.0,21.996,2.4494898,0.0,False,False,True,False,True,False,False,True
+Standard Class,Home Office,Los Angeles,California,Paper,146.82,3,0.0,73.41,1.7320508,0.0,False,False,True,False,True,False,False,True
+Standard Class,Corporate,Detroit,Michigan,Tables,1652.94,3,0.0,231.4116,1.7320508,0.0,False,False,True,True,False,False,False,False
+Standard Class,Corporate,Detroit,Michigan,Storage,296.37,3,0.0,80.0199,1.7320508,0.0,False,False,True,True,False,False,False,False
+Standard Class,Home Office,Philadelphia,Pennsylvania,Furnishings,129.92,5,0.2,21.112,2.236068,0.4472136,False,False,True,False,True,True,False,False
+Standard Class,Corporate,Hialeah,Florida,Supplies,45.584,7,0.2,5.1282,2.6457512,0.4472136,False,False,True,True,False,False,True,False
+Standard Class,Consumer,Austin,Texas,Envelopes,17.568,2,0.2,6.3684,1.4142135,0.4472136,False,False,True,False,False,False,False,False
+Standard Class,Consumer,Austin,Texas,Phones,55.992,1,0.2,5.5992,1.0,0.4472136,False,False,True,False,False,False,False,False
+First Class,Consumer,Oceanside,New York,Paper,182.72,8,0.0,84.0512,2.828427,0.0,False,False,False,False,False,True,False,False
+First Class,Consumer,Oceanside,New York,Tables,400.032,2,0.4,-153.3456,1.4142135,0.6324555,False,False,False,False,False,True,False,False
+First Class,Consumer,Oceanside,New York,Storage,33.63,3,0.0,10.089,1.7320508,0.0,False,False,False,False,False,True,False,False
+First Class,Consumer,Oceanside,New York,Chairs,542.646,3,0.1,102.4998,1.7320508,0.31622776,False,False,False,False,False,True,False,False
+First Class,Consumer,Oceanside,New York,Labels,6.3,2,0.0,3.024,1.4142135,0.0,False,False,False,False,False,True,False,False
+Standard Class,Home Office,Seattle,Washington,Storage,242.94,3,0.0,9.7176,1.7320508,0.0,False,False,True,False,True,False,False,True
+Standard Class,Home Office,Seattle,Washington,Accessories,179.97,3,0.0,86.3856,1.7320508,0.0,False,False,True,False,True,False,False,True
+Standard Class,Home Office,Seattle,Washington,Binders,99.696,6,0.2,33.6474,2.4494898,0.4472136,False,False,True,False,True,False,False,True
+Standard Class,Home Office,Seattle,Washington,Binders,27.936,4,0.2,9.4284,2.0,0.4472136,False,False,True,False,True,False,False,True
+Standard Class,Home Office,Seattle,Washington,Bookcases,84.98,1,0.0,18.6956,1.0,0.0,False,False,True,False,True,False,False,True
+Standard Class,Home Office,Seattle,Washington,Binders,18.72,5,0.2,6.552,2.236068,0.4472136,False,False,True,False,True,False,False,True
+Standard Class,Consumer,San Francisco,California,Accessories,49.98,2,0.0,8.4966,1.4142135,0.0,False,False,True,False,False,False,False,True
+Standard Class,Home Office,Naperville,Illinois,Labels,11.784,3,0.2,4.2717,1.7320508,0.4472136,False,False,True,False,True,False,False,False
+Standard Class,Home Office,Naperville,Illinois,Storage,272.736,3,0.2,-64.7748,1.7320508,0.4472136,False,False,True,False,True,False,False,False
+Standard Class,Home Office,Naperville,Illinois,Binders,3.54,2,0.8,-5.487,1.4142135,0.8944272,False,False,True,False,True,False,False,False
+Standard Class,Consumer,Dallas,Texas,Supplies,51.52,5,0.2,-10.948,2.236068,0.4472136,False,False,True,False,False,False,False,False
+Standard Class,Consumer,Dallas,Texas,Paper,3.528,1,0.2,1.1466,1.0,0.4472136,False,False,True,False,False,False,False,False
+Standard Class,Consumer,Dallas,Texas,Paper,4.624,1,0.2,1.6762,1.0,0.4472136,False,False,True,False,False,False,False,False
+Standard Class,Consumer,Dallas,Texas,Supplies,55.168,4,0.2,6.2064,2.0,0.4472136,False,False,True,False,False,False,False,False
+Same Day,Corporate,San Diego,California,Tables,567.12,10,0.2,-28.356,3.1622777,0.4472136,True,False,False,True,False,False,False,True
+Same Day,Corporate,San Diego,California,Storage,359.32,4,0.0,7.1864,2.0,0.0,True,False,False,True,False,False,False,True
+Second Class,Consumer,Evanston,Illinois,Phones,11.992,1,0.2,0.8994,1.0,0.4472136,False,True,False,False,False,False,False,False
+Standard Class,Consumer,Trenton,Michigan,Binders,58.05,3,0.0,26.703,1.7320508,0.0,False,False,True,False,False,False,False,False
+Standard Class,Consumer,Trenton,Michigan,Furnishings,157.74,11,0.0,56.7864,3.3166249,0.0,False,False,True,False,False,False,False,False
+Standard Class,Consumer,Trenton,Michigan,Art,56.98,7,0.0,22.792,2.6457512,0.0,False,False,True,False,False,False,False,False
+Standard Class,Consumer,Trenton,Michigan,Binders,2.88,1,0.0,1.4112,1.0,0.0,False,False,True,False,False,False,False,False
+First Class,Corporate,San Francisco,California,Copiers,1199.976,3,0.2,374.9925,1.7320508,0.4472136,False,False,False,True,False,False,False,True
+Standard Class,Consumer,Los Angeles,California,Furnishings,79.92,4,0.0,28.7712,2.0,0.0,False,False,True,False,False,False,False,True
+Standard Class,Corporate,Jacksonville,Florida,Tables,383.438,4,0.45,-167.3184,2.0,0.6708204,False,False,True,True,False,False,True,False
+Standard Class,Consumer,Cottage Grove,Minnesota,Storage,24.56,2,0.0,6.8768,1.4142135,0.0,False,False,True,False,False,False,False,False
+Standard Class,Consumer,Cottage Grove,Minnesota,Accessories,119.8,4,0.0,47.92,2.0,0.0,False,False,True,False,False,False,False,False
+Standard Class,Corporate,New York City,New York,Binders,13.128,3,0.2,4.2666,1.7320508,0.4472136,False,False,True,True,False,True,False,False
+Standard Class,Corporate,Green Bay,Wisconsin,Paper,22.72,4,0.0,10.224,2.0,0.0,False,False,True,True,False,False,False,False
+Standard Class,Consumer,Los Angeles,California,Paper,58.32,9,0.0,27.9936,3.0,0.0,False,False,True,False,False,False,False,True
+Standard Class,Corporate,Atlanta,Georgia,Labels,12.39,3,0.0,5.6994,1.7320508,0.0,False,False,True,True,False,False,True,False
+Standard Class,Consumer,Columbus,Ohio,Phones,107.982,3,0.4,-26.9955,1.7320508,0.6324555,False,False,True,False,False,True,False,False
+Second Class,Corporate,Bossier City,Louisiana,Envelopes,11.36,2,0.0,5.3392,1.4142135,0.0,False,True,False,True,False,False,True,False
+Second Class,Corporate,Bossier City,Louisiana,Envelopes,50.94,3,0.0,25.47,1.7320508,0.0,False,True,False,True,False,False,True,False
+Second Class,Corporate,Bossier City,Louisiana,Accessories,646.74,6,0.0,258.696,2.4494898,0.0,False,True,False,True,False,False,True,False
+Second Class,Corporate,Bossier City,Louisiana,Binders,5.64,3,0.0,2.7072,1.7320508,0.0,False,True,False,True,False,False,True,False
+Second Class,Corporate,Bossier City,Louisiana,Storage,572.58,6,0.0,34.3548,2.4494898,0.0,False,True,False,True,False,False,True,False
+Standard Class,Corporate,Saint Petersburg,Florida,Furnishings,310.88,2,0.2,23.316,1.4142135,0.4472136,False,False,True,True,False,False,True,False
+Standard Class,Consumer,Arlington,Virginia,Chairs,641.96,2,0.0,179.7488,1.4142135,0.0,False,False,True,False,False,False,True,False
+Standard Class,Corporate,Des Moines,Iowa,Binders,18.28,2,0.0,9.14,1.4142135,0.0,False,False,True,True,False,False,False,False
+Standard Class,Corporate,Des Moines,Iowa,Phones,207.0,3,0.0,51.75,1.7320508,0.0,False,False,True,True,False,False,False,False
+Standard Class,Corporate,Des Moines,Iowa,Binders,32.35,5,0.0,16.175,2.236068,0.0,False,False,True,True,False,False,False,False
+Standard Class,Corporate,Des Moines,Iowa,Binders,7.71,1,0.0,3.4695,1.0,0.0,False,False,True,True,False,False,False,False
+Standard Class,Corporate,Des Moines,Iowa,Art,40.3,2,0.0,10.881,1.4142135,0.0,False,False,True,True,False,False,False,False
+Standard Class,Corporate,Des Moines,Iowa,Furnishings,34.58,7,0.0,14.5236,2.6457512,0.0,False,False,True,True,False,False,False,False
+Standard Class,Consumer,Cincinnati,Ohio,Art,32.76,7,0.2,3.6855,2.6457512,0.4472136,False,False,True,False,False,True,False,False
+First Class,Home Office,San Francisco,California,Chairs,544.008,3,0.2,40.8006,1.7320508,0.4472136,False,False,False,False,True,False,False,True
+First Class,Home Office,San Francisco,California,Paper,59.94,3,0.0,28.1718,1.7320508,0.0,False,False,False,False,True,False,False,True
+First Class,Home Office,San Francisco,California,Paper,23.92,4,0.0,11.7208,2.0,0.0,False,False,False,False,True,False,False,True
+First Class,Home Office,San Francisco,California,Paper,4.28,1,0.0,1.926,1.0,0.0,False,False,False,False,True,False,False,True
+Second Class,Consumer,Columbus,Ohio,Binders,32.07,5,0.7,-22.449,2.236068,0.83666,False,True,False,False,False,True,False,False
+Second Class,Consumer,Columbus,Ohio,Accessories,24.0,2,0.2,-2.7,1.4142135,0.4472136,False,True,False,False,False,True,False,False
+Second Class,Consumer,Columbus,Ohio,Bookcases,35.49,1,0.5,-15.6156,1.0,0.70710677,False,True,False,False,False,True,False,False
+Second Class,Consumer,Columbus,Ohio,Accessories,47.984,2,0.2,0.5998,1.4142135,0.4472136,False,True,False,False,False,True,False,False
+Standard Class,Corporate,Columbia,South Carolina,Envelopes,186.69,3,0.0,87.7443,1.7320508,0.0,False,False,True,True,False,False,True,False
+Second Class,Consumer,Lancaster,California,Binders,17.456,2,0.2,5.8914,1.4142135,0.4472136,False,True,False,False,False,False,False,True
+Standard Class,Consumer,Lancaster,California,Chairs,348.928,2,0.2,34.8928,1.4142135,0.4472136,False,False,True,False,False,False,False,True
+Standard Class,Consumer,Richmond,Virginia,Binders,143.96,4,0.0,69.1008,2.0,0.0,False,False,True,False,False,False,True,False
+Standard Class,Consumer,Richmond,Virginia,Storage,15.42,1,0.0,4.1634,1.0,0.0,False,False,True,False,False,False,True,False
+Standard Class,Consumer,Richmond,Virginia,Binders,43.04,8,0.0,21.0896,2.828427,0.0,False,False,True,False,False,False,True,False
+Standard Class,Consumer,Richmond,Virginia,Chairs,332.94,3,0.0,79.9056,1.7320508,0.0,False,False,True,False,False,False,True,False
+Same Day,Consumer,Asheville,North Carolina,Phones,1363.96,5,0.2,85.2475,2.236068,0.4472136,True,False,False,False,False,False,True,False
+Standard Class,Consumer,San Francisco,California,Labels,9.96,2,0.0,4.5816,1.4142135,0.0,False,False,True,False,False,False,False,True
+Standard Class,Consumer,San Francisco,California,Paper,21.72,4,0.0,10.6428,2.0,0.0,False,False,True,False,False,False,False,True
+Standard Class,Consumer,Rochester,Minnesota,Binders,20.16,7,0.0,9.8784,2.6457512,0.0,False,False,True,False,False,False,False,False
+First Class,Corporate,Rochester,New York,Paper,132.79,7,0.0,63.7392,2.6457512,0.0,False,False,False,True,False,True,False,False
+First Class,Corporate,Rochester,New York,Paper,12.96,2,0.0,6.2208,1.4142135,0.0,False,False,False,True,False,True,False,False
+First Class,Corporate,Rochester,New York,Labels,21.56,7,0.0,10.3488,2.6457512,0.0,False,False,False,True,False,True,False,False
+Standard Class,Consumer,Lake Elsinore,California,Chairs,283.92,5,0.2,17.745,2.236068,0.4472136,False,False,True,False,False,False,False,True
+First Class,Corporate,San Diego,California,Furnishings,22.23,1,0.0,7.3359,1.0,0.0,False,False,False,True,False,False,False,True
+First Class,Corporate,San Diego,California,Phones,215.968,2,0.2,18.8972,1.4142135,0.4472136,False,False,False,True,False,False,False,True
+Second Class,Corporate,New York City,New York,Appliances,355.32,9,0.0,99.4896,3.0,0.0,False,True,False,True,False,True,False,False
+Standard Class,Corporate,Monroe,Louisiana,Paper,12.96,2,0.0,6.2208,1.4142135,0.0,False,False,True,True,False,False,True,False
+First Class,Consumer,San Francisco,California,Furnishings,18.28,2,0.0,6.2152,1.4142135,0.0,False,False,False,False,False,False,False,True
+Standard Class,Consumer,Denver,Colorado,Art,43.176,3,0.2,4.3176,1.7320508,0.4472136,False,False,True,False,False,False,False,True
+Standard Class,Consumer,Denver,Colorado,Phones,1983.968,4,0.2,247.996,2.0,0.4472136,False,False,True,False,False,False,False,True
+First Class,Consumer,Omaha,Nebraska,Furnishings,28.4,2,0.0,11.076,1.4142135,0.0,False,False,False,False,False,False,False,False
+First Class,Consumer,Omaha,Nebraska,Accessories,149.97,3,0.0,50.9898,1.7320508,0.0,False,False,False,False,False,False,False,False
+First Class,Consumer,Edmonds,Washington,Art,11.52,4,0.0,3.2256,2.0,0.0,False,False,False,False,False,False,False,True
+First Class,Consumer,Edmonds,Washington,Tables,1298.55,5,0.0,311.652,2.236068,0.0,False,False,False,False,False,False,False,True
+First Class,Consumer,Edmonds,Washington,Appliances,213.92,4,0.0,62.0368,2.0,0.0,False,False,False,False,False,False,False,True
+First Class,Consumer,Edmonds,Washington,Accessories,25.78,2,0.0,2.578,1.4142135,0.0,False,False,False,False,False,False,False,True
+Same Day,Consumer,Santa Ana,California,Furnishings,18.28,2,0.0,6.2152,1.4142135,0.0,True,False,False,False,False,False,False,True
+Same Day,Consumer,Santa Ana,California,Accessories,1399.93,7,0.0,601.9699,2.6457512,0.0,True,False,False,False,False,False,False,True
+First Class,Corporate,Milwaukee,Wisconsin,Paper,51.84,8,0.0,24.8832,2.828427,0.0,False,False,False,True,False,False,False,False
+Standard Class,Consumer,Philadelphia,Pennsylvania,Paper,5.344,1,0.2,1.8704,1.0,0.4472136,False,False,True,False,False,True,False,False
+Standard Class,Consumer,Philadelphia,Pennsylvania,Paper,41.472,8,0.2,14.5152,2.828427,0.4472136,False,False,True,False,False,True,False,False
+Standard Class,Consumer,Philadelphia,Pennsylvania,Binders,3.168,3,0.7,-2.4288,1.7320508,0.83666,False,False,True,False,False,True,False,False
+Standard Class,Consumer,Philadelphia,Pennsylvania,Chairs,1228.465,5,0.3,0.0,2.236068,0.5477226,False,False,True,False,False,True,False,False
+Standard Class,Consumer,Philadelphia,Pennsylvania,Binders,31.086,3,0.7,-22.7964,1.7320508,0.83666,False,False,True,False,False,True,False,False
+Standard Class,Consumer,Philadelphia,Pennsylvania,Paper,335.52,4,0.2,117.432,2.0,0.4472136,False,False,True,False,False,True,False,False
+Standard Class,Consumer,Belleville,New Jersey,Accessories,239.97,3,0.0,71.991,1.7320508,0.0,False,False,True,False,False,True,False,False
+Standard Class,Consumer,Belleville,New Jersey,Labels,9.82,2,0.0,4.8118,1.4142135,0.0,False,False,True,False,False,True,False,False
+Standard Class,Consumer,San Francisco,California,Accessories,67.8,4,0.0,4.068,2.0,0.0,False,False,True,False,False,False,False,True
+Standard Class,Consumer,San Francisco,California,Accessories,167.97,3,0.0,40.3128,1.7320508,0.0,False,False,True,False,False,False,False,True
+Standard Class,Consumer,Lakeville,Minnesota,Fasteners,35.0,7,0.0,16.8,2.6457512,0.0,False,False,True,False,False,False,False,False
+Standard Class,Consumer,Lakeville,Minnesota,Supplies,37.24,4,0.0,10.7996,2.0,0.0,False,False,True,False,False,False,False,False
+Standard Class,Consumer,Lakeville,Minnesota,Envelopes,15.28,2,0.0,7.4872,1.4142135,0.0,False,False,True,False,False,False,False,False
+Second Class,Consumer,Florence,Kentucky,Chairs,301.96,2,0.0,90.588,1.4142135,0.0,False,True,False,False,False,False,True,False
+Second Class,Consumer,Florence,Kentucky,Appliances,180.66,3,0.0,50.5848,1.7320508,0.0,False,True,False,False,False,False,True,False
+Second Class,Consumer,Florence,Kentucky,Phones,191.98,2,0.0,51.8346,1.4142135,0.0,False,True,False,False,False,False,True,False
+Second Class,Consumer,Florence,Kentucky,Phones,65.99,1,0.0,17.1574,1.0,0.0,False,True,False,False,False,False,True,False
+Standard Class,Corporate,Tampa,Florida,Art,35.216,2,0.2,2.6412,1.4142135,0.4472136,False,False,True,True,False,False,True,False
+Standard Class,Corporate,Tampa,Florida,Appliances,23.696,2,0.2,6.5164,1.4142135,0.4472136,False,False,True,True,False,False,True,False
+Standard Class,Corporate,Tampa,Florida,Machines,265.475,1,0.5,-111.4995,1.0,0.70710677,False,False,True,True,False,False,True,False
+Second Class,Consumer,Tyler,Texas,Binders,51.184,4,0.8,-79.3352,2.0,0.8944272,False,True,False,False,False,False,False,False
+Standard Class,Home Office,Columbia,Tennessee,Paper,9.664,2,0.2,3.2616,1.4142135,0.4472136,False,False,True,False,True,False,True,False
+Standard Class,Corporate,Fort Worth,Texas,Phones,21.072,3,0.2,1.5804,1.7320508,0.4472136,False,False,True,True,False,False,False,False
+Standard Class,Corporate,New York City,New York,Art,60.45,3,0.0,16.3215,1.7320508,0.0,False,False,True,True,False,True,False,False
+Standard Class,Corporate,New York City,New York,Art,11.52,4,0.0,3.3408,2.0,0.0,False,False,True,True,False,True,False,False
+Standard Class,Corporate,New York City,New York,Bookcases,186.048,4,0.2,9.3024,2.0,0.4472136,False,False,True,True,False,True,False,False
+First Class,Corporate,Los Angeles,California,Binders,37.44,4,0.2,11.7,2.0,0.4472136,False,False,False,True,False,False,False,True
+First Class,Corporate,Los Angeles,California,Binders,26.976,4,0.2,8.7672,2.0,0.4472136,False,False,False,True,False,False,False,True
+First Class,Corporate,Los Angeles,California,Supplies,11.36,2,0.0,3.2944,1.4142135,0.0,False,False,False,True,False,False,False,True
+First Class,Corporate,Los Angeles,California,Labels,14.62,2,0.0,6.8714,1.4142135,0.0,False,False,False,True,False,False,False,True
+Standard Class,Consumer,Louisville,Kentucky,Phones,83.72,7,0.0,23.4416,2.6457512,0.0,False,False,True,False,False,False,True,False
+Standard Class,Consumer,Louisville,Kentucky,Chairs,287.94,3,0.0,77.7438,1.7320508,0.0,False,False,True,False,False,False,True,False
+Standard Class,Consumer,Lorain,Ohio,Furnishings,48.896,4,0.2,8.5568,2.0,0.4472136,False,False,True,False,False,True,False,False
+Standard Class,Corporate,Linden,New Jersey,Accessories,115.36,7,0.0,49.6048,2.6457512,0.0,False,False,True,True,False,True,False,False
+Second Class,Corporate,Salinas,California,Art,5.16,2,0.0,1.3416,1.4142135,0.0,False,True,False,True,False,False,False,True
+Second Class,Corporate,Salinas,California,Paper,38.88,6,0.0,18.6624,2.4494898,0.0,False,True,False,True,False,False,False,True
+Standard Class,Consumer,Jackson,Mississippi,Art,185.88,6,0.0,50.1876,2.4494898,0.0,False,False,True,False,False,False,True,False
+Standard Class,Consumer,New York City,New York,Furnishings,44.46,2,0.0,14.6718,1.4142135,0.0,False,False,True,False,False,True,False,False
+Standard Class,Consumer,New York City,New York,Storage,242.94,3,0.0,9.7176,1.7320508,0.0,False,False,True,False,False,True,False,False
+Standard Class,Consumer,New York City,New York,Paper,39.96,2,0.0,18.7812,1.4142135,0.0,False,False,True,False,False,True,False,False
+Standard Class,Consumer,New York City,New York,Supplies,102.3,10,0.0,26.598,3.1622777,0.0,False,False,True,False,False,True,False,False
+Standard Class,Consumer,New York City,New York,Storage,21.36,2,0.0,5.7672,1.4142135,0.0,False,False,True,False,False,True,False,False
+Standard Class,Home Office,New Brunswick,New Jersey,Paper,7.61,1,0.0,3.5767,1.0,0.0,False,False,True,False,True,True,False,False
+Standard Class,Home Office,New Brunswick,New Jersey,Fasteners,7.16,2,0.0,3.58,1.4142135,0.0,False,False,True,False,True,True,False,False
+Standard Class,Consumer,San Francisco,California,Supplies,7.36,2,0.0,0.1472,1.4142135,0.0,False,False,True,False,False,False,False,True
+Standard Class,Consumer,San Francisco,California,Art,23.1,2,0.0,10.626,1.4142135,0.0,False,False,True,False,False,False,False,True
+Second Class,Corporate,Jacksonville,Florida,Accessories,191.472,6,0.2,40.6878,2.4494898,0.4472136,False,True,False,True,False,False,True,False
+Second Class,Corporate,Jacksonville,Florida,Art,5.248,2,0.2,0.5904,1.4142135,0.4472136,False,True,False,True,False,False,True,False
+Second Class,Corporate,Jacksonville,Florida,Phones,59.184,2,0.2,5.1786,1.4142135,0.4472136,False,True,False,True,False,False,True,False
+Standard Class,Corporate,Springfield,Virginia,Labels,2.89,1,0.0,1.3583,1.0,0.0,False,False,True,True,False,False,True,False
+Standard Class,Corporate,Springfield,Virginia,Furnishings,51.94,1,0.0,21.2954,1.0,0.0,False,False,True,True,False,False,True,False
+First Class,Corporate,Philadelphia,Pennsylvania,Labels,15.936,4,0.2,5.1792,2.0,0.4472136,False,False,False,True,False,True,False,False
+Standard Class,Corporate,Lancaster,Pennsylvania,Binders,44.91,6,0.7,-35.928,2.4494898,0.83666,False,False,True,True,False,True,False,False
+First Class,Home Office,Philadelphia,Pennsylvania,Binders,1141.47,5,0.7,-760.98,2.236068,0.83666,False,False,False,False,True,True,False,False
+First Class,Home Office,Philadelphia,Pennsylvania,Phones,280.782,3,0.4,-46.797,1.7320508,0.6324555,False,False,False,False,True,True,False,False
+First Class,Consumer,Concord,New Hampshire,Paper,34.44,3,0.0,17.22,1.7320508,0.0,False,False,False,False,False,True,False,False
+Standard Class,Consumer,New York City,New York,Paper,11.36,2,0.0,5.2256,1.4142135,0.0,False,False,True,False,False,True,False,False
+Standard Class,Consumer,New York City,New York,Binders,106.344,7,0.2,37.2204,2.6457512,0.4472136,False,False,True,False,False,True,False,False
+Standard Class,Consumer,Charlotte,North Carolina,Paper,192.16,5,0.2,67.256,2.236068,0.4472136,False,False,True,False,False,False,True,False
+Standard Class,Home Office,Concord,New Hampshire,Furnishings,322.59,3,0.0,64.518,1.7320508,0.0,False,False,True,False,True,True,False,False
+Standard Class,Home Office,Concord,New Hampshire,Accessories,29.99,1,0.0,13.1956,1.0,0.0,False,False,True,False,True,True,False,False
+Standard Class,Home Office,Concord,New Hampshire,Accessories,371.97,3,0.0,66.9546,1.7320508,0.0,False,False,True,False,True,True,False,False
+Standard Class,Home Office,Philadelphia,Pennsylvania,Binders,5.892,4,0.7,-4.1244,2.0,0.83666,False,False,True,False,True,True,False,False
+Second Class,Home Office,New York City,New York,Binders,68.472,3,0.2,23.1093,1.7320508,0.4472136,False,True,False,False,True,True,False,False
+Second Class,Home Office,New York City,New York,Chairs,1242.9,5,0.1,262.39,2.236068,0.31622776,False,True,False,False,True,True,False,False
+Standard Class,Consumer,Springfield,Virginia,Storage,30.84,2,0.0,8.3268,1.4142135,0.0,False,False,True,False,False,False,True,False
+Same Day,Consumer,San Francisco,California,Art,13.48,4,0.0,5.9312,2.0,0.0,True,False,False,False,False,False,False,True
+First Class,Home Office,Detroit,Michigan,Furnishings,31.4,5,0.0,10.048,2.236068,0.0,False,False,False,False,True,False,False,False
+Standard Class,Consumer,Rochester,New York,Furnishings,17.46,2,0.0,5.9364,1.4142135,0.0,False,False,True,False,False,True,False,False
+Second Class,Corporate,Los Angeles,California,Binders,13.944,3,0.2,4.5318,1.7320508,0.4472136,False,True,False,True,False,False,False,True
+Standard Class,Consumer,San Diego,California,Storage,83.76,12,0.0,1.6752,3.4641016,0.0,False,False,True,False,False,False,False,True
+Standard Class,Home Office,Columbia,Maryland,Binders,37.66,7,0.0,18.4534,2.6457512,0.0,False,False,True,False,True,True,False,False
+Standard Class,Corporate,San Francisco,California,Paper,34.68,6,0.0,16.9932,2.4494898,0.0,False,False,True,True,False,False,False,True
+Standard Class,Consumer,New Rochelle,New York,Accessories,149.95,5,0.0,14.995,2.236068,0.0,False,False,True,False,False,True,False,False
+Standard Class,Consumer,New Rochelle,New York,Binders,51.312,3,0.2,18.6006,1.7320508,0.4472136,False,False,True,False,False,True,False,False
+First Class,Home Office,Detroit,Michigan,Paper,4.54,1,0.0,2.043,1.0,0.0,False,False,False,False,True,False,False,False
+First Class,Home Office,Detroit,Michigan,Art,15.92,4,0.0,5.4128,2.0,0.0,False,False,False,False,True,False,False,False
+First Class,Home Office,Detroit,Michigan,Phones,543.92,8,0.0,135.98,2.828427,0.0,False,False,False,False,True,False,False,False
+First Class,Corporate,San Francisco,California,Storage,155.82,7,0.0,42.0714,2.6457512,0.0,False,False,False,True,False,False,False,True
+First Class,Corporate,San Francisco,California,Binders,70.008,3,0.2,24.5028,1.7320508,0.4472136,False,False,False,True,False,False,False,True
+Second Class,Consumer,Houston,Texas,Envelopes,15.648,2,0.2,5.0856,1.4142135,0.4472136,False,True,False,False,False,False,False,False
+Standard Class,Consumer,Detroit,Michigan,Labels,103.6,7,0.0,51.8,2.6457512,0.0,False,False,True,False,False,False,False,False
+Second Class,Corporate,Auburn,New York,Paper,46.96,8,0.0,22.5408,2.828427,0.0,False,True,False,True,False,True,False,False
+First Class,Corporate,Springfield,Ohio,Binders,8.904,2,0.7,-6.5296,1.4142135,0.83666,False,False,False,True,False,True,False,False
+First Class,Consumer,Garland,Texas,Labels,10.44,5,0.2,3.393,2.236068,0.4472136,False,False,False,False,False,False,False,False
+First Class,Consumer,Garland,Texas,Binders,18.336,4,0.8,-32.088,2.0,0.8944272,False,False,False,False,False,False,False,False
+First Class,Consumer,Chicago,Illinois,Phones,323.976,3,0.2,20.2485,1.7320508,0.4472136,False,False,False,False,False,False,False,False
+Standard Class,Consumer,Los Angeles,California,Paper,20.04,3,0.0,9.6192,1.7320508,0.0,False,False,True,False,False,False,False,True
+Standard Class,Consumer,Los Angeles,California,Storage,64.96,2,0.0,2.5984,1.4142135,0.0,False,False,True,False,False,False,False,True
+Standard Class,Consumer,Los Angeles,California,Paper,12.96,2,0.0,6.2208,1.4142135,0.0,False,False,True,False,False,False,False,True
+Standard Class,Consumer,New York City,New York,Bookcases,323.136,4,0.2,12.1176,2.0,0.4472136,False,False,True,False,False,True,False,False
+Standard Class,Consumer,New York City,New York,Phones,90.93,7,0.0,2.7279,2.6457512,0.0,False,False,True,False,False,True,False,False
+Standard Class,Consumer,New York City,New York,Binders,52.776,3,0.2,19.791,1.7320508,0.4472136,False,False,True,False,False,True,False,False
+Standard Class,Home Office,Jackson,Michigan,Phones,1199.8,4,0.0,323.946,2.0,0.0,False,False,True,False,True,False,False,False
+Standard Class,Home Office,Jackson,Michigan,Accessories,1928.78,7,0.0,829.3754,2.6457512,0.0,False,False,True,False,True,False,False,False
+Standard Class,Home Office,Jackson,Michigan,Storage,352.38,2,0.0,81.0474,1.4142135,0.0,False,False,True,False,True,False,False,False
+Standard Class,Home Office,Norwich,Connecticut,Furnishings,22.2,6,0.0,9.102,2.4494898,0.0,False,False,True,False,True,True,False,False
+First Class,Corporate,Milwaukee,Wisconsin,Furnishings,46.94,1,0.0,19.2454,1.0,0.0,False,False,False,True,False,False,False,False
+First Class,Corporate,Milwaukee,Wisconsin,Accessories,143.73,9,0.0,56.0547,3.0,0.0,False,False,False,True,False,False,False,False
+Standard Class,Corporate,San Antonio,Texas,Tables,99.918,2,0.3,-18.5562,1.4142135,0.5477226,False,False,True,True,False,False,False,False
+Standard Class,Corporate,San Antonio,Texas,Chairs,797.944,4,0.3,-56.996,2.0,0.5477226,False,False,True,True,False,False,False,False
+Standard Class,Corporate,San Antonio,Texas,Binders,8.568,3,0.8,-14.5656,1.7320508,0.8944272,False,False,True,True,False,False,False,False
+Standard Class,Corporate,Dallas,Texas,Envelopes,149.352,3,0.2,50.4063,1.7320508,0.4472136,False,False,True,True,False,False,False,False
+Standard Class,Corporate,Dallas,Texas,Storage,12.992,1,0.2,-0.812,1.0,0.4472136,False,False,True,True,False,False,False,False
+Standard Class,Consumer,Alexandria,Virginia,Storage,24.56,2,0.0,6.8768,1.4142135,0.0,False,False,True,False,False,False,True,False
+Standard Class,Consumer,New York City,New York,Accessories,85.14,3,0.0,34.9074,1.7320508,0.0,False,False,True,False,False,True,False,False
+Standard Class,Consumer,New York City,New York,Phones,21.99,1,0.0,10.5552,1.0,0.0,False,False,True,False,False,True,False,False
+Standard Class,Consumer,New York City,New York,Appliances,406.6,5,0.0,113.848,2.236068,0.0,False,False,True,False,False,True,False,False
+Standard Class,Corporate,New York City,New York,Binders,841.568,2,0.2,294.5488,1.4142135,0.4472136,False,False,True,True,False,True,False,False
+First Class,Consumer,Philadelphia,Pennsylvania,Paper,15.552,3,0.2,5.4432,1.7320508,0.4472136,False,False,False,False,False,True,False,False
+First Class,Consumer,Philadelphia,Pennsylvania,Accessories,252.0,5,0.2,53.55,2.236068,0.4472136,False,False,False,False,False,True,False,False
+Standard Class,Home Office,Springfield,Virginia,Art,46.2,4,0.0,12.936,2.0,0.0,False,False,True,False,True,False,True,False
+Standard Class,Home Office,Springfield,Virginia,Appliances,28.84,2,0.0,9.5172,1.4142135,0.0,False,False,True,False,True,False,True,False
+First Class,Consumer,Toledo,Ohio,Art,14.592,3,0.2,2.5536,1.7320508,0.4472136,False,False,False,False,False,True,False,False
+First Class,Consumer,Toledo,Ohio,Art,89.856,3,0.2,21.3408,1.7320508,0.4472136,False,False,False,False,False,True,False,False
+First Class,Consumer,Toledo,Ohio,Paper,13.872,3,0.2,5.0286,1.7320508,0.4472136,False,False,False,False,False,True,False,False
+Standard Class,Consumer,Philadelphia,Pennsylvania,Paper,12.192,3,0.2,4.1148,1.7320508,0.4472136,False,False,True,False,False,True,False,False
+Standard Class,Home Office,Philadelphia,Pennsylvania,Paper,45.056,8,0.2,15.2064,2.828427,0.4472136,False,False,True,False,True,True,False,False
+Standard Class,Home Office,Philadelphia,Pennsylvania,Binders,29.718,6,0.7,-21.7932,2.4494898,0.83666,False,False,True,False,True,True,False,False
+Standard Class,Home Office,Philadelphia,Pennsylvania,Paper,15.552,3,0.2,5.4432,1.7320508,0.4472136,False,False,True,False,True,True,False,False
+Standard Class,Home Office,Philadelphia,Pennsylvania,Appliances,447.696,2,0.2,33.5772,1.4142135,0.4472136,False,False,True,False,True,True,False,False
+First Class,Corporate,Farmington,New Mexico,Accessories,159.99,1,0.0,54.3966,1.0,0.0,False,False,False,True,False,False,False,True
+Standard Class,Corporate,Riverside,California,Paper,12.96,2,0.0,6.2208,1.4142135,0.0,False,False,True,True,False,False,False,True
+Standard Class,Corporate,Riverside,California,Appliances,134.48,4,0.0,34.9648,2.0,0.0,False,False,True,True,False,False,False,True
+First Class,Corporate,San Francisco,California,Paper,17.12,2,0.0,8.0464,1.4142135,0.0,False,False,False,True,False,False,False,True
+Standard Class,Corporate,Torrance,California,Binders,6.096,2,0.2,2.2098,1.4142135,0.4472136,False,False,True,True,False,False,False,True
+Standard Class,Corporate,Torrance,California,Tables,1114.272,4,0.2,41.7852,2.0,0.4472136,False,False,True,True,False,False,False,True
+Standard Class,Consumer,Seattle,Washington,Paper,32.4,5,0.0,15.552,2.236068,0.0,False,False,True,False,False,False,False,True
+Standard Class,Consumer,Seattle,Washington,Storage,540.57,3,0.0,140.5482,1.7320508,0.0,False,False,True,False,False,False,False,True
+Standard Class,Consumer,Seattle,Washington,Binders,167.76,5,0.2,62.91,2.236068,0.4472136,False,False,True,False,False,False,False,True
+First Class,Consumer,Mesa,Arizona,Tables,393.165,3,0.5,-204.4458,1.7320508,0.70710677,False,False,False,False,False,False,False,True
+Standard Class,Home Office,Philadelphia,Pennsylvania,Furnishings,516.488,7,0.2,-12.9122,2.6457512,0.4472136,False,False,True,False,True,True,False,False
+Standard Class,Home Office,Philadelphia,Pennsylvania,Furnishings,1007.232,6,0.2,75.5424,2.4494898,0.4472136,False,False,True,False,True,True,False,False
+Standard Class,Home Office,Philadelphia,Pennsylvania,Tables,2065.32,12,0.4,-619.596,3.4641016,0.6324555,False,False,True,False,True,True,False,False
+Standard Class,Home Office,Philadelphia,Pennsylvania,Paper,15.552,3,0.2,5.4432,1.7320508,0.4472136,False,False,True,False,True,True,False,False
+Standard Class,Home Office,Philadelphia,Pennsylvania,Paper,25.344,6,0.2,7.92,2.4494898,0.4472136,False,False,True,False,True,True,False,False
+Standard Class,Consumer,Philadelphia,Pennsylvania,Furnishings,25.472,4,0.2,7.6416,2.0,0.4472136,False,False,True,False,False,True,False,False
+Standard Class,Consumer,Round Rock,Texas,Art,27.168,2,0.2,2.7168,1.4142135,0.4472136,False,False,True,False,False,False,False,False
+Standard Class,Consumer,Round Rock,Texas,Bookcases,78.8528,2,0.32,-11.596,1.4142135,0.56568545,False,False,True,False,False,False,False,False
+Standard Class,Consumer,Jackson,Mississippi,Storage,173.8,5,0.0,43.45,2.236068,0.0,False,False,True,False,False,False,True,False
+Second Class,Consumer,Phoenix,Arizona,Phones,29.592,1,0.2,2.5893,1.0,0.4472136,False,True,False,False,False,False,False,True
+Second Class,Consumer,Phoenix,Arizona,Binders,4.752,2,0.7,-3.168,1.4142135,0.83666,False,True,False,False,False,False,False,True
+Second Class,Consumer,Phoenix,Arizona,Paper,15.552,3,0.2,5.6376,1.7320508,0.4472136,False,True,False,False,False,False,False,True
+Same Day,Consumer,Oceanside,California,Furnishings,204.6,2,0.0,53.196,1.4142135,0.0,True,False,False,False,False,False,False,True
+Standard Class,Corporate,San Francisco,California,Chairs,321.568,2,0.2,28.1372,1.4142135,0.4472136,False,False,True,True,False,False,False,True
+Standard Class,Home Office,Fayetteville,Arkansas,Binders,6.24,2,0.0,3.0576,1.4142135,0.0,False,False,True,False,True,False,True,False
+First Class,Corporate,San Francisco,California,Envelopes,21.88,2,0.0,10.94,1.4142135,0.0,False,False,False,True,False,False,False,True
+Second Class,Consumer,Boca Raton,Florida,Labels,4.608,2,0.2,1.6704,1.4142135,0.4472136,False,True,False,False,False,False,True,False
+First Class,Home Office,New York City,New York,Labels,9.82,2,0.0,4.8118,1.4142135,0.0,False,False,False,False,True,True,False,False
+First Class,Home Office,New York City,New York,Art,35.97,3,0.0,9.7119,1.7320508,0.0,False,False,False,False,True,True,False,False
+First Class,Home Office,New York City,New York,Paper,12.96,2,0.0,6.2208,1.4142135,0.0,False,False,False,False,True,True,False,False
+First Class,Home Office,New York City,New York,Paper,191.6,4,0.0,91.968,2.0,0.0,False,False,False,False,True,True,False,False
+First Class,Home Office,New York City,New York,Labels,8.64,3,0.0,4.2336,1.7320508,0.0,False,False,False,False,True,True,False,False
+First Class,Home Office,New York City,New York,Storage,501.81,3,0.0,0.0,1.7320508,0.0,False,False,False,False,True,True,False,False
+Second Class,Consumer,Philadelphia,Pennsylvania,Furnishings,127.104,6,0.2,28.5984,2.4494898,0.4472136,False,True,False,False,False,True,False,False
+Second Class,Consumer,Philadelphia,Pennsylvania,Phones,124.2,3,0.4,-31.05,1.7320508,0.6324555,False,True,False,False,False,True,False,False
+Second Class,Consumer,Philadelphia,Pennsylvania,Binders,18.588,2,0.7,-13.6312,1.4142135,0.83666,False,True,False,False,False,True,False,False
+Second Class,Consumer,Philadelphia,Pennsylvania,Labels,30.072,3,0.2,10.1493,1.7320508,0.4472136,False,True,False,False,False,True,False,False
+Second Class,Home Office,New York City,New York,Phones,160.93,7,0.0,3.2186,2.6457512,0.0,False,True,False,False,True,True,False,False
+Second Class,Home Office,New York City,New York,Binders,75.792,3,0.2,25.5798,1.7320508,0.4472136,False,True,False,False,True,True,False,False
+Standard Class,Consumer,Portland,Oregon,Binders,1.08,2,0.7,-0.792,1.4142135,0.83666,False,False,True,False,False,False,False,True
+First Class,Corporate,Detroit,Michigan,Machines,3059.982,2,0.1,679.996,1.4142135,0.31622776,False,False,False,True,False,False,False,False
+First Class,Consumer,Wilmington,North Carolina,Binders,3.282,2,0.7,-2.6256,1.4142135,0.83666,False,False,False,False,False,False,True,False
+First Class,Corporate,Columbus,Indiana,Paper,34.02,3,0.0,16.6698,1.7320508,0.0,False,False,False,True,False,False,False,False
+Standard Class,Consumer,New York City,New York,Chairs,599.292,6,0.1,93.2232,2.4494898,0.31622776,False,False,True,False,False,True,False,False
+Second Class,Consumer,Louisville,Colorado,Art,3.392,1,0.2,0.8056,1.0,0.4472136,False,True,False,False,False,False,False,True
+Second Class,Consumer,Louisville,Colorado,Phones,559.984,2,0.2,55.9984,1.4142135,0.4472136,False,True,False,False,False,False,False,True
+Second Class,Consumer,Louisville,Colorado,Chairs,603.92,5,0.2,75.49,2.236068,0.4472136,False,True,False,False,False,False,False,True
+Standard Class,Home Office,Pasadena,Texas,Labels,7.968,2,0.2,2.5896,1.4142135,0.4472136,False,False,True,False,True,False,False,False
+Standard Class,Home Office,Pasadena,Texas,Envelopes,27.968,4,0.2,9.4392,2.0,0.4472136,False,False,True,False,True,False,False,False
+Standard Class,Home Office,Pasadena,Texas,Machines,336.51,3,0.4,44.868,1.7320508,0.6324555,False,False,True,False,True,False,False,False
+Same Day,Consumer,Houston,Texas,Binders,1.112,2,0.8,-1.8904,1.4142135,0.8944272,True,False,False,False,False,False,False,False
+Standard Class,Corporate,Auburn,New York,Furnishings,520.05,5,0.0,72.807,2.236068,0.0,False,False,True,True,False,True,False,False
+Standard Class,Corporate,Auburn,New York,Art,17.97,3,0.0,5.2113,1.7320508,0.0,False,False,True,True,False,True,False,False
+Second Class,Home Office,Jacksonville,Florida,Chairs,1166.92,5,0.2,131.2785,2.236068,0.4472136,False,True,False,False,True,False,True,False
+First Class,Consumer,New York City,New York,Binders,14.624,2,0.2,5.484,1.4142135,0.4472136,False,False,False,False,False,True,False,False
+First Class,Consumer,San Jose,California,Fasteners,10.23,3,0.0,4.9104,1.7320508,0.0,False,False,False,False,False,False,False,True
+First Class,Consumer,San Jose,California,Paper,154.9,5,0.0,69.705,2.236068,0.0,False,False,False,False,False,False,False,True
+Standard Class,Corporate,Virginia Beach,Virginia,Binders,2715.93,7,0.0,1276.487,2.6457512,0.0,False,False,True,True,False,False,True,False
+Standard Class,Corporate,Virginia Beach,Virginia,Phones,617.97,3,0.0,173.0316,1.7320508,0.0,False,False,True,True,False,False,True,False
+Standard Class,Consumer,Henderson,Kentucky,Envelopes,10.67,1,0.0,4.9082,1.0,0.0,False,False,True,False,False,False,True,False
+Standard Class,Consumer,Henderson,Kentucky,Storage,36.63,3,0.0,9.8901,1.7320508,0.0,False,False,True,False,False,False,True,False
+Standard Class,Consumer,Henderson,Kentucky,Furnishings,24.1,5,0.0,9.158,2.236068,0.0,False,False,True,False,False,False,True,False

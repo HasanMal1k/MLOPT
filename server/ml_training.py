@@ -1422,13 +1422,92 @@ async def stream_training_results(task_id: str):
         }
     )
 
+@router.get("/get-original-columns/{config_id}")
+async def get_original_columns(config_id: str):
+    """
+    Get the original column names from the preprocessing pipeline.
+    Frontend uses this to dynamically generate input fields for raw data.
+    
+    Args:
+        config_id: Training configuration ID
+        
+    Returns:
+        List of original column names (excluding target column)
+    """
+    try:
+        if config_id not in training_tasks:
+            raise HTTPException(status_code=404, detail="Training configuration not found")
+        
+        task = training_tasks[config_id]
+        file_id = task.get("original_file_id")
+        
+        if not file_id:
+            raise HTTPException(status_code=404, detail="No file_id found for this training task")
+        
+        # Find and load preprocessing pipeline
+        import joblib
+        processed_folder = Path("processed_files")
+        
+        pipeline_patterns = [
+            f"processed_{file_id}_*.joblib",
+            f"processed_*{file_id}*.joblib"
+        ]
+        
+        pipeline_path = None
+        for pattern in pipeline_patterns:
+            matches = list(processed_folder.glob(pattern))
+            if matches:
+                pipeline_path = matches[0]
+                break
+        
+        if not pipeline_path or not pipeline_path.exists():
+            raise HTTPException(status_code=404, detail="Preprocessing pipeline not found")
+        
+        # Load pipeline and extract original columns
+        pipeline = joblib.load(pipeline_path)
+        original_columns = pipeline.get("original_columns", [])
+        
+        # Get target column from config
+        target_column = task.get("config", {}).get("target_column")
+        
+        # Filter out target column from input columns
+        input_columns = [col for col in original_columns if col != target_column]
+        
+        return JSONResponse({
+            "success": True,
+            "config_id": config_id,
+            "original_columns": input_columns,
+            "target_column": target_column,
+            "total_columns": len(input_columns)
+        })
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting original columns: {str(e)}")
+        import traceback
+        logger.error(traceback.format_exc())
+        raise HTTPException(status_code=500, detail=f"Failed to get original columns: {str(e)}")
+
+
 @router.post("/predict/")
 async def predict_with_model(
     config_id: str = Form(...),
     model_name: str = Form(...),
     input_data: str = Form(...)
 ):
-    """Make predictions using a trained model"""
+    """
+    Make predictions using a trained model with automatic preprocessing pipeline application.
+    
+    The preprocessing pipeline is automatically loaded based on the original training file.
+    User provides raw input data (original column names), and the system automatically
+    applies all preprocessing transformations before making predictions.
+    
+    Args:
+        config_id: Training configuration ID
+        model_name: Name of the model to use
+        input_data: JSON string of raw input data (with original column names)
+    """
     try:
         if config_id not in training_tasks:
             raise HTTPException(status_code=404, detail="Training configuration not found")
@@ -1438,7 +1517,7 @@ async def predict_with_model(
         if task.get("status") != "completed":
             raise HTTPException(status_code=400, detail="Training not completed yet")
         
-        # Parse input data
+        # Parse input data (raw format from user)
         try:
             inputs = json.loads(input_data)
         except:
@@ -1458,28 +1537,117 @@ async def predict_with_model(
         import joblib
         model = joblib.load(model_file)
         
-        # Prepare input dataframe
+        # Prepare input dataframe (raw format)
         input_df = pd.DataFrame([inputs])
         
-        # Make prediction
-        prediction = model.predict(input_df)[0]
+        # AUTO-RETRIEVE file_id from training task (stored during configuration)
+        file_id = task.get("original_file_id")
+        
+        # Try to apply preprocessing pipeline (MANDATORY for reproducibility)
+        preprocessed_df = input_df
+        pipeline_applied = False
+        pipeline_warning = None
+        
+        if file_id:
+            try:
+                from preprocessing_pipeline_loader import preprocess_for_prediction, load_preprocessing_pipeline
+                
+                # Find and load preprocessing pipeline
+                processed_folder = Path("processed_files")
+                
+                # Load pipeline to get original columns for validation
+                import joblib
+                from pathlib import Path as PathlibPath
+                
+                # Find pipeline file
+                pipeline_patterns = [
+                    f"processed_{file_id}_*.joblib",
+                    f"processed_*{file_id}*.joblib"
+                ]
+                
+                pipeline_path = None
+                for pattern in pipeline_patterns:
+                    matches = list(processed_folder.glob(pattern))
+                    if matches:
+                        pipeline_path = matches[0]
+                        break
+                
+                if pipeline_path and pipeline_path.exists():
+                    pipeline = joblib.load(pipeline_path)
+                    original_columns = pipeline.get("original_columns", [])
+                    
+                    # VALIDATE: User must provide exact original column names
+                    input_columns = set(inputs.keys())
+                    expected_columns = set(original_columns)
+                    
+                    # Check for columns not in original dataset
+                    invalid_columns = input_columns - expected_columns
+                    if invalid_columns:
+                        raise HTTPException(
+                            status_code=400,
+                            detail=f"Invalid columns: {list(invalid_columns)}. "
+                                   f"Expected columns from original dataset: {list(expected_columns)}"
+                        )
+                    
+                    # Warn about missing columns (will be imputed by pipeline)
+                    missing_columns = expected_columns - input_columns
+                    if missing_columns:
+                        logger.warning(f"Missing columns in input: {missing_columns} (will be filled with NaN and imputed)")
+                    
+                    logger.info(f"✅ Input validation passed")
+                    logger.info(f"Expected columns: {original_columns}")
+                    logger.info(f"Provided columns: {list(input_columns)}")
+                
+                # Apply preprocessing pipeline
+                preprocessed_df = preprocess_for_prediction(inputs, file_id, processed_folder)
+                pipeline_applied = True
+                logger.info(f"✅ Applied preprocessing pipeline for file_id: {file_id}")
+                logger.info(f"Transformed from {input_df.shape} to {preprocessed_df.shape}")
+                
+            except FileNotFoundError as e:
+                pipeline_warning = f"Preprocessing pipeline not found: {e}"
+                logger.warning(f"⚠️ {pipeline_warning}")
+                logger.warning("Using raw input data without preprocessing - predictions may be INACCURATE!")
+            except Exception as e:
+                pipeline_warning = f"Error applying preprocessing pipeline: {e}"
+                logger.warning(f"⚠️ {pipeline_warning}")
+                logger.warning("Using raw input data without preprocessing - predictions may be INACCURATE!")
+                import traceback
+                logger.warning(traceback.format_exc())
+        else:
+            pipeline_warning = "No file_id found in training task - cannot apply preprocessing pipeline"
+            logger.warning(f"⚠️ {pipeline_warning}")
+            logger.warning("Predictions will use raw input data and may be INACCURATE!")
+        
+        # Make prediction using preprocessed data
+        prediction = model.predict(preprocessed_df)[0]
         
         # Get prediction probability if classification
         prediction_proba = None
         if hasattr(model, 'predict_proba'):
             try:
-                proba = model.predict_proba(input_df)[0]
+                proba = model.predict_proba(preprocessed_df)[0]
                 prediction_proba = float(max(proba))
             except:
                 pass
         
-        return JSONResponse({
+        response_data = {
             "success": True,
             "prediction": float(prediction) if isinstance(prediction, (np.integer, np.floating)) else prediction,
             "confidence": prediction_proba,
             "model_name": model_name,
-            "input_data": inputs
-        })
+            "input_data": inputs,
+            "pipeline_applied": pipeline_applied,
+            "preprocessed_shape": list(preprocessed_df.shape),
+            "file_id": file_id
+        }
+        
+        # Add warning if pipeline wasn't applied
+        if pipeline_warning:
+            response_data["warning"] = pipeline_warning
+            response_data["accuracy_note"] = "Prediction may be inaccurate - preprocessing pipeline not applied"
+        
+        return JSONResponse(response_data)
         
     except HTTPException:
         raise
@@ -1921,6 +2089,16 @@ async def configure_training_with_file(
         training_file_path = training_data_dir / f"{config_id}_data.csv"
         data.to_csv(training_file_path, index=False)
         
+        # Extract file_id from filename for preprocessing pipeline
+        # Filename format: "processed_<file_id>_originalname.csv"
+        original_file_id = None
+        if file.filename:
+            # Try to extract the unique_id that was added during upload
+            # Format: "{unique_id}_{original_filename}"
+            parts = file.filename.split('_', 1)
+            if len(parts) >= 2 and len(parts[0]) == 8:  # unique_id is 8 chars
+                original_file_id = parts[0]
+        
         # Store configuration for training
         training_tasks[config_id] = {
             "status": "configured",
@@ -1947,7 +2125,8 @@ async def configure_training_with_file(
             "data_file": str(training_file_path),
             "data_shape": data.shape,
             "features_count": len(data.columns) - 1,
-            "original_filename": file.filename
+            "original_filename": file.filename,
+            "original_file_id": original_file_id  # Store for preprocessing pipeline
         }
         
         logger.info(f"Configuration saved with ID: {config_id}")

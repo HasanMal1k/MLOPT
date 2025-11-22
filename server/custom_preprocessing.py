@@ -6,11 +6,15 @@ import numpy as np
 import json
 import uuid
 import os
+import logging
 from typing import List, Optional
 import math
 
 # Import the proper apply_transformations function from transformations module
 from transformations import apply_transformations as apply_specific_transformations
+
+# Setup logger
+logger = logging.getLogger(__name__)
 
 # Create router for custom preprocessing
 router = APIRouter(prefix="/custom-preprocessing")
@@ -327,6 +331,27 @@ async def apply_transformations_endpoint(
         output_filename = f"transformed_{uuid.uuid4()}_{file.filename}"
         output_path = result_folder / output_filename
         transformed_df.to_csv(output_path, index=False)
+        
+        # Save transformation pipeline for reproducible predictions
+        try:
+            import joblib
+            pipeline_path = result_folder / f"{output_filename.replace('.csv', '')}_pipeline.joblib"
+            
+            transformation_pipeline = {
+                "pipeline_type": "custom_transformations",
+                "original_columns": list(df.columns),
+                "final_columns": list(transformed_df.columns),
+                "transform_config": transform_config,
+                "transformations_applied": applied_transforms,
+                "original_shape": list(df.shape),
+                "final_shape": list(transformed_df.shape)
+            }
+            
+            joblib.dump(transformation_pipeline, pipeline_path)
+            logger.info(f"Saved custom transformation pipeline to {pipeline_path}")
+            
+        except Exception as e:
+            logger.warning(f"Could not save transformation pipeline: {e}")
         
         # Save transformation report
         report_filename = f"{output_filename}.report.json"

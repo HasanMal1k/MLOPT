@@ -347,9 +347,11 @@ def preprocess_file(file_path: Path, output_path: Path,
             update_status(filename, status_folder, -1, error_msg)
             return {"success": False, "error": error_msg}
         
-        # Save original shape for reporting
+        # Save original shape and columns for pipeline
         original_shape = df.shape
+        original_columns = df.columns.tolist()  # Store for pipeline
         logger.info(f"Original shape: {original_shape}")
+        logger.info(f"Original columns: {original_columns}")
         
         if original_shape[0] == 0 or original_shape[1] == 0:
             error_msg = f"File is empty or has no columns: {original_shape}"
@@ -501,6 +503,10 @@ def preprocess_file(file_path: Path, output_path: Path,
             # Create a copy of the dataframe for safety during imputation
             df_copy = df.copy()
             
+            # Initialize pipeline storage variables at function scope
+            categorical_modes = {}  # Store modes for pipeline
+            numeric_medians = {}    # Store medians for pipeline
+            
             # For categorical columns
             if nominal_columns:
                 for col in nominal_columns:
@@ -509,9 +515,11 @@ def preprocess_file(file_path: Path, output_path: Path,
                             try:
                                 # Get the mode for this column
                                 mode_val = df_copy[col].mode().iloc[0] if not df_copy[col].mode().empty else "Unknown"
+                                categorical_modes[col] = mode_val  # Store for pipeline
                                 df_copy[col] = df_copy[col].fillna(mode_val)
                                 preprocessing_info["columns_cleaned"].append(col)
                                 preprocessing_info["missing_value_stats"][col]["imputation_method"] = "mode"
+                                preprocessing_info["missing_value_stats"][col]["imputation_value"] = str(mode_val)
                             except Exception as e:
                                 logger.warning(f"Error imputing column {col}: {e}")
             
@@ -553,9 +561,11 @@ def preprocess_file(file_path: Path, output_path: Path,
                             if col in preprocessing_info["missing_value_stats"] and df_copy[col].isna().sum() > 0:
                                 # Use median for imputation
                                 median_val = df_copy[col].median()
+                                numeric_medians[col] = float(median_val) if not pd.isna(median_val) else 0.0
                                 df_copy[col] = df_copy[col].fillna(median_val)
                                 preprocessing_info["columns_cleaned"].append(col)
                                 preprocessing_info["missing_value_stats"][col]["imputation_method"] = "median"
+                                preprocessing_info["missing_value_stats"][col]["imputation_value"] = float(median_val) if not pd.isna(median_val) else 0.0
                 
                 except Exception as e:
                     logger.warning(f"Error in KNN imputation: {e}, falling back to median")
@@ -565,9 +575,11 @@ def preprocess_file(file_path: Path, output_path: Path,
                         if col in preprocessing_info["missing_value_stats"] and df_copy[col].isna().sum() > 0:
                             try:
                                 median_val = df_copy[col].median()
+                                numeric_medians[col] = float(median_val) if not pd.isna(median_val) else 0.0
                                 df_copy[col] = df_copy[col].fillna(median_val)
                                 preprocessing_info["columns_cleaned"].append(col)
                                 preprocessing_info["missing_value_stats"][col]["imputation_method"] = "median"
+                                preprocessing_info["missing_value_stats"][col]["imputation_value"] = float(median_val) if not pd.isna(median_val) else 0.0
                             except Exception as e:
                                 logger.warning(f"Error with median imputation for {col}: {e}")
             
@@ -732,20 +744,82 @@ def preprocess_file(file_path: Path, output_path: Path,
         logger.info(f"Preprocessing complete. Original shape: {original_shape}, Final shape: {final_shape}")
         logger.info(f"Processed {len(preprocessing_info['columns_cleaned'])} columns ({processed_percentage}%)")
         
-        # Save preprocessing pipeline for reproducibility
+        # Save comprehensive preprocessing pipeline for reproducible predictions
         try:
             import joblib
             pipeline_path = output_path.with_name(f"{output_path.stem}_pipeline.joblib")
+            
+            # Build comprehensive pipeline with all transformation details
             preprocessing_pipeline = {
+                # Metadata
+                "pipeline_type": "auto_preprocessing",
                 "missing_values": MISSING_VALUES,
                 "date_patterns": DATE_PATTERNS,
                 "preprocessing_info": preprocessing_info,
                 "original_shape": list(original_shape),
-                "final_shape": list(final_shape)
+                "final_shape": list(final_shape),
+                "original_columns": original_columns,
+                
+                # Column type information
+                "date_columns": date_columns if 'date_columns' in locals() else [],
+                "nominal_columns": nominal_columns if 'nominal_columns' in locals() else [],
+                "non_nominal_columns": non_nominal_columns if 'non_nominal_columns' in locals() else [],
+                
+                # Imputation values for inference
+                "categorical_modes": categorical_modes if 'categorical_modes' in locals() else {},
+                "numeric_medians": numeric_medians if 'numeric_medians' in locals() else {},
+                
+                # Feature engineering mappings
+                "one_hot_columns": {},
+                "numeric_transformations": {},
+                "date_feature_mappings": {}
             }
+            
+            # Extract one-hot encoding details from preprocessing_info
+            transformation_details = preprocessing_info.get("transformation_details", {})
+            if isinstance(transformation_details, dict):
+                # Store one-hot encoding mappings
+                categorical_encodings = transformation_details.get("categorical_encodings", [])
+                if isinstance(categorical_encodings, list):
+                    for encoding in categorical_encodings:
+                        if isinstance(encoding, dict):
+                            source_col = encoding.get("source_column")
+                            derived_features = encoding.get("derived_features", [])
+                            if source_col:
+                                preprocessing_pipeline["one_hot_columns"][source_col] = derived_features
+                
+                # Store numeric transformation details
+                numeric_transformations = transformation_details.get("numeric_transformations", [])
+                if isinstance(numeric_transformations, list):
+                    for transform in numeric_transformations:
+                        if isinstance(transform, dict):
+                            source_col = transform.get("source_column")
+                            derived_features = transform.get("derived_features", [])
+                            if source_col:
+                                preprocessing_pipeline["numeric_transformations"][source_col] = derived_features
+                
+                # Store date feature mappings
+                datetime_features = transformation_details.get("datetime_features", [])
+                if isinstance(datetime_features, list):
+                    for date_feat in datetime_features:
+                        if isinstance(date_feat, dict):
+                            source_col = date_feat.get("source_column")
+                            derived_features = date_feat.get("derived_features", [])
+                            if source_col:
+                                preprocessing_pipeline["date_feature_mappings"][source_col] = derived_features
+            
+            # Save the pipeline
             joblib.dump(preprocessing_pipeline, pipeline_path)
+            logger.info(f"Saved comprehensive preprocessing pipeline to {pipeline_path}")
+            logger.info(f"Pipeline contains: {len(original_columns)} original columns, "
+                       f"{len(preprocessing_pipeline['categorical_modes'])} categorical modes, "
+                       f"{len(preprocessing_pipeline['numeric_medians'])} numeric medians, "
+                       f"{len(preprocessing_pipeline['one_hot_columns'])} one-hot encodings")
+            
         except Exception as e:
             logger.warning(f"Could not save preprocessing pipeline: {e}")
+            import traceback
+            logger.warning(traceback.format_exc())
         
         # Final report
         report = {
