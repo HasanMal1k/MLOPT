@@ -749,6 +749,9 @@ def preprocess_file(file_path: Path, output_path: Path,
             import joblib
             pipeline_path = output_path.with_name(f"{output_path.stem}_pipeline.joblib")
             
+            # Get final columns after all processing
+            final_columns = df.columns.tolist()
+            
             # Build comprehensive pipeline with all transformation details
             preprocessing_pipeline = {
                 # Metadata
@@ -759,6 +762,7 @@ def preprocess_file(file_path: Path, output_path: Path,
                 "original_shape": list(original_shape),
                 "final_shape": list(final_shape),
                 "original_columns": original_columns,
+                "final_columns": final_columns,
                 
                 # Column type information
                 "date_columns": date_columns if 'date_columns' in locals() else [],
