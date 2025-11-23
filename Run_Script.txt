@@ -9,4 +9,4 @@ docker run -d --rm -p 8000:8000 `
   -e AZURE_SUBSCRIPTION_ID="262f6ecf-518e-4f93-ba94-ba1bae0b8940" `
   -e AZURE_RESOURCE_GROUP="MLOPT1" `
   -e AZURE_WORKSPACE_NAME="MLOPT_91" `
-  mlopt:latest
+  mlopting:latest

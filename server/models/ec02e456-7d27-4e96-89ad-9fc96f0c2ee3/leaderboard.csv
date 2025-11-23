@@ -1,0 +1,32 @@
+model,status,smape,mae,rmse,mape,training_time,error
+NaiveSeasonal,ok,26.171891813100856,47.38627586206896,53.30434698583415,22.604798602352826,0.01,
+Theta,failed,,,,,0.0,Metric calculation failed: Invalid metric values calculated
+NaiveDrift,ok,26.171891813100856,47.38627586206896,53.30434698583415,22.604798602352826,0.0,
+AutoARIMA,failed,,,,,0.0,Input y contains NaN.
+ARIMA_101,ok,27.217628616343436,49.010597720056396,55.194405637381436,23.36863581155551,0.4,
+ARIMA_111,ok,26.172226497718306,47.386795500347645,53.304854145028905,22.605055172059355,0.1,
+ARIMA_212,ok,26.173788998103092,47.38922160151434,53.307227482087676,22.606252170164176,0.2,
+ExponentialSmoothing,failed,,,,,0.0,Metric calculation failed: Invalid metric values calculated
+ExponentialSmoothing_Add,failed,,,,,0.0,'str' object has no attribute 'value'
+ExponentialSmoothing_Mul,failed,,,,,0.0,'str' object has no attribute 'value'
+Holt,failed,,,,,0.0,'str' object has no attribute 'value'
+HoltWinters,failed,,,,,0.0,'str' object has no attribute 'value'
+StatsForecast_AutoARIMA,ok,17.931060400599943,33.83613075374899,37.64771276308257,16.246979931379144,1.21,
+StatsForecast_AutoETS,failed,,,,,0.0,This function does not handle missing values
+StatsForecast_AutoCES,failed,,,,,0.0,This function does not handle missing values
+Croston,ok,26.335725160362166,47.64041604033453,53.55148818339066,22.730451642375296,0.4,
+FFT,ok,114.41485607826343,144.75185773158682,148.03503461500256,72.20697960957142,0.02,
+KalmanForecaster,failed,,,,,0.0,Output data cannot contain nulls
+RandomForest,ok,26.172324201856735,47.38694697441533,53.30499705743207,22.605130144559645,1.38,
+RandomForest_Light,ok,26.174124291221208,47.389740683496754,53.307704718962434,22.606510103116563,0.37,
+LightGBM,ok,26.261938873704274,47.52596061515629,53.44029643144082,22.673795035016436,1.7,
+LightGBM_Fast,ok,26.784104036357416,48.333077634450476,54.22841813568727,23.07282064190559,0.71,
+XGBoost,ok,26.222391770454625,47.46465658534258,53.38075681018631,22.643503788867793,1.73,
+XGBoost_Light,ok,26.301124224574558,47.586769447063574,53.4994634896526,22.703949741134036,0.24,
+NBEATS_Tiny,failed,,,,,0.0,Metric calculation failed: Invalid metric values calculated
+LSTM_Small,failed,,,,,0.0,Metric calculation failed: Invalid metric values calculated
+GRU_Small,failed,,,,,0.0,Metric calculation failed: Invalid metric values calculated
+NBEATS_Medium,failed,,,,,0.0,Metric calculation failed: Invalid metric values calculated
+LSTM_Medium,failed,,,,,0.0,Metric calculation failed: Invalid metric values calculated
+Transformer_Small,failed,,,,,0.0,Metric calculation failed: Invalid metric values calculated
+TCN_Small,failed,,,,,0.0,Metric calculation failed: Invalid metric values calculated

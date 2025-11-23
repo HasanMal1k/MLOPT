@@ -1913,6 +1913,231 @@ async def get_available_time_series_models():
     
     return JSONResponse(models_info)
 
+@router.post("/forecast-time-series/")
+async def forecast_time_series(
+    config_id: str = Form(...),
+    model_name: str = Form(...)
+):
+    """
+    Generate forecast for a trained time series model.
+    No user input needed - model was trained with forecast_horizon.
+    Just load model and return the forecasted values.
+    
+    Args:
+        config_id: Training configuration ID
+        model_name: Name of the model to use for forecasting
+        
+    Returns:
+        Forecast values with metadata (timestamps, values, metrics)
+    """
+    try:
+        if not DARTS_AVAILABLE:
+            raise HTTPException(
+                status_code=500,
+                detail="Darts library not available. Time series forecasting requires Darts."
+            )
+        
+        # Check if task exists
+        if config_id not in ts_training_tasks:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Training task {config_id} not found. Please train models first."
+            )
+        
+        task = ts_training_tasks[config_id]
+        
+        if task["status"] != "completed":
+            raise HTTPException(
+                status_code=400,
+                detail=f"Training task is not completed. Current status: {task['status']}"
+            )
+        
+        # Find model file
+        models_dir = Path("models") / config_id
+        if not models_dir.exists():
+            raise HTTPException(
+                status_code=404,
+                detail=f"Models directory not found for config {config_id}"
+            )
+        
+        # Search for model file (handle indexed filenames like "ModelName_0.pkl")
+        model_files = list(models_dir.glob(f"{model_name}*.pkl"))
+        if not model_files:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Model '{model_name}' not found. Available models: {[f.stem for f in models_dir.glob('*.pkl')]}"
+            )
+        
+        model_file = model_files[0]
+        logger.info(f"Loading time series model from: {model_file}")
+        
+        # Load the trained model using specific model classes
+        try:
+            # Deep learning models
+            if "NBEATS" in model_name:
+                from darts.models import NBEATSModel
+                model = NBEATSModel.load(str(model_file))
+            elif "RNN" in model_name or "LSTM" in model_name or "GRU" in model_name:
+                from darts.models import RNNModel
+                model = RNNModel.load(str(model_file))
+            elif "TCN" in model_name:
+                from darts.models import TCNModel
+                model = TCNModel.load(str(model_file))
+            elif "Transformer" in model_name:
+                from darts.models import TransformerModel
+                model = TransformerModel.load(str(model_file))
+            # StatsForecast models
+            elif "StatsForecast_AutoARIMA" in model_name:
+                from darts.models import StatsForecastAutoARIMA
+                model = StatsForecastAutoARIMA.load(str(model_file))
+            elif "StatsForecast_AutoETS" in model_name:
+                from darts.models import StatsForecastAutoETS
+                model = StatsForecastAutoETS.load(str(model_file))
+            elif "StatsForecast_AutoCES" in model_name:
+                from darts.models import StatsForecastAutoCES
+                model = StatsForecastAutoCES.load(str(model_file))
+            # ARIMA models
+            elif "AutoARIMA" in model_name:
+                from darts.models import AutoARIMA
+                model = AutoARIMA.load(str(model_file))
+            elif "ARIMA" in model_name:
+                from darts.models import ARIMA
+                model = ARIMA.load(str(model_file))
+            elif "VARIMA" in model_name:
+                from darts.models import VARIMA
+                model = VARIMA.load(str(model_file))
+            # Other statistical models
+            elif "Prophet" in model_name:
+                from darts.models import Prophet
+                model = Prophet.load(str(model_file))
+            elif "Theta" in model_name:
+                from darts.models import Theta
+                model = Theta.load(str(model_file))
+            elif "Naive" in model_name:
+                from darts.models import NaiveSeasonal
+                model = NaiveSeasonal.load(str(model_file))
+            elif "ExponentialSmoothing" in model_name or "Holt" in model_name:
+                from darts.models import ExponentialSmoothing
+                model = ExponentialSmoothing.load(str(model_file))
+            elif "FFT" in model_name:
+                from darts.models import FFT
+                model = FFT.load(str(model_file))
+            elif "Kalman" in model_name:
+                from darts.models import KalmanForecaster
+                model = KalmanForecaster.load(str(model_file))
+            elif "Croston" in model_name:
+                from darts.models import Croston
+                model = Croston.load(str(model_file))
+            # Machine learning models
+            elif "RandomForest" in model_name:
+                from darts.models import RandomForest
+                model = RandomForest.load(str(model_file))
+            elif "LightGBM" in model_name:
+                from darts.models import LightGBMModel
+                model = LightGBMModel.load(str(model_file))
+            elif "XGBoost" in model_name:
+                from darts.models import XGBModel
+                model = XGBModel.load(str(model_file))
+            elif "CatBoost" in model_name:
+                from darts.models import CatBoostModel
+                model = CatBoostModel.load(str(model_file))
+            elif "LinearRegression" in model_name or "Ridge" in model_name or "Lasso" in model_name or "ElasticNet" in model_name:
+                from darts.models import LinearRegressionModel
+                model = LinearRegressionModel.load(str(model_file))
+            else:
+                # Generic fallback - try to load as NaiveSeasonal
+                logger.warning(f"Unknown model type '{model_name}', attempting generic load")
+                from darts.models import NaiveSeasonal
+                model = NaiveSeasonal.load(str(model_file))
+                
+        except Exception as load_error:
+            logger.error(f"Error loading model '{model_name}': {load_error}")
+            raise HTTPException(
+                status_code=500,
+                detail=f"Failed to load model '{model_name}': {str(load_error)}"
+            )
+        
+        # Get training configuration
+        forecast_horizon = task.get("forecast_horizon", 12)
+        
+        # Load historical data to generate forecast
+        training_data_dir = Path("training_data")
+        data_file = training_data_dir / f"{config_id}_ts_data.csv"
+        
+        if not data_file.exists():
+            raise HTTPException(
+                status_code=404,
+                detail="Training data not found. Cannot generate forecast without historical data."
+            )
+        
+        df = pd.read_csv(data_file)
+        
+        # Get configuration details
+        config = task.get("config", {})
+        date_column = config.get("date_column", "date")
+        target_column = config.get("target_column")
+        
+        # Prepare time series from historical data
+        df[date_column] = pd.to_datetime(df[date_column], errors='coerce')
+        df = df.dropna(subset=[date_column])
+        df = df.sort_values(date_column)
+        df_indexed = df.set_index(date_column)
+        
+        # Create TimeSeries object
+        series = TimeSeries.from_dataframe(
+            df_indexed,
+            value_cols=target_column,
+            fill_missing_dates=True
+        )
+        
+        logger.info(f"Generating forecast for {forecast_horizon} periods ahead...")
+        
+        # Generate forecast
+        forecast = model.predict(n=forecast_horizon, series=series)
+        
+        # Convert forecast to DataFrame
+        forecast_df = forecast.pd_dataframe()
+        forecast_df = forecast_df.reset_index()
+        forecast_df.columns = ['timestamp', 'forecast_value']
+        
+        # Convert to JSON-serializable format
+        forecast_data = {
+            "timestamps": forecast_df['timestamp'].dt.strftime('%Y-%m-%d %H:%M:%S').tolist(),
+            "values": forecast_df['forecast_value'].tolist(),
+            "forecast_horizon": forecast_horizon,
+            "model_name": model_name,
+            "target_column": target_column
+        }
+        
+        # Get model metrics from leaderboard
+        leaderboard = task.get("leaderboard", [])
+        model_metrics = next((m for m in leaderboard if m.get("model", "").startswith(model_name)), {})
+        
+        logger.info(f"Forecast generated successfully: {len(forecast_data['values'])} periods")
+        
+        return JSONResponse({
+            "success": True,
+            "forecast": forecast_data,
+            "metrics": {
+                "mae": model_metrics.get("mae"),
+                "rmse": model_metrics.get("rmse"),
+                "smape": model_metrics.get("smape"),
+                "mape": model_metrics.get("mape")
+            },
+            "model_info": {
+                "name": model_name,
+                "config_id": config_id,
+                "forecast_horizon": forecast_horizon
+            }
+        })
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Forecast error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Forecasting failed: {str(e)}")
+
+
 @router.delete("/clear-ts-cache/")
 async def clear_time_series_cache():
     """Clear time series training tasks cache"""

@@ -2102,7 +2102,15 @@ export default function MLTrainingPage() {
                             onClick={() => {
                               const configIdToUse = configId || localStorage.getItem('ml_config_id')
                               if (configIdToUse) {
-                                window.open(`${process.env.NEXT_PUBLIC_BACKEND_URL}/ml/download-model/${configIdToUse}/best_model`, '_blank')
+                                if (taskType === 'time_series') {
+                                  // For time series, use the best model name from leaderboard
+                                  const bestModelName = trainingResults.leaderboard?.[0]?.Model
+                                  if (bestModelName) {
+                                    window.open(`${process.env.NEXT_PUBLIC_BACKEND_URL}/time-series/download-ts-model/${configIdToUse}/${bestModelName}`, '_blank')
+                                  }
+                                } else {
+                                  window.open(`${process.env.NEXT_PUBLIC_BACKEND_URL}/ml/download-model/${configIdToUse}/best_model`, '_blank')
+                                }
                               }
                             }}
                             className="h-auto p-4 flex flex-col items-start gap-2"
@@ -2119,7 +2127,11 @@ export default function MLTrainingPage() {
                             onClick={() => {
                               const configIdToUse = configId || localStorage.getItem('ml_config_id')
                               if (configIdToUse) {
-                                window.open(`${process.env.NEXT_PUBLIC_BACKEND_URL}/ml/download-leaderboard/${configIdToUse}`, '_blank')
+                                if (taskType === 'time_series') {
+                                  window.open(`${process.env.NEXT_PUBLIC_BACKEND_URL}/time-series/download-ts-leaderboard/${configIdToUse}`, '_blank')
+                                } else {
+                                  window.open(`${process.env.NEXT_PUBLIC_BACKEND_URL}/ml/download-leaderboard/${configIdToUse}`, '_blank')
+                                }
                               }
                             }}
                             className="h-auto p-4 flex flex-col items-start gap-2"
@@ -2154,20 +2166,22 @@ export default function MLTrainingPage() {
                               <Package className="h-4 w-4" />
                               Available Models
                             </h4>
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => {
-                                const configIdToUse = configId || localStorage.getItem('ml_config_id')
-                                if (configIdToUse) {
-                                  window.open(`${process.env.NEXT_PUBLIC_BACKEND_URL}/ml/download-all-models/${configIdToUse}`, '_blank')
-                                }
-                              }}
-                              className="gap-2"
-                            >
-                              <Package className="h-4 w-4" />
-                              Download All as ZIP
-                            </Button>
+                            {taskType !== 'time_series' && (
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => {
+                                  const configIdToUse = configId || localStorage.getItem('ml_config_id')
+                                  if (configIdToUse) {
+                                    window.open(`${process.env.NEXT_PUBLIC_BACKEND_URL}/ml/download-all-models/${configIdToUse}`, '_blank')
+                                  }
+                                }}
+                                className="gap-2"
+                              >
+                                <Package className="h-4 w-4" />
+                                Download All as ZIP
+                              </Button>
+                            )}
                           </div>
                           <div className="space-y-2">
                             {trainingResults.leaderboard?.slice(0, 5).map((model: any, index: number) => {
@@ -2231,9 +2245,14 @@ export default function MLTrainingPage() {
                                     onClick={() => {
                                       const configIdToUse = configId || localStorage.getItem('ml_config_id')
                                       if (configIdToUse) {
-                                        // Extract model ID from model name for download
-                                        const modelId = index === 0 ? 'best_model' : model.Model.toLowerCase().replace(/\s+/g, '_')
-                                        window.open(`${process.env.NEXT_PUBLIC_BACKEND_URL}/ml/download-model/${configIdToUse}/${modelId}`, '_blank')
+                                        if (taskType === 'time_series') {
+                                          // For time series, use the exact model name from leaderboard
+                                          window.open(`${process.env.NEXT_PUBLIC_BACKEND_URL}/time-series/download-ts-model/${configIdToUse}/${model.Model}`, '_blank')
+                                        } else {
+                                          // For ML models, extract model ID from model name
+                                          const modelId = index === 0 ? 'best_model' : model.Model.toLowerCase().replace(/\s+/g, '_')
+                                          window.open(`${process.env.NEXT_PUBLIC_BACKEND_URL}/ml/download-model/${configIdToUse}/${modelId}`, '_blank')
+                                        }
                                       }
                                     }}
                                   >
@@ -2289,7 +2308,14 @@ export default function MLTrainingPage() {
                                 setTestPrediction(null)
                                 setTestInputs({})
                                 
-                                // Fetch training columns from backend
+                                // For time series, no need to fetch columns
+                                if (taskType === 'time_series') {
+                                  setTrainingColumns([])
+                                  setIsLoadingTrainingColumns(false)
+                                  return
+                                }
+                                
+                                // Fetch training columns from backend for classification/regression
                                 setIsLoadingTrainingColumns(true)
                                 try {
                                   const configIdToUse = configId || localStorage.getItem('ml_config_id')
@@ -2368,7 +2394,17 @@ export default function MLTrainingPage() {
                           {/* Input Fields */}
                           {selectedModelForTest && (
                             <div className="space-y-4">
-                              {isLoadingTrainingColumns ? (
+                              {taskType === 'time_series' ? (
+                                <div className="p-4 bg-blue-50 dark:bg-blue-950 rounded-lg">
+                                  <h4 className="font-medium mb-2 flex items-center gap-2">
+                                    <Target className="h-4 w-4" />
+                                    Time Series Forecast
+                                  </h4>
+                                  <p className="text-xs text-gray-600 dark:text-gray-400">
+                                    Time series models generate forecasts automatically. No input required - just click "Get Forecast" below.
+                                  </p>
+                                </div>
+                              ) : isLoadingTrainingColumns ? (
                                 <div className="flex items-center justify-center p-8">
                                   <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
                                   <span className="ml-2 text-sm text-gray-600">Loading input fields...</span>
@@ -2425,55 +2461,72 @@ export default function MLTrainingPage() {
                                       return
                                     }
 
-                                    // Prepare data
-                                    const formData = new FormData()
-                                    formData.append('config_id', configIdToUse)
-                                    formData.append('model_name', selectedModelForTest)
-                                    formData.append('input_data', JSON.stringify(testInputs))
+                                    let response, result
 
-                                    const response = await fetch(
-                                      `${process.env.NEXT_PUBLIC_BACKEND_URL}/ml/predict/`,
-                                      {
-                                        method: 'POST',
-                                        body: formData
-                                      }
-                                    )
+                                    if (taskType === 'time_series') {
+                                      // Time series forecasting endpoint
+                                      const formData = new FormData()
+                                      formData.append('config_id', configIdToUse)
+                                      formData.append('model_name', selectedModelForTest)
+
+                                      response = await fetch(
+                                        `${process.env.NEXT_PUBLIC_BACKEND_URL}/time-series/forecast-time-series/`,
+                                        {
+                                          method: 'POST',
+                                          body: formData
+                                        }
+                                      )
+                                    } else {
+                                      // Classification/Regression prediction endpoint
+                                      const formData = new FormData()
+                                      formData.append('config_id', configIdToUse)
+                                      formData.append('model_name', selectedModelForTest)
+                                      formData.append('input_data', JSON.stringify(testInputs))
+
+                                      response = await fetch(
+                                        `${process.env.NEXT_PUBLIC_BACKEND_URL}/ml/predict/`,
+                                        {
+                                          method: 'POST',
+                                          body: formData
+                                        }
+                                      )
+                                    }
 
                                     if (!response.ok) {
                                       const errorData = await response.json()
                                       throw new Error(errorData.detail || 'Prediction failed')
                                     }
 
-                                    const result = await response.json()
+                                    result = await response.json()
                                     setTestPrediction(result)
                                     
                                     toast({
-                                      title: "Prediction Complete",
-                                      description: "Model inference successful"
+                                      title: taskType === 'time_series' ? "Forecast Complete" : "Prediction Complete",
+                                      description: taskType === 'time_series' ? "Time series forecast generated" : "Model inference successful"
                                     })
                                   } catch (error: any) {
                                     toast({
                                       variant: "destructive",
-                                      title: "Prediction Failed",
+                                      title: taskType === 'time_series' ? "Forecast Failed" : "Prediction Failed",
                                       description: error.message
                                     })
                                   } finally {
                                     setIsTesting(false)
                                   }
                                 }}
-                                disabled={isTesting || Object.values(testInputs).some(v => !v)}
+                                disabled={isTesting || (taskType !== 'time_series' && Object.values(testInputs).some(v => !v))}
                                 className="w-full"
                                 size="lg"
                               >
                                 {isTesting ? (
                                   <>
                                     <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                                    Running Prediction...
+                                    {taskType === 'time_series' ? 'Generating Forecast...' : 'Running Prediction...'}
                                   </>
                                 ) : (
                                   <>
                                     <Zap className="h-4 w-4 mr-2" />
-                                    Get Prediction
+                                    {taskType === 'time_series' ? 'Get Forecast' : 'Get Prediction'}
                                   </>
                                 )}
                               </Button>
@@ -2483,28 +2536,87 @@ export default function MLTrainingPage() {
                                 <div className="p-6 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950 dark:to-emerald-950 rounded-lg border-2 border-green-200 dark:border-green-800">
                                   <div className="flex items-center gap-3 mb-4">
                                     <CheckCircle className="h-6 w-6 text-green-600 dark:text-green-400" />
-                                    <h4 className="font-semibold text-lg">Prediction Result</h4>
+                                    <h4 className="font-semibold text-lg">
+                                      {taskType === 'time_series' ? 'Forecast Result' : 'Prediction Result'}
+                                    </h4>
                                   </div>
-                                  <div className="space-y-3">
-                                    <div className="flex items-center justify-between p-4 bg-white dark:bg-gray-900 rounded-lg">
-                                      <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Predicted {targetColumn}:</span>
-                                      <span className="text-2xl font-bold text-green-600 dark:text-green-400">
-                                        {taskType === 'regression' && typeof testPrediction.prediction === 'number' 
-                                          ? testPrediction.prediction.toFixed(4) 
-                                          : testPrediction.prediction}
-                                      </span>
-                                    </div>
-                                    <div className="flex items-center justify-between p-3 bg-white dark:bg-gray-900 rounded-lg">
-                                      <span className="text-sm text-gray-600 dark:text-gray-400">Model Used:</span>
-                                      <span className="text-sm font-medium">{selectedModelForTest}</span>
-                                    </div>
-                                    {testPrediction.confidence && (
+                                  
+                                  {taskType === 'time_series' && testPrediction.forecast ? (
+                                    <div className="space-y-4">
                                       <div className="flex items-center justify-between p-3 bg-white dark:bg-gray-900 rounded-lg">
-                                        <span className="text-sm text-gray-600 dark:text-gray-400">Confidence:</span>
-                                        <Badge variant="outline">{(testPrediction.confidence * 100).toFixed(1)}%</Badge>
+                                        <span className="text-sm text-gray-600 dark:text-gray-400">Model Used:</span>
+                                        <span className="text-sm font-medium">{selectedModelForTest}</span>
                                       </div>
-                                    )}
-                                  </div>
+                                      <div className="flex items-center justify-between p-3 bg-white dark:bg-gray-900 rounded-lg">
+                                        <span className="text-sm text-gray-600 dark:text-gray-400">Forecast Horizon:</span>
+                                        <Badge variant="outline">{testPrediction.forecast.forecast_horizon} periods</Badge>
+                                      </div>
+                                      
+                                      {testPrediction.metrics && (
+                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                                          {testPrediction.metrics.mae && (
+                                            <div className="p-2 bg-white dark:bg-gray-900 rounded text-center">
+                                              <div className="text-xs text-gray-600 dark:text-gray-400">MAE</div>
+                                              <div className="font-medium">{testPrediction.metrics.mae.toFixed(2)}</div>
+                                            </div>
+                                          )}
+                                          {testPrediction.metrics.rmse && (
+                                            <div className="p-2 bg-white dark:bg-gray-900 rounded text-center">
+                                              <div className="text-xs text-gray-600 dark:text-gray-400">RMSE</div>
+                                              <div className="font-medium">{testPrediction.metrics.rmse.toFixed(2)}</div>
+                                            </div>
+                                          )}
+                                          {testPrediction.metrics.smape && (
+                                            <div className="p-2 bg-white dark:bg-gray-900 rounded text-center">
+                                              <div className="text-xs text-gray-600 dark:text-gray-400">SMAPE</div>
+                                              <div className="font-medium">{testPrediction.metrics.smape.toFixed(2)}%</div>
+                                            </div>
+                                          )}
+                                          {testPrediction.metrics.mape && (
+                                            <div className="p-2 bg-white dark:bg-gray-900 rounded text-center">
+                                              <div className="text-xs text-gray-600 dark:text-gray-400">MAPE</div>
+                                              <div className="font-medium">{testPrediction.metrics.mape.toFixed(2)}%</div>
+                                            </div>
+                                          )}
+                                        </div>
+                                      )}
+                                      
+                                      <div className="p-4 bg-white dark:bg-gray-900 rounded-lg max-h-96 overflow-y-auto">
+                                        <h5 className="font-medium mb-3 text-sm">Forecast Values:</h5>
+                                        <div className="space-y-2">
+                                          {testPrediction.forecast.timestamps.map((timestamp: string, idx: number) => (
+                                            <div key={idx} className="flex items-center justify-between p-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded">
+                                              <span className="text-xs text-gray-600 dark:text-gray-400">{timestamp}</span>
+                                              <span className="font-mono text-sm font-medium text-green-600 dark:text-green-400">
+                                                {testPrediction.forecast.values[idx].toFixed(4)}
+                                              </span>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <div className="space-y-3">
+                                      <div className="flex items-center justify-between p-4 bg-white dark:bg-gray-900 rounded-lg">
+                                        <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Predicted {targetColumn}:</span>
+                                        <span className="text-2xl font-bold text-green-600 dark:text-green-400">
+                                          {taskType === 'regression' && typeof testPrediction.prediction === 'number' 
+                                            ? testPrediction.prediction.toFixed(4) 
+                                            : testPrediction.prediction}
+                                        </span>
+                                      </div>
+                                      <div className="flex items-center justify-between p-3 bg-white dark:bg-gray-900 rounded-lg">
+                                        <span className="text-sm text-gray-600 dark:text-gray-400">Model Used:</span>
+                                        <span className="text-sm font-medium">{selectedModelForTest}</span>
+                                      </div>
+                                      {testPrediction.confidence && (
+                                        <div className="flex items-center justify-between p-3 bg-white dark:bg-gray-900 rounded-lg">
+                                          <span className="text-sm text-gray-600 dark:text-gray-400">Confidence:</span>
+                                          <Badge variant="outline">{(testPrediction.confidence * 100).toFixed(1)}%</Badge>
+                                        </div>
+                                      )}
+                                    </div>
+                                  )}
                                 </div>
                               )}
                             </div>
