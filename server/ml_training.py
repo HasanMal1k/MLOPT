@@ -40,6 +40,7 @@ from pycaret.regression import *
 from pycaret.classification import *
 import pycaret.regression as regression_module
 import pycaret.classification as classification_module
+import joblib
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -1422,21 +1423,17 @@ async def stream_training_results(task_id: str):
         }
     )
 
-@router.get("/get-original-columns/{config_id}")
-async def get_original_columns(config_id: str):
-    """Get columns for model input (compatibility endpoint)"""
-    return await get_model_columns(config_id)
-
-@router.get("/get-model-columns/{config_id}")
-async def get_model_columns(config_id: str):
+@router.get("/get-training-columns/{config_id}")
+async def get_training_columns(config_id: str):
     """
-    Get the columns the model expects for input.
+    Get the columns the model was trained on (EXCLUDING target column).
+    Returns the exact feature names from the trained model.
     
     Args:
         config_id: Training configuration ID
         
     Returns:
-        List of column names for user input
+        List of training feature column names (no target)
     """
     try:
         if config_id not in training_tasks:
@@ -1447,41 +1444,59 @@ async def get_model_columns(config_id: str):
         if task.get("status") != "completed":
             raise HTTPException(status_code=400, detail="Training not completed yet")
         
-        # Load any model to get feature names
+        # Load first available model to get feature names
         models_dir = Path("models") / config_id
         model_files = list(models_dir.glob("*.pkl"))
         
         if not model_files:
             raise HTTPException(status_code=404, detail="No models found")
         
-        # Load first model
+        # Load model and extract feature names
         model = joblib.load(model_files[0])
         
-        # Get feature names from model
+        # Get target column to exclude it
+        target_column = task.get("config", {}).get("target_column")
+        
         if hasattr(model, 'feature_names_in_'):
+            # Get feature names from model (these should already exclude target)
             columns = list(model.feature_names_in_)
+            # Double-check: remove target if it somehow got included
+            if target_column and target_column in columns:
+                columns = [col for col in columns if col != target_column]
         else:
-            # Fallback to training data
+            # Fallback: read from training data
             data_file = task.get("data_file")
             if data_file and Path(data_file).exists():
                 training_data = pd.read_csv(data_file)
-                target_column = task.get("config", {}).get("target_column")
                 columns = [col for col in training_data.columns if col != target_column]
             else:
-                raise HTTPException(status_code=404, detail="Cannot determine model columns")
+                raise HTTPException(status_code=404, detail="Cannot determine training columns")
+        
+        logger.info(f"Training feature columns for {config_id}: {columns}")
+        logger.info(f"Target column excluded: {target_column}")
         
         return JSONResponse({
             "success": True,
-            "original_columns": columns,
-            "columns": columns,
-            "total_columns": len(columns)
+            "training_columns": columns,
+            "total_columns": len(columns),
+            "target_column": target_column
         })
         
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error: {str(e)}")
+        logger.error(f"Error getting training columns: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/get-original-columns/{config_id}")
+async def get_original_columns(config_id: str):
+    """Legacy endpoint - redirects to get-training-columns"""
+    result = await get_training_columns(config_id)
+    # Add 'original_columns' key for backward compatibility
+    data = result.body.decode()
+    parsed = json.loads(data)
+    parsed['original_columns'] = parsed['training_columns']
+    return JSONResponse(parsed)
 
 
 @router.post("/predict/")
@@ -1491,12 +1506,13 @@ async def predict_with_model(
     input_data: str = Form(...)
 ):
     """
-    Make predictions - user provides values, we pass to model, return prediction.
+    Make prediction using trained model.
+    User provides input values for training columns → model returns prediction.
     
     Args:
         config_id: Training configuration ID
         model_name: Name of the model to use
-        input_data: JSON string with input values
+        input_data: JSON string with input values {"col1": val1, "col2": val2, ...}
     """
     try:
         if config_id not in training_tasks:
@@ -1510,42 +1526,74 @@ async def predict_with_model(
         # Parse input data
         try:
             inputs = json.loads(input_data)
-        except:
-            raise HTTPException(status_code=400, detail="Invalid input data format")
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Invalid JSON input: {str(e)}")
         
         # Load the trained model
         models_dir = Path("models") / config_id
         model_file = models_dir / f"{model_name.replace(' ', '_')}.pkl"
         
         if not model_file.exists():
-            model_file = models_dir / "best_model.pkl"
-            if not model_file.exists():
-                raise HTTPException(status_code=404, detail=f"Model file not found: {model_name}")
+            raise HTTPException(status_code=404, detail=f"Model not found: {model_name}")
         
-        # Load model
         model = joblib.load(model_file)
         
-        # Create input dataframe
-        input_df = pd.DataFrame([inputs])
+        # Get target column to exclude it
+        target_column = task.get("config", {}).get("target_column")
         
-        logger.info(f"📥 Making prediction with columns: {list(input_df.columns)}")
+        # Get expected columns from model (excluding target)
+        if hasattr(model, 'feature_names_in_'):
+            expected_columns = list(model.feature_names_in_)
+            # Remove target column if it's in the feature names
+            if target_column and target_column in expected_columns:
+                expected_columns = [col for col in expected_columns if col != target_column]
+                logger.info(f"Removed target column '{target_column}' from expected features")
+        else:
+            expected_columns = list(inputs.keys())
+        
+        logger.info(f"Expected columns: {expected_columns}")
+        logger.info(f"Received inputs: {list(inputs.keys())}")
+        
+        # Validate inputs match expected columns
+        received_cols = set(inputs.keys())
+        expected_cols = set(expected_columns)
+        
+        missing_cols = expected_cols - received_cols
+        extra_cols = received_cols - expected_cols
+        
+        if missing_cols:
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Missing required columns: {list(missing_cols)}"
+            )
+        
+        if extra_cols:
+            logger.warning(f"Extra columns provided (will be ignored): {list(extra_cols)}")
+        
+        # Create DataFrame with only expected columns in correct order
+        try:
+            input_df = pd.DataFrame([{col: inputs[col] for col in expected_columns}])
+        except KeyError as e:
+            raise HTTPException(status_code=400, detail=f"Column error: {str(e)}")
         
         # Make prediction
         prediction = model.predict(input_df)[0]
         
-        # Get prediction probability if classification
-        prediction_proba = None
+        # Get confidence for classification
+        confidence = None
         if hasattr(model, 'predict_proba'):
             try:
                 proba = model.predict_proba(input_df)[0]
-                prediction_proba = float(max(proba))
+                confidence = float(max(proba))
             except:
                 pass
         
+        logger.info(f"Prediction successful: {prediction}")
+        
         return JSONResponse({
             "success": True,
-            "prediction": float(prediction) if isinstance(prediction, (np.integer, np.floating)) else prediction,
-            "confidence": prediction_proba,
+            "prediction": float(prediction) if isinstance(prediction, (np.integer, np.floating)) else str(prediction),
+            "confidence": confidence,
             "model_name": model_name
         })
         
@@ -1553,6 +1601,8 @@ async def predict_with_model(
         raise
     except Exception as e:
         logger.error(f"Prediction error: {str(e)}")
+        import traceback
+        logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=f"Prediction failed: {str(e)}")
 
 @router.get("/download-model/{task_id}/{model_name}")

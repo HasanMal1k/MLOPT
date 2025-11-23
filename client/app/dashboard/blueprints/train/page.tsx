@@ -142,6 +142,8 @@ export default function MLTrainingPage() {
   const [testInputs, setTestInputs] = useState<Record<string, string>>({})
   const [testPrediction, setTestPrediction] = useState<any>(null)
   const [isTesting, setIsTesting] = useState(false)
+  const [trainingColumns, setTrainingColumns] = useState<string[]>([])
+  const [isLoadingTrainingColumns, setIsLoadingTrainingColumns] = useState(false)
 
   // Save model state
   const [showSaveDialog, setShowSaveDialog] = useState(false)
@@ -2282,15 +2284,52 @@ export default function MLTrainingPage() {
                             <label className="text-sm font-medium mb-2 block">Select Model to Test</label>
                             <Select 
                               value={selectedModelForTest || ''} 
-                              onValueChange={(value) => {
+                              onValueChange={async (value) => {
                                 setSelectedModelForTest(value)
                                 setTestPrediction(null)
-                                // Initialize inputs for all features
-                                const inputs: Record<string, string> = {}
-                                selectedFeatures.forEach(feature => {
-                                  inputs[feature] = ''
-                                })
-                                setTestInputs(inputs)
+                                setTestInputs({})
+                                
+                                // Fetch training columns from backend
+                                setIsLoadingTrainingColumns(true)
+                                try {
+                                  const configIdToUse = configId || localStorage.getItem('ml_config_id')
+                                  if (!configIdToUse) {
+                                    toast({
+                                      variant: "destructive",
+                                      title: "Error",
+                                      description: "Configuration ID not found"
+                                    })
+                                    return
+                                  }
+
+                                  const response = await fetch(
+                                    `${process.env.NEXT_PUBLIC_BACKEND_URL}/ml/get-training-columns/${configIdToUse}`
+                                  )
+
+                                  if (!response.ok) {
+                                    throw new Error('Failed to fetch training columns')
+                                  }
+
+                                  const result = await response.json()
+                                  if (result.success) {
+                                    setTrainingColumns(result.training_columns)
+                                    
+                                    // Initialize inputs for training columns
+                                    const inputs: Record<string, string> = {}
+                                    result.training_columns.forEach((col: string) => {
+                                      inputs[col] = ''
+                                    })
+                                    setTestInputs(inputs)
+                                  }
+                                } catch (error: any) {
+                                  toast({
+                                    variant: "destructive",
+                                    title: "Error",
+                                    description: error.message || "Failed to load training columns"
+                                  })
+                                } finally {
+                                  setIsLoadingTrainingColumns(false)
+                                }
                               }}
                             >
                               <SelectTrigger>
@@ -2329,29 +2368,45 @@ export default function MLTrainingPage() {
                           {/* Input Fields */}
                           {selectedModelForTest && (
                             <div className="space-y-4">
-                              <div className="p-4 bg-blue-50 rounded-lg">
-                                <h4 className="font-medium mb-3 flex items-center gap-2">
-                                  <Target className="h-4 w-4" />
-                                  Enter Feature Values
-                                </h4>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                  {selectedFeatures.map((feature) => (
-                                    <div key={feature}>
-                                      <label className="text-sm font-medium mb-1 block">{feature}</label>
-                                      <Input
-                                        type="number"
-                                        step="any"
-                                        placeholder={`Enter ${feature}...`}
-                                        value={testInputs[feature] || ''}
-                                        onChange={(e) => setTestInputs(prev => ({
-                                          ...prev,
-                                          [feature]: e.target.value
-                                        }))}
-                                      />
-                                    </div>
-                                  ))}
+                              {isLoadingTrainingColumns ? (
+                                <div className="flex items-center justify-center p-8">
+                                  <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+                                  <span className="ml-2 text-sm text-gray-600">Loading input fields...</span>
                                 </div>
-                              </div>
+                              ) : trainingColumns.length > 0 ? (
+                                <div className="p-4 bg-blue-50 rounded-lg">
+                                  <h4 className="font-medium mb-3 flex items-center gap-2">
+                                    <Target className="h-4 w-4" />
+                                    Enter Training Column Values
+                                  </h4>
+                                  <p className="text-xs text-gray-600 mb-3">
+                                    Enter values for the columns this model was trained on.
+                                  </p>
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {trainingColumns.map((feature) => (
+                                      <div key={feature}>
+                                        <label className="text-sm font-medium mb-1 block">{feature}</label>
+                                        <Input
+                                          type="text"
+                                          placeholder={`Enter ${feature}...`}
+                                          value={testInputs[feature] || ''}
+                                          onChange={(e) => setTestInputs(prev => ({
+                                            ...prev,
+                                            [feature]: e.target.value
+                                          }))}
+                                        />
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              ) : (
+                                <Alert>
+                                  <AlertCircle className="h-4 w-4" />
+                                  <AlertDescription>
+                                    No training columns found. Please ensure the model training completed successfully.
+                                  </AlertDescription>
+                                </Alert>
+                              )}
 
                               {/* Test Button */}
                               <Button 
@@ -2434,7 +2489,9 @@ export default function MLTrainingPage() {
                                     <div className="flex items-center justify-between p-4 bg-white dark:bg-gray-900 rounded-lg">
                                       <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Predicted {targetColumn}:</span>
                                       <span className="text-2xl font-bold text-green-600 dark:text-green-400">
-                                        {testPrediction.prediction?.toFixed(4) || testPrediction.prediction}
+                                        {taskType === 'regression' && typeof testPrediction.prediction === 'number' 
+                                          ? testPrediction.prediction.toFixed(4) 
+                                          : testPrediction.prediction}
                                       </span>
                                     </div>
                                     <div className="flex items-center justify-between p-3 bg-white dark:bg-gray-900 rounded-lg">
