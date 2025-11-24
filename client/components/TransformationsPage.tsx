@@ -48,7 +48,8 @@ import {
   TrendingUp,
   Info,
   Sparkles,
-  Settings
+  Settings,
+  Youtube
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import type { FileMetadata } from '@/components/FilePreview'
@@ -542,6 +543,23 @@ export default function TransformationsPage() {
               Select a dataset to apply mathematical and encoding transformations
             </p>
           </div>
+
+          {/* Tutorial Alert */}
+          <Alert className="mb-6">
+            <Youtube className="h-4 w-4" />
+            <AlertTitle>Watch Tutorial</AlertTitle>
+            <AlertDescription>
+              Learn how to transform your data with our{' '}
+              <a 
+                href="https://www.youtube.com/watch?v=znlODwYKlrI" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-primary hover:underline font-medium"
+              >
+                transformations activity video guide
+              </a>
+            </AlertDescription>
+          </Alert>
 
           {/* File Selection List */}
           {files.length === 0 ? (

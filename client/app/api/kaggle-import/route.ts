@@ -23,38 +23,59 @@ function isZipFile(buffer: Buffer): boolean {
   return buffer.length >= 2 && buffer[0] === 0x50 && buffer[1] === 0x4B;
 }
 
-// Extract the first CSV file from a ZIP archive
-async function extractCsvFromZip(zipBuffer: Buffer): Promise<{ content: Buffer; filename: string } | null> {
+// Extract all CSV/Excel files from a ZIP archive
+async function extractFilesFromZip(zipBuffer: Buffer): Promise<{ content: Buffer; filename: string }[]> {
   try {
     const zip = new JSZip();
     const zipContent = await zip.loadAsync(zipBuffer);
+    const extractedFiles: { content: Buffer; filename: string }[] = [];
     
-    // Find the first CSV file in the ZIP
-    for (const [filename, file] of Object.entries(zipContent.files)) {
-      if (!file.dir && (filename.toLowerCase().endsWith('.csv') || filename.toLowerCase().endsWith('.txt'))) {
+    // Find all CSV and Excel files in the ZIP (including nested folders)
+    for (const [filepath, file] of Object.entries(zipContent.files)) {
+      if (file.dir) continue;
+      
+      const filename = filepath.split('/').pop() || filepath;
+      const lowerFilename = filename.toLowerCase();
+      
+      // Skip hidden files, metadata files, and system files
+      if (filename.startsWith('.') || filename.startsWith('__MACOSX') || filename === 'desktop.ini') {
+        continue;
+      }
+      
+      // Accept CSV, Excel, and TXT files
+      if (lowerFilename.endsWith('.csv') || 
+          lowerFilename.endsWith('.xlsx') || 
+          lowerFilename.endsWith('.xls') ||
+          lowerFilename.endsWith('.txt')) {
         const content = await file.async('arraybuffer');
-        return {
+        extractedFiles.push({
           content: Buffer.from(content),
-          filename: filename
-        };
+          filename: filename // Use just the filename without path
+        });
       }
     }
     
-    // If no CSV found, try the first file that's not a directory
-    for (const [filename, file] of Object.entries(zipContent.files)) {
-      if (!file.dir) {
-        const content = await file.async('arraybuffer');
-        return {
-          content: Buffer.from(content),
-          filename: filename
-        };
+    // If no data files found, try to find any readable file
+    if (extractedFiles.length === 0) {
+      for (const [filepath, file] of Object.entries(zipContent.files)) {
+        if (!file.dir) {
+          const filename = filepath.split('/').pop() || filepath;
+          if (!filename.startsWith('.') && !filename.startsWith('__MACOSX')) {
+            const content = await file.async('arraybuffer');
+            extractedFiles.push({
+              content: Buffer.from(content),
+              filename: filename
+            });
+            break; // Just take the first one
+          }
+        }
       }
     }
     
-    return null;
+    return extractedFiles;
   } catch (error) {
     console.error('Error extracting from ZIP:', error);
-    return null;
+    return [];
   }
 }
 
@@ -148,36 +169,47 @@ export async function POST(request: Request) {
     console.log(`Downloaded ${fileBuffer.length} bytes from Kaggle`);
     
     // Process the downloaded content
-    let finalContent: Buffer;
-    let finalFilename: string;
-    let contentType = 'text/csv';
+    let filesToReturn: Array<{ content: Buffer; filename: string; contentType: string }> = [];
     
     // Check if it's a ZIP file
     if (isZipFile(fileBuffer)) {
       console.log('Detected ZIP file, extracting...');
-      const extracted = await extractCsvFromZip(fileBuffer);
+      const extractedFiles = await extractFilesFromZip(fileBuffer);
       
-      if (extracted) {
-        finalContent = extracted.content;
-        finalFilename = extracted.filename;
-        console.log(`Extracted file: ${finalFilename} (${finalContent.length} bytes)`);
-        
-        // Verify the extracted content is CSV-like
-        if (!isLikelyCsv(finalContent)) {
-          console.log('Extracted content does not appear to be CSV, using as-is');
-        }
-      } else {
+      if (extractedFiles.length === 0) {
         return NextResponse.json({ 
           error: 'Processing Error', 
-          message: 'Could not extract CSV file from the downloaded archive' 
+          message: 'Could not extract any data files from the downloaded archive. The ZIP might be empty or contain unsupported file types.' 
         }, { status: 500 });
+      }
+      
+      console.log(`Extracted ${extractedFiles.length} file(s) from ZIP`);
+      
+      // Process each extracted file
+      for (const extracted of extractedFiles) {
+        let contentType = 'text/csv';
+        if (extracted.filename.toLowerCase().endsWith('.xlsx')) {
+          contentType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+        } else if (extracted.filename.toLowerCase().endsWith('.xls')) {
+          contentType = 'application/vnd.ms-excel';
+        } else if (extracted.filename.toLowerCase().endsWith('.json')) {
+          contentType = 'application/json';
+        }
+        
+        filesToReturn.push({
+          content: extracted.content,
+          filename: extracted.filename,
+          contentType
+        });
+        
+        console.log(`Processed: ${extracted.filename} (${extracted.content.length} bytes)`);
       }
     } else {
       // Not a ZIP file, use as-is
       console.log('File is not compressed, using directly');
-      finalContent = fileBuffer;
       
       // Generate filename
+      let finalFilename: string;
       if (type === 'dataset' && name) {
         finalFilename = `${name}.csv`;
       } else if (type === 'competition' && name) {
@@ -187,10 +219,10 @@ export async function POST(request: Request) {
       }
       
       // Check if content looks like CSV
-      if (!isLikelyCsv(finalContent)) {
+      if (!isLikelyCsv(fileBuffer)) {
         console.log('Warning: Content does not appear to be CSV format');
         // Try to detect actual content type
-        const contentStart = finalContent.toString('utf8', 0, 100);
+        const contentStart = fileBuffer.toString('utf8', 0, 100);
         if (contentStart.includes('<?xml') || contentStart.includes('<html')) {
           return NextResponse.json({ 
             error: 'Invalid Content', 
@@ -198,69 +230,71 @@ export async function POST(request: Request) {
           }, { status: 400 });
         }
       }
-    }
-    
-    // Determine content type based on filename
-    if (finalFilename.toLowerCase().endsWith('.xlsx')) {
-      contentType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
-    } else if (finalFilename.toLowerCase().endsWith('.json')) {
-      contentType = 'application/json';
+      
+      filesToReturn.push({
+        content: fileBuffer,
+        filename: finalFilename,
+        contentType: 'text/csv'
+      });
     }
     
     // Validate that we have actual content
-    if (finalContent.length === 0) {
+    if (filesToReturn.length === 0 || filesToReturn.some(f => f.content.length === 0)) {
       return NextResponse.json({ 
         error: 'Empty File', 
-        message: 'The downloaded file is empty' 
+        message: 'The downloaded file(s) are empty' 
       }, { status: 400 });
     }
     
-    // Try to validate CSV content one more time
-    if (contentType === 'text/csv') {
-      try {
-        const sampleText = finalContent.toString('utf8', 0, Math.min(500, finalContent.length));
-        if (sampleText.includes('<!DOCTYPE') || sampleText.includes('<html>')) {
-          return NextResponse.json({ 
-            error: 'Access Denied', 
-            message: 'Received HTML page instead of data file. The dataset might be private, require login, or need terms acceptance.' 
-          }, { status: 403 });
+    // Validate CSV content for each file
+    for (const file of filesToReturn) {
+      if (file.contentType === 'text/csv') {
+        try {
+          const sampleText = file.content.toString('utf8', 0, Math.min(500, file.content.length));
+          if (sampleText.includes('<!DOCTYPE') || sampleText.includes('<html>')) {
+            return NextResponse.json({ 
+              error: 'Access Denied', 
+              message: 'Received HTML page instead of data file. The dataset might be private, require login, or need terms acceptance.' 
+            }, { status: 403 });
+          }
+        } catch (error) {
+          console.error('Error validating CSV content:', error);
         }
-      } catch (error) {
-        console.error('Error validating CSV content:', error);
       }
     }
     
-    // Upload the file to Supabase Storage (optional - for debugging)
-    const debugFilePath = `debug/${user.id}/kaggle-${Date.now()}-${finalFilename}`;
-    const { data: uploadData, error: uploadError } = await supabase.storage
-      .from('data-files')
-      .upload(debugFilePath, finalContent, {
-        contentType,
-        upsert: false
+    // If multiple files, return array format
+    if (filesToReturn.length > 1) {
+      const filesData = filesToReturn.map(file => ({
+        filename: file.filename,
+        size: file.content.length,
+        contentType: file.contentType,
+        content: file.content.toString('base64')
+      }));
+      
+      console.log(`Successfully processed ${filesToReturn.length} Kaggle files`);
+      
+      return NextResponse.json({
+        success: true,
+        message: `Successfully imported ${filesToReturn.length} files from Kaggle`,
+        multipleFiles: true,
+        files: filesData,
+        totalSize: filesToReturn.reduce((sum, f) => sum + f.content.length, 0)
       });
-    
-    if (uploadError) {
-      console.error('Debug upload error:', uploadError);
-      // Continue anyway - this is just for debugging
     }
     
-    // Get the public URL for debugging
-    const { data: { publicUrl } } = supabase.storage
-      .from('data-files')
-      .getPublicUrl(debugFilePath);
+    // Single file - backward compatible response
+    const singleFile = filesToReturn[0];
+    console.log(`Successfully processed Kaggle file: ${singleFile.filename} (${singleFile.content.length} bytes)`);
     
-    console.log(`Successfully processed Kaggle file: ${finalFilename} (${finalContent.length} bytes)`);
-    
-    // Return file information that the frontend can use to create a File object
     return NextResponse.json({
       success: true,
       message: 'Dataset imported successfully',
-      filename: finalFilename,
-      size: finalContent.length,
-      contentType,
-      // Return the content as base64 so frontend can create File object
-      content: finalContent.toString('base64'),
-      debugUrl: uploadData ? publicUrl : null
+      filename: singleFile.filename,
+      size: singleFile.content.length,
+      contentType: singleFile.contentType,
+      content: singleFile.content.toString('base64'),
+      multipleFiles: false
     });
     
   } catch (err: any) {

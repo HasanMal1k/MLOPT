@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
-import { ArrowLeft, Clock, CheckCircle2, AlertCircle, TrendingUp, Calendar } from "lucide-react"
+import { ArrowLeft, Clock, CheckCircle2, AlertCircle, TrendingUp, Calendar, Youtube } from "lucide-react"
 
 
 interface TimeSeriesProcessingProps {
@@ -364,6 +364,22 @@ export default function TimeSeriesProcessing({
           <AlertDescription>
             Configure how your time series data should be processed. We'll handle date parsing, 
             frequency setting, missing value imputation, and data type conversion automatically.
+          </AlertDescription>
+        </Alert>
+
+        <Alert className="mb-6">
+          <Youtube className="h-4 w-4" />
+          <AlertTitle>Watch Tutorial</AlertTitle>
+          <AlertDescription>
+            Learn about time series preprocessing{' '}
+            <a 
+              href="https://www.youtube.com/watch?v=0VqBUZTtYYs" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-primary hover:underline font-medium"
+            >
+              in this video guide
+            </a>
           </AlertDescription>
         </Alert>
 

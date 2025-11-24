@@ -108,8 +108,40 @@ export default function KaggleUpload({ onFileImported }: KaggleUploadProps) {
       console.log('Kaggle import response:', data);
       setImportProgress(70);
       
-      // Convert the base64 content back to a File object
-      if (data.content && data.filename) {
+      // Handle multiple files or single file
+      if (data.multipleFiles && data.files && Array.isArray(data.files)) {
+        // Multiple files extracted from ZIP
+        try {
+          let importedCount = 0;
+          for (const fileData of data.files) {
+            const file = base64ToFile(fileData.content, fileData.filename, fileData.contentType || 'text/csv');
+            console.log('Created File object:', {
+              name: file.name,
+              size: file.size,
+              type: file.type
+            });
+            
+            // Call the parent callback with each File object
+            onFileImported(file);
+            importedCount++;
+          }
+          
+          setImportProgress(100);
+          setSuccess(`Successfully imported ${importedCount} file${importedCount > 1 ? 's' : ''} (${(data.totalSize / 1024 / 1024).toFixed(2)} MB total)`);
+          
+          // Reset form after success
+          setTimeout(() => {
+            setKaggleUrl("");
+            setImportProgress(0);
+            setSuccess(null);
+          }, 4000);
+          
+        } catch (fileError) {
+          console.error('Error creating File objects:', fileError);
+          throw new Error('Failed to process the downloaded file contents');
+        }
+      } else if (data.content && data.filename) {
+        // Single file (backward compatible)
         try {
           const file = base64ToFile(data.content, data.filename, data.contentType || 'text/csv');
           console.log('Created File object:', {
@@ -165,7 +197,7 @@ export default function KaggleUpload({ onFileImported }: KaggleUploadProps) {
           Import from Kaggle
         </CardTitle>
         <CardDescription>
-          Import datasets directly from Kaggle without downloading them first
+          Import datasets directly from Kaggle. Supports ZIP archives with multiple files.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -179,8 +211,7 @@ export default function KaggleUpload({ onFileImported }: KaggleUploadProps) {
               disabled={isImporting}
             />
             <p className="text-xs text-muted-foreground">
-              Enter a Kaggle dataset URL (e.g., https://www.kaggle.com/datasets/username/datasetname) or 
-              competition URL (e.g., https://www.kaggle.com/competitions/titanic)
+              Enter a Kaggle dataset or competition URL. Automatically extracts CSV/Excel files from ZIP archives.
             </p>
           </div>
 
@@ -207,7 +238,8 @@ export default function KaggleUpload({ onFileImported }: KaggleUploadProps) {
                 <span className="text-sm">
                   {importProgress < 30 ? 'Contacting Kaggle API...' :
                    importProgress < 60 ? 'Downloading dataset...' :
-                   importProgress < 90 ? 'Processing file...' :
+                   importProgress < 80 ? 'Extracting files from archive...' :
+                   importProgress < 95 ? 'Processing files...' :
                    'Finalizing import...'}
                 </span>
               </div>

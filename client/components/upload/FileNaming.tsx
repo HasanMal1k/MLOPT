@@ -67,7 +67,20 @@ export default function FileNaming({
     // Check against database
     try {
       const response = await fetch(`/api/files/check-name?name=${encodeURIComponent(newFileName)}`)
+      
+      if (!response.ok) {
+        console.error('Filename validation failed:', response.statusText)
+        // If database check fails, allow the name (don't block user)
+        return { isValid: true, message: 'Unable to verify uniqueness, proceeding anyway' }
+      }
+      
       const data = await response.json()
+      
+      if (data.error) {
+        console.error('Database error:', data.error)
+        // If there's an error, allow the name to proceed
+        return { isValid: true, message: 'Unable to verify uniqueness, proceeding anyway' }
+      }
       
       if (data.exists) {
         return { isValid: false, message: 'Filename already exists in database' }
@@ -76,7 +89,8 @@ export default function FileNaming({
       return { isValid: true, message: 'Filename is available' }
     } catch (error) {
       console.error('Error validating filename:', error)
-      return { isValid: false, message: 'Error checking filename availability' }
+      // On network/other errors, allow the name (graceful degradation)
+      return { isValid: true, message: 'Unable to verify uniqueness, proceeding anyway' }
     }
   }
 

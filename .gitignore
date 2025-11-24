@@ -64,3 +64,13 @@ client/.vercel
 # typescript
 client/*.tsbuildinfo
 client/next-env.d.ts
+
+
+server/transformed_files/
+server/training_data/
+server/temp_models/
+server/temp_models/
+server/processing_status/
+server/processed_files/
+server/preprocessing_results/
+

@@ -259,8 +259,8 @@ async def list_user_models(user_id: str, status: Optional[str] = None):
         
         logger.info(f"📋 Fetching models for user {user_id}")
         
-        # Build query
-        query = supabase.table('trained_models').select('*').eq('user_id', user_id)
+        # Build query - exclude deleted models
+        query = supabase.table('trained_models').select('*').eq('user_id', user_id).neq('status', 'deleted')
         
         if status:
             query = query.eq('status', status)

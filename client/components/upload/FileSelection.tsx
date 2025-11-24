@@ -134,6 +134,7 @@ export default function FileSelection({
               {/* Dropzone */}
               <div
                 {...getRootProps()}
+                onClick={open}
                 className={`
                   border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors
                   ${isDragActive 
@@ -150,18 +151,11 @@ export default function FileSelection({
                       {isDragActive ? "Drop files here..." : "Drag & drop files here"}
                     </p>
                     <p className="text-sm text-muted-foreground mt-1">
-                      or{" "}
-                      <button 
-                        onClick={open} 
-                        className="text-primary font-medium hover:underline"
-                      >
-                        click to browse
-                      </button>
+                      or click anywhere to browse
                     </p>
                   </div>
                   <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground">
                     <span>• Supports CSV, Excel (.xlsx)</span>
-                    <span>• Max 10MB per file</span>
                     <span>• Multiple files allowed</span>
                   </div>
                 </div>

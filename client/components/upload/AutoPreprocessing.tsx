@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { CheckCircle2, ArrowLeft, Settings2, AlertCircle, RefreshCw } from "lucide-react"
+import { CheckCircle2, ArrowLeft, Settings2, AlertCircle, RefreshCw, Youtube } from "lucide-react"
 import AutoPreprocessingReport from "@/components/AutoPreprocessingReport"
 
 interface ProcessingInfo {
@@ -380,6 +380,22 @@ export default function AutoPreprocessing({
                 <li>• Basic feature engineering for dates</li>
               </ul>
             </div>
+
+            <Alert className="max-w-md mx-auto mb-6">
+              <Youtube className="h-4 w-4" />
+              <AlertTitle>Watch Tutorial</AlertTitle>
+              <AlertDescription>
+                Learn how auto preprocessing works{' '}
+                <a 
+                  href="https://youtu.be/Y14MTUuC3y4?si=v-iNkTBwdaetsup6" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-primary hover:underline font-medium"
+                >
+                  in this video guide
+                </a>
+              </AlertDescription>
+            </Alert>
             
             <div className="flex gap-4 justify-center">
               <Button onClick={startPreprocessing} size="lg" className="gap-2">

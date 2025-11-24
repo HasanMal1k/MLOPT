@@ -51,22 +51,32 @@ export async function signInWithOAuth(formData: FormData) {
   
   const provider = formData.get('provider') as 'google' | 'github'
   
-  // Get the app URL with a fallback for development
+  // Get the redirect URL - use the one passed from client or fallback
+  const redirectTo = formData.get('redirectTo') as string | null
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+  const callbackUrl = redirectTo || `${appUrl}/auth/callback`
   
-  const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: provider,
-    options: {
-      redirectTo: `${appUrl}/auth/callback`,
-      queryParams: {
-        prompt: 'select_account' // Forces Google to show account selection screen
+  try {
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: provider,
+      options: {
+        redirectTo: callbackUrl,
+        queryParams: {
+          prompt: 'select_account',
+          access_type: 'offline'
+        },
+        skipBrowserRedirect: false
       }
+    })
+    
+    if (error) {
+      console.error('OAuth sign in error:', error)
+      return { error: error.message }
     }
-  })
-  
-  if (error) {
-    return { error: error.message }
+    
+    return { url: data?.url }
+  } catch (error: any) {
+    console.error('Exception during OAuth:', error)
+    return { error: error?.message || 'Failed to initiate OAuth login' }
   }
-  
-  return { url: data?.url }
 }

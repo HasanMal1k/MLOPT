@@ -60,29 +60,43 @@ export function LoginForm({
       const formData = new FormData()
       formData.append('provider', provider)
       
-      // Add redirect URL to auth/callback instead of default
+      // Add redirect URL to auth/callback
       const redirectTo = `${window.location.origin}/auth/callback`
       formData.append('redirectTo', redirectTo)
+      
+      console.log('Initiating OAuth with redirect:', redirectTo)
       
       const result = await signInWithOAuth(formData)
       
       if (result?.error) {
+        console.error('OAuth error:', result.error)
         toast({
           variant: "destructive",
-          title: "Login failed",
-          description: result.error,
+          title: "Authentication failed",
+          description: result.error || "Unable to connect to authentication provider. Please check your internet connection and try again.",
         })
+        setLoading(false)
       } else if (result?.url) {
+        console.log('Redirecting to OAuth provider:', result.url)
         // Redirect the user to the provider's login page
         window.location.href = result.url
+        // Keep loading state true during redirect
+      } else {
+        console.error('No URL returned from OAuth')
+        toast({
+          variant: "destructive",
+          title: "Authentication failed",
+          description: "Unable to generate authentication URL. Please try again.",
+        })
+        setLoading(false)
       }
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Exception during OAuth sign in:', error)
       toast({
         variant: "destructive",
         title: "Something went wrong",
-        description: "Please try again later.",
+        description: error?.message || "Please check your internet connection and try again.",
       })
-    } finally {
       setLoading(false)
     }
   }

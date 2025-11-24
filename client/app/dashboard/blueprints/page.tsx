@@ -57,7 +57,8 @@ import {
   Award,
   GitBranch,
   Activity,
-  Layers
+  Layers,
+  Youtube
 } from "lucide-react"
 import Link from 'next/link'
 import { useToast } from "@/hooks/use-toast"
@@ -339,6 +340,31 @@ export default function BlueprintsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          <Alert className="mb-6">
+            <Youtube className="h-4 w-4" />
+            <AlertTitle>Watch Blueprint Design Tutorials</AlertTitle>
+            <AlertDescription>
+              Learn how to design ML pipelines:{' '}
+              <a 
+                href="https://www.youtube.com/watch?v=9ICbWWXQIF4" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-primary hover:underline font-medium"
+              >
+                Classification
+              </a>
+              {' | '}
+              <a 
+                href="https://www.youtube.com/watch?v=1KXqaFrR6HY" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-primary hover:underline font-medium"
+              >
+                Regression
+              </a>
+            </AlertDescription>
+          </Alert>
+
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {ML_WORKFLOW_STEPS.map((step, index) => (
               <div key={step.id} className="relative">

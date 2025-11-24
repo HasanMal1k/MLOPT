@@ -52,7 +52,8 @@ import {
   Moon,
   CreditCard,
   FileCode2,
-  Cloud
+  Cloud,
+  BookOpen
 } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
 import { useToast } from "@/hooks/use-toast"
@@ -67,6 +68,12 @@ const navigation = [
         title: 'Dashboard',
         url: '/dashboard',
         icon: LayoutDashboard
+      },
+      {
+        title: 'Tutorials',
+        url: '/dashboard/tutorials',
+        icon: BookOpen,
+        badge: 'New'
       }
     ]
   },

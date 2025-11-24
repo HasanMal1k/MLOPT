@@ -55,7 +55,8 @@ import {
   Download,
   Save,
   Package,
-  FileCode2
+  FileCode2,
+  Youtube
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import SaveModelDialog from '@/components/SaveModelDialog'
@@ -855,6 +856,43 @@ export default function MLTrainingPage() {
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Error</AlertTitle>
             <AlertDescription>{errorMessage}</AlertDescription>
+          </Alert>
+        )}
+
+        {/* Tutorial Alert */}
+        {currentStep === 0 && (
+          <Alert className="mb-6">
+            <Youtube className="h-4 w-4" />
+            <AlertTitle>Watch Tutorials</AlertTitle>
+            <AlertDescription>
+              Learn how to train models:{' '}
+              <a 
+                href="https://www.youtube.com/watch?v=vTEQ2c_OuPY" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-primary hover:underline font-medium"
+              >
+                Classification
+              </a>
+              {' | '}
+              <a 
+                href="https://www.youtube.com/watch?v=fBgMuqsSgB0" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-primary hover:underline font-medium"
+              >
+                Regression
+              </a>
+              {' | '}
+              <a 
+                href="https://www.youtube.com/watch?v=tNdKW_StDAQ" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-primary hover:underline font-medium"
+              >
+                Time Series
+              </a>
+            </AlertDescription>
           </Alert>
         )}
 

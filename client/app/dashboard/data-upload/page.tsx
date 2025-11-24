@@ -22,7 +22,6 @@ export default function DataUpload() {
       "text/csv": ['.csv'],
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx"],
     },
-    maxSize: 10485760, // 10MB
     noClick: true
   })
 

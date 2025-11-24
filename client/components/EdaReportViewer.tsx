@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { AlertCircle, Download, FileText, RefreshCw, BarChart3 } from "lucide-react"
+import { AlertCircle, Download, FileText, RefreshCw, BarChart3, Youtube } from "lucide-react"
 import { Progress } from "@/components/ui/progress"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose, DialogFooter, DialogDescription } from "@/components/ui/dialog"
 import { X } from "lucide-react"
@@ -148,6 +148,22 @@ export default function EdaReportViewer({ fileMetadata, onClose, isOpen, origina
                 <div className="p-6 text-center">
                   <FileText className="h-12 w-12 mx-auto mb-4 text-gray-400" />
                   <h3 className="text-lg font-medium mb-2">Generate Exploratory Data Analysis Report</h3>
+                  
+                  <Alert className="max-w-md mx-auto my-4">
+                    <Youtube className="h-4 w-4" />
+                    <AlertTitle>Watch Tutorial</AlertTitle>
+                    <AlertDescription>
+                      Learn how to use EDA and Chart Builder{' '}
+                      <a 
+                        href="https://www.youtube.com/watch?v=mAPa38sAR0I" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-primary hover:underline font-medium"
+                      >
+                        in this video guide
+                      </a>
+                    </AlertDescription>
+                  </Alert>
                   <p className="text-sm text-gray-500 mb-6 max-w-md mx-auto">
                     Generate a comprehensive report with statistics, visualizations, and insights about your data.
                     This may take a few moments depending on the size of your data.
