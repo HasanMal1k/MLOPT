@@ -870,6 +870,13 @@ async def run_regular_ml_training(config_id: str, config: dict):
             
             # Train each model individually - use index as model ID
             for idx, (model_id, row) in enumerate(available_models.iterrows(), 1):
+                # ✅ CHECK FOR CANCELLATION
+                if training_tasks[config_id].get("cancelled", False):
+                    logger.warning(f"🛑 Regression training cancelled by user for task {config_id}")
+                    training_tasks[config_id]["status"] = "cancelled"
+                    training_tasks[config_id]["error"] = "Training cancelled by user"
+                    return
+                
                 model_name = row['Name']
                 model_id_map[model_name] = model_id
                 
@@ -1023,6 +1030,13 @@ async def run_regular_ml_training(config_id: str, config: dict):
             
             # Train each model individually - use index as model ID
             for idx, (model_id, row) in enumerate(available_models.iterrows(), 1):
+                # ✅ CHECK FOR CANCELLATION
+                if training_tasks[config_id].get("cancelled", False):
+                    logger.warning(f"🛑 Classification training cancelled by user for task {config_id}")
+                    training_tasks[config_id]["status"] = "cancelled"
+                    training_tasks[config_id]["error"] = "Training cancelled by user"
+                    return
+                
                 model_name = row['Name']
                 model_id_map[model_name] = model_id
                 
@@ -1329,88 +1343,111 @@ async def get_training_status(task_id: str):
 
 @router.get("/training-stream/{task_id}")
 async def stream_training_results(task_id: str):
-    """Stream model results as they complete using Server-Sent Events with real-time updates"""
+    """Stream model results as they complete using Server-Sent Events with disconnect detection"""
     if task_id not in training_tasks:
         raise HTTPException(status_code=404, detail="Task not found")
     
     async def event_generator():
-        """Generate SSE events for model results with immediate flushing"""
-        # Send initial connection event with padding to force flush
-        connection_data = {'type': 'connected', 'task_id': task_id}
-        connection_msg = f"data: {json.dumps(connection_data)}\n\n" + (" " * 2048) + "\n\n"
-        yield connection_msg
-        
-        # If there are already completed models in queue, send them immediately
-        if task_id in model_results_queue and model_results_queue[task_id]:
-            logger.info(f"📤 Sending {len(model_results_queue[task_id])} cached results to new SSE connection")
-            for result in model_results_queue[task_id]:
-                result_msg = f"data: {json.dumps(clean_for_json(result))}\n\n" + (" " * 2048) + "\n\n"
-                yield result_msg
-                await asyncio.sleep(0.05)  # Small delay between cached results
-        
-        last_check = len(model_results_queue.get(task_id, []))
-        heartbeat_counter = 0
-        
-        while True:
-            task = training_tasks.get(task_id)
-            if not task:
-                error_msg = f"data: {json.dumps({'type': 'error', 'message': 'Task not found'})}\n\n"
-                yield error_msg
-                break
+        """Generate SSE events for model results with disconnect detection"""
+        try:
+            # Send initial connection event with padding to force flush
+            connection_data = {'type': 'connected', 'task_id': task_id}
+            connection_msg = f"data: {json.dumps(connection_data)}\n\n" + (" " * 2048) + "\n\n"
+            yield connection_msg
             
-            # Check if there are new results in the queue
-            has_new_results = False
-            if task_id in model_results_queue:
-                current_results = model_results_queue[task_id]
-                if len(current_results) > last_check:
-                    # Send new results one by one with padding to force flush
-                    for result in current_results[last_check:]:
-                        # Add padding to force immediate delivery (2KB padding)
-                        result_msg = f"data: {json.dumps(clean_for_json(result))}\n\n" + (" " * 2048) + "\n\n"
-                        yield result_msg
-                        has_new_results = True
-                        await asyncio.sleep(0.01)  # Tiny delay between events
-                    last_check = len(current_results)
+            # If there are already completed models in queue, send them immediately
+            if task_id in model_results_queue and model_results_queue[task_id]:
+                logger.info(f"📤 Sending {len(model_results_queue[task_id])} cached results to new SSE connection")
+                for result in model_results_queue[task_id]:
+                    result_msg = f"data: {json.dumps(clean_for_json(result))}\n\n" + (" " * 2048) + "\n\n"
+                    yield result_msg
+                    await asyncio.sleep(0.05)  # Small delay between cached results
             
-            # Check task status
-            status = task.get("status")
+            last_check = len(model_results_queue.get(task_id, []))
+            heartbeat_counter = 0
             
-            if status == "completed":
-                # Send completion event with final summary
-                completion_data = {
-                    "type": "completed",
-                    "task_id": task_id,
-                    "best_model_name": task.get("best_model_name"),
-                    "models_saved": task.get("models_saved"),
-                    "total_models_tested": task.get("total_models_tested"),
-                    "leaderboard": clean_for_json(task.get("leaderboard", []))
-                }
-                completion_msg = f"data: {json.dumps(completion_data)}\n\n"
-                yield completion_msg
-                break
-            
-            elif status == "failed":
-                # Send error event
-                error_data = {
-                    "type": "error",
-                    "task_id": task_id,
-                    "error": task.get("error", "Unknown error")
-                }
-                error_msg = f"data: {json.dumps(error_data)}\n\n"
-                yield error_msg
-                break
-            
-            # Send heartbeat periodically to keep connection alive
-            if not has_new_results:
-                heartbeat_counter += 1
-                if heartbeat_counter >= 5:
-                    yield ": heartbeat\n\n"
+            while True:
+                task = training_tasks.get(task_id)
+                if not task:
+                    error_msg = f"data: {json.dumps({'type': 'error', 'message': 'Task not found'})}\n\n"
+                    yield error_msg
+                    break
+                
+                # Check if cancelled
+                if task.get("cancelled", False):
+                    logger.info(f"🛑 Task {task_id} was cancelled, closing SSE stream")
+                    cancel_msg = f"data: {json.dumps({'type': 'cancelled', 'task_id': task_id})}\n\n"
+                    yield cancel_msg
+                    break
+                
+                # Check if there are new results in the queue
+                has_new_results = False
+                if task_id in model_results_queue:
+                    current_results = model_results_queue[task_id]
+                    if len(current_results) > last_check:
+                        # Send new results one by one with padding to force flush
+                        for result in current_results[last_check:]:
+                            # Add padding to force immediate delivery (2KB padding)
+                            result_msg = f"data: {json.dumps(clean_for_json(result))}\n\n" + (" " * 2048) + "\n\n"
+                            yield result_msg
+                            has_new_results = True
+                            await asyncio.sleep(0.01)  # Tiny delay between events
+                        last_check = len(current_results)
+                
+                # Check task status
+                status = task.get("status")
+                
+                if status == "completed":
+                    # Send completion event with final summary
+                    completion_data = {
+                        "type": "completed",
+                        "task_id": task_id,
+                        "best_model_name": task.get("best_model_name"),
+                        "models_saved": task.get("models_saved"),
+                        "total_models_tested": task.get("total_models_tested"),
+                        "leaderboard": clean_for_json(task.get("leaderboard", []))
+                    }
+                    completion_msg = f"data: {json.dumps(completion_data)}\n\n"
+                    yield completion_msg
+                    break
+                
+                elif status == "failed":
+                    # Send error event
+                    error_data = {
+                        "type": "error",
+                        "task_id": task_id,
+                        "error": task.get("error", "Unknown error")
+                    }
+                    error_msg = f"data: {json.dumps(error_data)}\n\n"
+                    yield error_msg
+                    break
+                
+                # Send heartbeat periodically to keep connection alive
+                if not has_new_results:
+                    heartbeat_counter += 1
+                    if heartbeat_counter >= 5:
+                        yield ": heartbeat\n\n"
+                        heartbeat_counter = 0
+                else:
                     heartbeat_counter = 0
-            else:
-                heartbeat_counter = 0
-            
-            # Very short wait for real-time responsiveness
-            await asyncio.sleep(0.1)
+                
+                # Very short wait for real-time responsiveness
+                await asyncio.sleep(0.1)
+                
+        except asyncio.CancelledError:
+            # Client disconnected - auto-cancel the training
+            logger.warning(f"🔌 SSE connection closed for task {task_id} - AUTO-CANCELLING training")
+            if task_id in training_tasks:
+                training_tasks[task_id]["cancelled"] = True
+                training_tasks[task_id]["status"] = "cancelled"
+                training_tasks[task_id]["error"] = "Client disconnected"
+            raise
+        except Exception as e:
+            logger.error(f"❌ Error in SSE stream for {task_id}: {e}")
+            # Also cancel on error
+            if task_id in training_tasks:
+                training_tasks[task_id]["cancelled"] = True
+            raise
     
     return StreamingResponse(
         event_generator(),
@@ -1422,6 +1459,31 @@ async def stream_training_results(task_id: str):
             "Content-Type": "text/event-stream; charset=utf-8"
         }
     )
+
+@router.post("/cancel-training/{task_id}")
+async def cancel_training(task_id: str):
+    """Cancel an ongoing training task"""
+    if task_id not in training_tasks:
+        raise HTTPException(status_code=404, detail="Task not found")
+    
+    task = training_tasks[task_id]
+    
+    if task["status"] in ["completed", "failed", "cancelled"]:
+        return JSONResponse({
+            "success": False,
+            "message": f"Training already {task['status']}",
+            "task_id": task_id
+        })
+    
+    # Set cancellation flag
+    training_tasks[task_id]["cancelled"] = True
+    logger.info(f"🛑 Cancellation requested for task {task_id}")
+    
+    return JSONResponse({
+        "success": True,
+        "message": "Training cancellation requested",
+        "task_id": task_id
+    })
 
 @router.get("/get-training-columns/{config_id}")
 async def get_training_columns(config_id: str):

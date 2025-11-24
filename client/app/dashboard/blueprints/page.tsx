@@ -58,13 +58,14 @@ import {
   GitBranch,
   Activity,
   Layers,
-  Youtube
+  Youtube,
 } from "lucide-react"
 import Link from 'next/link'
 import { useToast } from "@/hooks/use-toast"
 import { format } from 'date-fns'
 import FilePreview from "@/components/FilePreview"
 import { useRouter } from 'next/navigation'
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
 
 interface ExtendedFileMetadata {
   id: string;
@@ -189,7 +190,7 @@ export default function BlueprintsPage() {
   }
 
   const filteredDatasets = getMLReadyDatasets().filter(dataset => {
-    const matchesSearch = (dataset.name || dataset.original_filename).toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesSearch = dataset.original_filename.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesType = filterType === 'all' || dataset.dataset_type === filterType
     
     let matchesStatus = true
@@ -544,7 +545,7 @@ export default function BlueprintsPage() {
                       <div className="flex items-center gap-3">
                         {getDatasetTypeIcon(dataset.dataset_type)}
                         <div>
-                          <div className="font-medium">{dataset.name || dataset.original_filename}</div>
+                          <div className="font-medium">{dataset.original_filename}</div>
                           <div className="text-sm text-muted-foreground">
                             {formatFileSize(dataset.file_size)} • {dataset.mime_type.includes('csv') ? 'CSV' : 'Excel'}
                           </div>

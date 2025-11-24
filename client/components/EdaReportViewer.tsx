@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { createClient } from '@/utils/supabase/client'
 import { 
   Card, 
@@ -34,10 +34,39 @@ export default function EdaReportViewer({ fileMetadata, onClose, isOpen, origina
   const [reportHtml, setReportHtml] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<string>("report");
   const [isChartViewerOpen, setIsChartViewerOpen] = useState(false);
+  const [abortController, setAbortController] = useState<AbortController | null>(null);
+  
+  // Cleanup on unmount or when dialog closes
+  useEffect(() => {
+    return () => {
+      if (abortController) {
+        console.log('🛑 Aborting EDA generation on unmount');
+        abortController.abort();
+      }
+    };
+  }, [abortController]);
+
+  useEffect(() => {
+    if (!isOpen && abortController) {
+      console.log('🛑 Aborting EDA generation on dialog close');
+      abortController.abort();
+      setAbortController(null);
+      setIsLoading(false);
+    }
+  }, [isOpen]);
   
   // Function to generate the report
   const generateReport = async () => {
     if (!fileMetadata) return;
+    
+    // Cancel any existing request
+    if (abortController) {
+      abortController.abort();
+    }
+
+    // Create new abort controller
+    const controller = new AbortController();
+    setAbortController(controller);
     
     setIsLoading(true);
     setError(null);
@@ -82,6 +111,7 @@ export default function EdaReportViewer({ fileMetadata, onClose, isOpen, origina
       const reportResponse = await fetch('/api/eda-report', {
         method: 'POST',
         body: formData,
+        signal: controller.signal,
       });
       
       if (!reportResponse.ok) {
@@ -94,9 +124,15 @@ export default function EdaReportViewer({ fileMetadata, onClose, isOpen, origina
       const html = await reportResponse.text();
       setReportHtml(html);
       setActiveTab("report"); // Switch to report tab
+      setAbortController(null); // Clear controller on success
     } catch (err) {
-      console.error('Error generating report:', err);
-      setError(err instanceof Error ? err.message : 'Failed to generate EDA report');
+      if (err instanceof Error && err.name === 'AbortError') {
+        console.log('✅ EDA generation cancelled by user');
+        setError(null); // Don't show error for user cancellation
+      } else {
+        console.error('Error generating report:', err);
+        setError(err instanceof Error ? err.message : 'Failed to generate EDA report');
+      }
     } finally {
       setIsLoading(false);
     }

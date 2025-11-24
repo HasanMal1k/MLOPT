@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { createClient } from '@/utils/supabase/client'
 import { 
@@ -97,7 +97,6 @@ export default function MLTrainingPage() {
   const [currentStep, setCurrentStep] = useState(0)
   const fileId = searchParams.get('file') || ''
   const filename = decodeURIComponent(searchParams.get('filename') || '')
-  
   // Data state
   const [fileMetadata, setFileMetadata] = useState<any>(null)
   const [taskType, setTaskType] = useState<'classification' | 'regression' | 'time_series' | null>(null)
@@ -137,6 +136,7 @@ export default function MLTrainingPage() {
   const [configId, setConfigId] = useState<string | null>(null)
   const [trainingStatus, setTrainingStatus] = useState<string>('idle')
   const [trainingResults, setTrainingResults] = useState<any>(null)
+  const [isTraining, setIsTraining] = useState(false)
 
   // Model testing state
   const [selectedModelForTest, setSelectedModelForTest] = useState<string | null>(null)
@@ -155,8 +155,38 @@ export default function MLTrainingPage() {
   const [isLoadingFile, setIsLoadingFile] = useState(true)
   const [isAnalyzingFeatures, setIsAnalyzingFeatures] = useState(false)
   const [isConfiguringTraining, setIsConfiguringTraining] = useState(false)
-  const [isTraining, setIsTraining] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  
+  // Refs for cleanup
+  const eventSourceRef = useRef<EventSource | null>(null)
+  const abortControllerRef = useRef<AbortController | null>(null)
+  const currentConfigIdRef = useRef<string | null>(null)
+
+  // Cleanup on unmount - cancel training if in progress
+  useEffect(() => {
+    return () => {
+      // Close EventSource connection
+      if (eventSourceRef.current) {
+        console.log('🛑 Closing training stream on unmount');
+        eventSourceRef.current.close();
+        eventSourceRef.current = null;
+      }
+      // Abort any pending requests
+      if (abortControllerRef.current) {
+        console.log('🛑 Aborting training requests on unmount');
+        abortControllerRef.current.abort();
+        abortControllerRef.current = null;
+      }
+      // Cancel training if in progress (use ref to access latest value)
+      if (currentConfigIdRef.current) {
+        console.log('🛑 Cancelling training on unmount');
+        fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/ml/cancel-training/${currentConfigIdRef.current}`, {
+          method: 'POST',
+          keepalive: true // Ensure request completes even if page unloads
+        }).catch(err => console.error('Failed to cancel training:', err));
+      }
+    };
+  }, []); // Empty deps - use refs for latest values
 
   const steps = [
     'Task Type & Target',
@@ -417,6 +447,22 @@ export default function MLTrainingPage() {
 
     console.log('=== STARTING TRAINING ===', currentConfigId)
     
+    // Store config ID for cancellation on unmount
+    currentConfigIdRef.current = currentConfigId;
+    
+    // Cancel any existing requests
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    if (eventSourceRef.current) {
+      eventSourceRef.current.close();
+      eventSourceRef.current = null;
+    }
+
+    // Create new abort controller
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+    
     setIsTraining(true)
     setTrainingStatus('starting')
     setErrorMessage(null)
@@ -427,7 +473,8 @@ export default function MLTrainingPage() {
 
       const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/ml/start-training/`, {
         method: 'POST',
-        body: formData
+        body: formData,
+        signal: controller.signal,
       })
 
       if (!response.ok) {
@@ -450,6 +497,11 @@ export default function MLTrainingPage() {
         setIsTraining(false)
       }
     } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        console.log('✅ Training start cancelled by user');
+        setIsTraining(false);
+        return;
+      }
       console.error('Training start error:', error)
       setErrorMessage(`Training failed to start: ${error}`)
       setIsTraining(false)
@@ -460,10 +512,18 @@ export default function MLTrainingPage() {
   const streamTrainingResults = (taskId: string) => {
     console.log('🚀 Starting SSE stream for task:', taskId)
     
+    // Close any existing EventSource
+    if (eventSourceRef.current) {
+      eventSourceRef.current.close();
+    }
+    
     try {
       const eventSource = new EventSource(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/ml/training-stream/${taskId}`
       )
+
+      // Store in ref for cleanup
+      eventSourceRef.current = eventSource;
 
       console.log('📡 EventSource created, waiting for connection...')
 
@@ -552,6 +612,7 @@ export default function MLTrainingPage() {
           })
           
           eventSource.close()
+          eventSourceRef.current = null;
         }
         
         else if (data.type === 'error') {
@@ -567,6 +628,7 @@ export default function MLTrainingPage() {
           })
           
           eventSource.close()
+          eventSourceRef.current = null;
         }
       } catch (error) {
         console.error('Error parsing SSE event:', error)
@@ -577,6 +639,7 @@ export default function MLTrainingPage() {
       console.error('❌ SSE connection error:', error)
       console.error('SSE readyState:', eventSource.readyState)
       eventSource.close()
+      eventSourceRef.current = null;
       
       // Fallback to polling if SSE fails
       console.log('⚠️ Falling back to polling...')
