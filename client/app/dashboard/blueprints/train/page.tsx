@@ -1659,7 +1659,16 @@ export default function MLTrainingPage() {
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="auto">Auto (Recommended)</SelectItem>
-                            {taskType === 'regression' ? (
+                            {taskType === 'time_series' ? (
+                              <>
+                                <SelectItem value="SMAPE">SMAPE (Lower is Better)</SelectItem>
+                                <SelectItem value="MAE">Mean Absolute Error</SelectItem>
+                                <SelectItem value="RMSE">Root Mean Squared Error</SelectItem>
+                                <SelectItem value="MSE">Mean Squared Error</SelectItem>
+                                <SelectItem value="R2">R² Score</SelectItem>
+                                <SelectItem value="MAPE">Mean Absolute % Error</SelectItem>
+                              </>
+                            ) : taskType === 'regression' ? (
                               <>
                                 <SelectItem value="R2">R² Score</SelectItem>
                                 <SelectItem value="MAE">Mean Absolute Error</SelectItem>
@@ -2028,6 +2037,8 @@ export default function MLTrainingPage() {
                         'RMSE': 'RMSE',
                         'RMSLE': 'RMSLE',
                         'MSE': 'MSE',
+                        'SMAPE': 'SMAPE',
+                        'MAPE': 'MAPE',
                         'Accuracy': 'Accuracy',
                         'AUC': 'AUC',
                         'F1': 'F1 Score',
@@ -2065,10 +2076,17 @@ export default function MLTrainingPage() {
                                     {(() => {
                                       const value = model[displayMetric] ?? 0
                                       // Classification metrics (0-1 range) should be shown as percentages
+                                      // Time series and regression metrics should be shown as decimals
                                       const isPercentageMetric = ['Accuracy', 'AUC', 'F1', 'Precision', 'Recall'].includes(displayMetric)
-                                      return isPercentageMetric 
-                                        ? `${(value * 100).toFixed(2)}%`
-                                        : value.toFixed(4)
+                                      const isTimeSeriesMetric = ['SMAPE', 'MAPE', 'MAE', 'RMSE', 'MSE'].includes(displayMetric)
+                                      
+                                      if (isPercentageMetric) {
+                                        return `${(value * 100).toFixed(2)}%`
+                                      } else if (isTimeSeriesMetric) {
+                                        return value.toFixed(4)
+                                      } else {
+                                        return value.toFixed(4)
+                                      }
                                     })()}
                                   </div>
                                   <div className="text-xs text-muted-foreground">
@@ -2123,7 +2141,7 @@ export default function MLTrainingPage() {
                         </div>
                         <div className="text-center">
                           <div className="text-2xl font-bold text-purple-600">
-                            {taskType === 'classification' ? 'Accuracy' : 'R²'}
+                            {taskType === 'time_series' ? 'SMAPE' : taskType === 'classification' ? 'Accuracy' : 'R²'}
                           </div>
                           <div className="text-sm text-gray-600">Primary Metric</div>
                         </div>
@@ -2150,7 +2168,7 @@ export default function MLTrainingPage() {
                             {trainingResults.best_model_name?.split('(')[0] || 'Best Model'}
                           </div>
                           <div className="text-sm text-gray-600">
-                            This model achieved the highest {taskType === 'classification' ? 'accuracy' : 'R² score'} on the test data
+                            This model achieved the {taskType === 'time_series' ? 'lowest SMAPE (best forecasting accuracy)' : taskType === 'classification' ? 'highest accuracy' : 'highest R² score'} on the test data
                           </div>
                         </div>
                       </CardContent>
@@ -2175,7 +2193,15 @@ export default function MLTrainingPage() {
                                 <TableRow>
                                   <TableHead>Rank</TableHead>
                                   <TableHead>Model</TableHead>
-                                  {taskType === 'classification' ? (
+                                  {taskType === 'time_series' ? (
+                                    <>
+                                      <TableHead>SMAPE</TableHead>
+                                      <TableHead>MAE</TableHead>
+                                      <TableHead>RMSE</TableHead>
+                                      <TableHead>R²</TableHead>
+                                      <TableHead>MAPE</TableHead>
+                                    </>
+                                  ) : taskType === 'classification' ? (
                                     <>
                                       <TableHead>Accuracy</TableHead>
                                       <TableHead>AUC</TableHead>
@@ -2204,7 +2230,15 @@ export default function MLTrainingPage() {
                                       </div>
                                     </TableCell>
                                     <TableCell className="font-medium">{row.Model}</TableCell>
-                                    {taskType === 'classification' ? (
+                                    {taskType === 'time_series' ? (
+                                      <>
+                                        <TableCell>{row.SMAPE?.toFixed(2) || 'N/A'}</TableCell>
+                                        <TableCell>{row.MAE?.toFixed(4) || 'N/A'}</TableCell>
+                                        <TableCell>{row.RMSE?.toFixed(4) || 'N/A'}</TableCell>
+                                        <TableCell>{row.R2?.toFixed(4) || 'N/A'}</TableCell>
+                                        <TableCell>{row.MAPE?.toFixed(2) || 'N/A'}</TableCell>
+                                      </>
+                                    ) : taskType === 'classification' ? (
                                       <>
                                         <TableCell>{(row.Accuracy * 100).toFixed(2)}%</TableCell>
                                         <TableCell>{row.AUC ? (row.AUC * 100).toFixed(2) + '%' : 'N/A'}</TableCell>
