@@ -2676,14 +2676,89 @@ async def forecast_time_series(
         df[date_column] = pd.to_datetime(df[date_column], errors='coerce')
         df = df.dropna(subset=[date_column])
         df = df.sort_values(date_column)
+        
+        # Handle duplicates by aggregating
+        if df[date_column].duplicated().any():
+            logger.warning(f"Found duplicate timestamps in historical data. Aggregating by mean...")
+            numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
+            agg_dict = {col: 'mean' for col in numeric_cols if col in df.columns}
+            df = df.groupby(date_column, as_index=False).agg(agg_dict)
+            
         df_indexed = df.set_index(date_column)
         
-        # Create TimeSeries object
-        series = TimeSeries.from_dataframe(
-            df_indexed,
-            value_cols=target_column,
-            fill_missing_dates=True
-        )
+        # Detect frequency (Robust logic copied from training)
+        detected_freq = None
+        try:
+            # Try to infer frequency from the index
+            inferred_freq = pd.infer_freq(df_indexed.index)
+            if inferred_freq:
+                detected_freq = inferred_freq
+            else:
+                # Analyze data pattern
+                time_diffs = df_indexed.index.to_series().diff().dropna()
+                if len(time_diffs) > 0:
+                    most_common_diff = time_diffs.mode()
+                    if len(most_common_diff) > 0:
+                        diff_days = most_common_diff.iloc[0].days
+                        if diff_days == 1:
+                            weekdays = df_indexed.index.weekday
+                            has_weekends = any(day >= 5 for day in weekdays)
+                            detected_freq = 'B' if not has_weekends else 'D'
+                        elif diff_days == 7:
+                            detected_freq = 'W'
+                        elif 28 <= diff_days <= 31:
+                            detected_freq = 'M'
+        except Exception as e:
+            logger.warning(f"Frequency detection failed in forecast: {e}")
+
+        logger.info(f"Forecast using frequency: {detected_freq}")
+
+        # Create TimeSeries object with robust fallback logic
+        series = None
+        
+        # 1. Try with detected frequency and fill_missing_dates=True
+        if detected_freq:
+            try:
+                series = TimeSeries.from_dataframe(
+                    df_indexed,
+                    value_cols=target_column,
+                    fill_missing_dates=True,
+                    freq=detected_freq
+                )
+            except Exception as e:
+                logger.warning(f"Failed with freq={detected_freq}: {e}")
+        
+        # 2. Try without frequency (let Darts infer)
+        if series is None:
+            try:
+                series = TimeSeries.from_dataframe(
+                    df_indexed,
+                    value_cols=target_column,
+                    fill_missing_dates=False
+                )
+            except Exception as e:
+                logger.warning(f"Failed without freq: {e}")
+        
+        # 3. Try with fill_missing_dates=True and freq=None
+        if series is None:
+            try:
+                series = TimeSeries.from_dataframe(
+                    df_indexed,
+                    value_cols=target_column,
+                    fill_missing_dates=True,
+                    freq=None
+                )
+            except Exception as e:
+                logger.warning(f"Failed with fill_missing_dates=True: {e}")
+                
+        # 4. Last resort: Resample to daily
+        if series is None:
+            try:
+                logger.info("Attempting daily resampling fallback")
+                resampled = df_indexed[target_column].resample('D').ffill()
+                series = TimeSeries.from_series(resampled, freq='D')
+            except Exception as e:
+                raise HTTPException(status_code=500, detail=f"Could not create TimeSeries: {str(e)}")
         
         logger.info(f"Generating forecast for {forecast_horizon} periods ahead...")
         
