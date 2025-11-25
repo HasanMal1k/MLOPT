@@ -1462,7 +1462,10 @@ async def train_exogenous_models(series_info: Dict, config: Dict, max_epochs: in
     # Calculate appropriate lags and output chunk length
     lags = min(24, len(train_target) // 3)
     output_chunk = max(1, min(12, len(val_target)))  # Ensure at least 1
-    lags_exo = [0, 1, 2, 3, 6, 12] if train_exo is not None else None
+    
+    # Fix for lags_past_covariates: must be strictly negative integers (e.g. [-1, -2, -3])
+    # 0 is not allowed as it implies current time step which is future covariates
+    lags_exo = [-1, -2, -3, -6, -12] if train_exo is not None else None
     
     logger.info(f"Model parameters: lags={lags}, output_chunk={output_chunk}, lags_exo={lags_exo}")
     
