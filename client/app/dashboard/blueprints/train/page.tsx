@@ -706,7 +706,7 @@ export default function MLTrainingPage() {
     try {
       // Use appropriate endpoint based on task type
       const statusEndpoint = taskType === 'time_series'
-        ? `${process.env.NEXT_PUBLIC_BACKEND_URL}/time-series/training-status/${taskId}`
+        ? `${process.env.NEXT_PUBLIC_BACKEND_URL}/time-series/time-series-training-status/${taskId}`
         : `${process.env.NEXT_PUBLIC_BACKEND_URL}/ml/training-status/${taskId}`
       
       const response = await fetch(statusEndpoint)

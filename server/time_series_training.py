@@ -1924,7 +1924,11 @@ async def get_time_series_training_status(task_id: str):
 @router.get("/time-series-training-stream/{task_id}")
 async def stream_time_series_training(task_id: str):
     """Stream time series model results as they complete using Server-Sent Events"""
+    logger.info(f"📡 SSE connection request for task: {task_id}")
+    logger.info(f"📋 Available tasks in ts_training_tasks: {list(ts_training_tasks.keys())}")
+    
     if task_id not in ts_training_tasks:
+        logger.error(f"❌ Task {task_id} not found in ts_training_tasks")
         raise HTTPException(status_code=404, detail="Task not found")
     
     async def event_generator():
