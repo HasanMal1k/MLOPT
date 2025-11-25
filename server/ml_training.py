@@ -649,7 +649,7 @@ async def run_time_series_training_integrated(config_id: str, config: dict):
                 # Update training_tasks with converted results
                 best_model_name = successful_results[0]["Model"] if successful_results else "None"
                 
-                training_tasks[config_id].update({
+                completed_data = {
                     "status": "completed",
                     "leaderboard": ml_compatible_results,  # Only successful models
                     "best_model_name": best_model_name,
@@ -662,7 +662,18 @@ async def run_time_series_training_integrated(config_id: str, config: dict):
                     "forecasting_type": config.get("forecasting_type", "univariate"),
                     "time_series_advanced": True,  # Flag to indicate advanced training was used
                     "training_method": "Advanced Darts-based Time Series Training"
-                })
+                }
+                
+                training_tasks[config_id].update(completed_data)
+                
+                # CRITICAL: Also update ts_training_tasks so frontend can access results
+                if config_id in ts_training_tasks:
+                    logger.info(f"📝 Updating ts_training_tasks[{config_id}] with completed results")
+                    ts_training_tasks[config_id].update(completed_data)
+                    ts_training_tasks[config_id]["forecast_horizon"] = config.get("forecast_horizon", 12)
+                    logger.info(f"✅ ts_training_tasks updated with {len(ml_compatible_results)} models")
+                else:
+                    logger.warning(f"⚠️ ts_training_tasks[{config_id}] not found for update")
                 
                 logger.info(f"🎉 ADVANCED time series training completed for {config_id}! Tested {len(ml_compatible_results)} models.")
                 
