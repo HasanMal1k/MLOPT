@@ -2492,15 +2492,57 @@ async def forecast_time_series(
             )
         
         # Search for model file (handle indexed filenames like "ModelName_0.pkl")
-        model_files = list(models_dir.glob(f"{model_name}*.pkl"))
+        # The model_name might come with or without the index suffix
+        # Try multiple search strategies to find the file
+        
+        model_name_clean = model_name.strip().replace(" ", "")
+        model_files = []
+        
+        # Strategy 1: Exact match (if model_name includes index like "RandomForest_Light_19")
+        exact_match = models_dir / f"{model_name_clean}.pkl"
+        if exact_match.exists():
+            model_files = [exact_match]
+            logger.info(f"Found exact match: {exact_match}")
+        
+        # Strategy 2: Try with original name (with spaces)
         if not model_files:
+            exact_match_with_spaces = models_dir / f"{model_name}.pkl"
+            if exact_match_with_spaces.exists():
+                model_files = [exact_match_with_spaces]
+                logger.info(f"Found exact match with spaces: {exact_match_with_spaces}")
+        
+        # Strategy 3: Search for files starting with model name (for base names like "RandomForest_Light")
+        if not model_files:
+            # Remove trailing index if present (e.g., "RandomForest_Light_19" -> "RandomForest_Light")
+            base_name_parts = model_name_clean.split('_')
+            if len(base_name_parts) > 1 and base_name_parts[-1].isdigit():
+                base_name = '_'.join(base_name_parts[:-1])
+                model_files = list(models_dir.glob(f"{base_name}_*.pkl"))
+                if model_files:
+                    logger.info(f"Found using base name glob: {base_name}_*.pkl")
+        
+        # Strategy 4: Fallback - search with wildcard
+        if not model_files:
+            model_files = list(models_dir.glob(f"{model_name_clean}*.pkl"))
+            if model_files:
+                logger.info(f"Found using wildcard: {model_name_clean}*.pkl")
+        
+        # Strategy 5: Last resort - search with original name
+        if not model_files:
+            model_files = list(models_dir.glob(f"{model_name}*.pkl"))
+            if model_files:
+                logger.info(f"Found using original name wildcard: {model_name}*.pkl")
+        
+        if not model_files:
+            available_models = [f.stem for f in models_dir.glob('*.pkl')]
+            logger.error(f"Model '{model_name}' not found. Available: {available_models}")
             raise HTTPException(
                 status_code=404,
-                detail=f"Model '{model_name}' not found. Available models: {[f.stem for f in models_dir.glob('*.pkl')]}"
+                detail=f"Model '{model_name}' not found. Available models: {available_models}"
             )
         
         model_file = model_files[0]
-        logger.info(f"Loading time series model from: {model_file}")
+        logger.info(f"✅ Loading time series model from: {model_file}")
         
         # Load the trained model using specific model classes
         try:
