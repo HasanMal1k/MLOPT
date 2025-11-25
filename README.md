@@ -414,7 +414,7 @@ MLOPT/
   <tr>
     <td align="center">
       <a href="https://github.com/HasanMal1k/">
-        <img src="https://github.com/HasanMal1k/" width="100px;" alt=""/>
+        <img src="https://github.com/HasanMal1k.png" width="100px;" alt=""/>
         <br />
         <sub><b>Muhammad Hasan</b></sub>
       </a>
