@@ -39,10 +39,16 @@ export interface ModelStats {
  */
 export async function saveModel(
   request: SaveModelRequest,
-  userId: string
+  userId: string,
+  isTimeSeries: boolean = false
 ): Promise<{ success: boolean; model_id?: string; message?: string }> {
   try {
-    const response = await fetch(`${API_BASE}/models/save?user_id=${userId}`, {
+    // Use appropriate endpoint based on model type
+    const endpoint = isTimeSeries
+      ? `${API_BASE}/time-series/save-ts-model?user_id=${userId}`
+      : `${API_BASE}/models/save?user_id=${userId}`;
+    
+    const response = await fetch(endpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

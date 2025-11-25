@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException, BackgroundTasks, Form, File, UploadFile
-from fastapi.responses import JSONResponse, FileResponse
+from fastapi.responses import JSONResponse, FileResponse, StreamingResponse
 from pydantic import BaseModel
+import asyncio
 from typing import Dict, List, Optional, Any, Union
 from pathlib import Path
 from io import StringIO, BytesIO
@@ -58,11 +59,37 @@ except ImportError:
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Try to import Supabase (optional dependency)
+try:
+    from supabase import create_client, Client
+    SUPABASE_AVAILABLE = True
+except ImportError:
+    SUPABASE_AVAILABLE = False
+    logger.warning("⚠️ Supabase module not installed. Model saving features will be disabled.")
+
+# Supabase client (only if available)
+supabase = None
+if SUPABASE_AVAILABLE:
+    SUPABASE_URL = os.getenv("SUPABASE_URL", "")
+    SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY", "")
+    SUPABASE_KEY = os.getenv("SUPABASE_KEY", "")
+    
+    key_to_use = SUPABASE_SERVICE_KEY if SUPABASE_SERVICE_KEY else SUPABASE_KEY
+    
+    if SUPABASE_URL and key_to_use:
+        try:
+            supabase = create_client(SUPABASE_URL, key_to_use)
+            logger.info("✅ Supabase client initialized for time series models")
+        except Exception as e:
+            logger.error(f"❌ Failed to initialize Supabase client: {e}")
+            supabase = None
+
 # Create router
 router = APIRouter(prefix="/time-series", tags=["Time Series Training"])
 
 # Global storage for time series training tasks
 ts_training_tasks: Dict[str, Dict] = {}
+ts_model_results_queue: Dict[str, List[Dict]] = {}  # Queue for streaming model results
 
 # Pydantic models
 class TimeSeriesConfigRequest(BaseModel):
@@ -84,6 +111,12 @@ class TimeSeriesAnalysisRequest(BaseModel):
     filename: str
     date_column: str
     value_columns: List[str]
+
+class SaveTimeSeriesModelRequest(BaseModel):
+    task_id: str
+    model_name: str
+    description: Optional[str] = None
+    tags: Optional[List[str]] = []
 
 # Helper functions
 def detect_time_series_patterns(series: pd.Series, freq: str = None) -> Dict:
@@ -579,15 +612,18 @@ async def run_time_series_training(config_id: str, config: dict):
         ts_training_tasks[config_id]["status"] = "training_models"
         logger.info(f"Starting time series model training for {forecasting_type}")
         
+        # Initialize results queue for streaming
+        ts_model_results_queue[config_id] = []
+        
         # Define model candidates based on configuration
         results = []
         
         if forecasting_type == "univariate":
-            results = await train_univariate_models(series_info, config, max_epochs)
+            results = await train_univariate_models(series_info, config, max_epochs, config_id)
         elif forecasting_type == "multivariate":
-            results = await train_multivariate_models(series_info, config, max_epochs)
+            results = await train_multivariate_models(series_info, config, max_epochs, config_id)
         elif forecasting_type == "exogenous":
-            results = await train_exogenous_models(series_info, config, max_epochs)
+            results = await train_exogenous_models(series_info, config, max_epochs, config_id)
         
         ts_training_tasks[config_id]["status"] = "saving_models"
         
@@ -655,7 +691,7 @@ async def run_time_series_training(config_id: str, config: dict):
         ts_training_tasks[config_id]["status"] = "failed"
         ts_training_tasks[config_id]["error"] = str(e)
 
-async def train_univariate_models(series_info: Dict, config: Dict, max_epochs: int) -> List[Dict]:
+async def train_univariate_models(series_info: Dict, config: Dict, max_epochs: int, config_id: str = None) -> List[Dict]:
     """Train univariate forecasting models"""
     results = []
     train_target = series_info["train_target"]
@@ -1044,6 +1080,12 @@ async def train_univariate_models(series_info: Dict, config: Dict, max_epochs: i
     
     # Train each model
     for name, model in candidates.items():
+        # Check for cancellation
+        if config_id and config_id in ts_training_tasks:
+            if ts_training_tasks[config_id].get("cancelled", False):
+                logger.info(f"🛑 Training cancelled, stopping univariate model training")
+                break
+        
         try:
             logger.info(f"Training univariate model: {name}")
             
@@ -1091,10 +1133,16 @@ async def train_univariate_models(series_info: Dict, config: Dict, max_epochs: i
             results.append(metrics)
             logger.info(f"✓ {name}: SMAPE={metrics['smape']:.4f}, MAE={metrics['mae']:.4f}, Time={metrics['training_time']:.2f}s")
             
+            # Stream result to SSE clients
+            if config_id and config_id in ts_model_results_queue:
+                stream_result = {k: v for k, v in metrics.items() if k != "model_object"}
+                stream_result["type"] = "model_completed"
+                ts_model_results_queue[config_id].append(stream_result)
+            
         except Exception as e:
             error_msg = str(e)
             logger.warning(f"✗ {name} failed: {error_msg}")
-            results.append({
+            failed_result = {
                 "model": name,
                 "status": "failed",
                 "smape": None,
@@ -1103,11 +1151,18 @@ async def train_univariate_models(series_info: Dict, config: Dict, max_epochs: i
                 "mape": None,
                 "training_time": 0.0,
                 "error": error_msg
-            })
+            }
+            results.append(failed_result)
+            
+            # Stream failed result to SSE clients
+            if config_id and config_id in ts_model_results_queue:
+                stream_result = failed_result.copy()
+                stream_result["type"] = "model_failed"
+                ts_model_results_queue[config_id].append(stream_result)
     
     return results
 
-async def train_multivariate_models(series_info: Dict, config: Dict, max_epochs: int) -> List[Dict]:
+async def train_multivariate_models(series_info: Dict, config: Dict, max_epochs: int, config_id: str = None) -> List[Dict]:
     """Train multivariate forecasting models"""
     results = []
     series_dict = series_info["series_dict"]
@@ -1260,6 +1315,12 @@ async def train_multivariate_models(series_info: Dict, config: Dict, max_epochs:
             
             # Train each model for this series
             for model_name, model in candidates.items():
+                # Check for cancellation
+                if config_id and config_id in ts_training_tasks:
+                    if ts_training_tasks[config_id].get("cancelled", False):
+                        logger.info(f"🛑 Training cancelled, stopping multivariate model training")
+                        break
+                
                 try:
                     logger.info(f"Training {model_name} for series {series_name}")
                     
@@ -1307,10 +1368,16 @@ async def train_multivariate_models(series_info: Dict, config: Dict, max_epochs:
                     results.append(metrics)
                     logger.info(f"✓ {series_name}-{model_name}: SMAPE={metrics['smape']:.4f}, MAE={metrics['mae']:.4f}, Time={metrics['training_time']:.2f}s")
                     
+                    # Stream result to SSE clients
+                    if config_id and config_id in ts_model_results_queue:
+                        stream_result = {k: v for k, v in metrics.items() if k != "model_object"}
+                        stream_result["type"] = "model_completed"
+                        ts_model_results_queue[config_id].append(stream_result)
+                    
                 except Exception as e:
                     error_msg = str(e)
                     logger.warning(f"✗ {series_name}-{model_name} failed: {error_msg}")
-                    results.append({
+                    failed_result = {
                         "series": series_name,
                         "model": model_name,
                         "status": "failed",
@@ -1320,14 +1387,21 @@ async def train_multivariate_models(series_info: Dict, config: Dict, max_epochs:
                         "mape": None,
                         "training_time": 0.0,
                         "error": error_msg
-                    })
+                    }
+                    results.append(failed_result)
+                    
+                    # Stream failed result to SSE clients
+                    if config_id and config_id in ts_model_results_queue:
+                        stream_result = failed_result.copy()
+                        stream_result["type"] = "model_failed"
+                        ts_model_results_queue[config_id].append(stream_result)
                     
         except Exception as e:
             logger.error(f"Error processing series {series_name}: {e}")
     
     return results
 
-async def train_exogenous_models(series_info: Dict, config: Dict, max_epochs: int) -> List[Dict]:
+async def train_exogenous_models(series_info: Dict, config: Dict, max_epochs: int, config_id: str = None) -> List[Dict]:
     """Train exogenous forecasting models"""
     results = []
     train_target = series_info["train_target"]
@@ -1451,6 +1525,12 @@ async def train_exogenous_models(series_info: Dict, config: Dict, max_epochs: in
     
     # Train each model
     for name, model in candidates.items():
+        # Check for cancellation
+        if config_id and config_id in ts_training_tasks:
+            if ts_training_tasks[config_id].get("cancelled", False):
+                logger.info(f"🛑 Training cancelled, stopping exogenous model training")
+                break
+        
         try:
             logger.info(f"Training exogenous model: {name}")
             
@@ -1504,10 +1584,16 @@ async def train_exogenous_models(series_info: Dict, config: Dict, max_epochs: in
             results.append(metrics)
             logger.info(f"✓ {name}: SMAPE={metrics['smape']:.4f}, MAE={metrics['mae']:.4f}, Time={metrics['training_time']:.2f}s")
             
+            # Stream result to SSE clients
+            if config_id and config_id in ts_model_results_queue:
+                stream_result = {k: v for k, v in metrics.items() if k != "model_object"}
+                stream_result["type"] = "model_completed"
+                ts_model_results_queue[config_id].append(stream_result)
+            
         except Exception as e:
             error_msg = str(e)
             logger.warning(f"✗ {name} failed: {error_msg}")
-            results.append({
+            failed_result = {
                 "model": name,
                 "status": "failed",
                 "smape": None,
@@ -1517,7 +1603,14 @@ async def train_exogenous_models(series_info: Dict, config: Dict, max_epochs: in
                 "training_time": 0.0,
                 "exogenous_used": train_exo is not None,
                 "error": error_msg
-            })
+            }
+            results.append(failed_result)
+            
+            # Stream failed result to SSE clients
+            if config_id and config_id in ts_model_results_queue:
+                stream_result = failed_result.copy()
+                stream_result["type"] = "model_failed"
+                ts_model_results_queue[config_id].append(stream_result)
     
     return results
 
@@ -1809,6 +1902,302 @@ async def get_time_series_training_status(task_id: str):
     
     return JSONResponse(response)
 
+@router.get("/time-series-training-stream/{task_id}")
+async def stream_time_series_training(task_id: str):
+    """Stream time series model results as they complete using Server-Sent Events"""
+    if task_id not in ts_training_tasks:
+        raise HTTPException(status_code=404, detail="Task not found")
+    
+    async def event_generator():
+        """Generate SSE events for model results"""
+        try:
+            # Send initial connection event
+            connection_data = {'type': 'connected', 'task_id': task_id}
+            connection_msg = f"data: {json.dumps(connection_data)}\n\n" + (" " * 2048) + "\n\n"
+            yield connection_msg
+            
+            # Send cached results if any
+            if task_id in ts_model_results_queue and ts_model_results_queue[task_id]:
+                logger.info(f"📤 Sending {len(ts_model_results_queue[task_id])} cached time series results")
+                for result in ts_model_results_queue[task_id]:
+                    result_msg = f"data: {json.dumps(result)}\n\n" + (" " * 2048) + "\n\n"
+                    yield result_msg
+                    await asyncio.sleep(0.05)
+            
+            last_check = len(ts_model_results_queue.get(task_id, []))
+            heartbeat_counter = 0
+            
+            while True:
+                task = ts_training_tasks.get(task_id)
+                if not task:
+                    error_msg = f"data: {json.dumps({'type': 'error', 'message': 'Task not found'})}\n\n"
+                    yield error_msg
+                    break
+                
+                # Check for cancellation
+                if task.get("cancelled", False):
+                    logger.info(f"🛑 Time series task {task_id} was cancelled")
+                    cancel_msg = f"data: {json.dumps({'type': 'cancelled', 'task_id': task_id})}\n\n"
+                    yield cancel_msg
+                    break
+                
+                # Check for new results
+                has_new_results = False
+                if task_id in ts_model_results_queue:
+                    current_results = ts_model_results_queue[task_id]
+                    if len(current_results) > last_check:
+                        for result in current_results[last_check:]:
+                            result_msg = f"data: {json.dumps(result)}\n\n" + (" " * 2048) + "\n\n"
+                            yield result_msg
+                            has_new_results = True
+                            await asyncio.sleep(0.01)
+                        last_check = len(current_results)
+                
+                # Check task status
+                status = task.get("status")
+                
+                if status == "completed":
+                    completion_data = {
+                        "type": "completed",
+                        "task_id": task_id,
+                        "best_model_name": task.get("best_model_name"),
+                        "models_saved": task.get("models_saved"),
+                        "total_models_tested": task.get("total_models_tested"),
+                        "leaderboard": task.get("leaderboard", [])
+                    }
+                    completion_msg = f"data: {json.dumps(completion_data)}\n\n"
+                    yield completion_msg
+                    break
+                
+                elif status == "failed":
+                    error_data = {
+                        "type": "error",
+                        "task_id": task_id,
+                        "error": task.get("error", "Unknown error")
+                    }
+                    error_msg = f"data: {json.dumps(error_data)}\n\n"
+                    yield error_msg
+                    break
+                
+                # Send heartbeat
+                if not has_new_results:
+                    heartbeat_counter += 1
+                    if heartbeat_counter >= 5:
+                        yield ": heartbeat\n\n"
+                        heartbeat_counter = 0
+                else:
+                    heartbeat_counter = 0
+                
+                await asyncio.sleep(0.1)
+                
+        except asyncio.CancelledError:
+            logger.warning(f"🔌 SSE connection closed for time series task {task_id}")
+            if task_id in ts_training_tasks:
+                ts_training_tasks[task_id]["cancelled"] = True
+                ts_training_tasks[task_id]["status"] = "cancelled"
+            raise
+        except Exception as e:
+            logger.error(f"❌ Error in time series SSE stream for {task_id}: {e}")
+            if task_id in ts_training_tasks:
+                ts_training_tasks[task_id]["cancelled"] = True
+            raise
+    
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+            "Content-Type": "text/event-stream; charset=utf-8"
+        }
+    )
+
+@router.post("/cancel-time-series-training/{task_id}")
+async def cancel_time_series_training(task_id: str):
+    """Cancel an ongoing time series training task"""
+    if task_id not in ts_training_tasks:
+        raise HTTPException(status_code=404, detail="Task not found")
+    
+    task = ts_training_tasks[task_id]
+    
+    if task["status"] in ["completed", "failed", "cancelled"]:
+        return JSONResponse({
+            "success": False,
+            "message": f"Training already {task['status']}",
+            "task_id": task_id
+        })
+    
+    # Set cancellation flag
+    ts_training_tasks[task_id]["cancelled"] = True
+    logger.info(f"🛑 Cancellation requested for time series task {task_id}")
+    
+    return JSONResponse({
+        "success": True,
+        "message": "Time series training cancellation requested",
+        "task_id": task_id
+    })
+
+@router.post("/save-ts-model")
+async def save_time_series_model(request: SaveTimeSeriesModelRequest, user_id: str):
+    """
+    Save a trained time series model to Supabase storage and database
+    
+    Args:
+        request: SaveTimeSeriesModelRequest with task_id, model_name, description, tags
+        user_id: User ID from authentication
+    
+    Returns:
+        Success message with model_id
+    """
+    # Check if Supabase is available
+    if not SUPABASE_AVAILABLE or not supabase:
+        raise HTTPException(
+            status_code=503,
+            detail="Model saving is not configured. Supabase module not installed or credentials not set."
+        )
+    
+    try:
+        logger.info(f"📦 Saving time series model for task {request.task_id}, user {user_id}")
+        
+        # Check if task exists
+        if request.task_id not in ts_training_tasks:
+            raise HTTPException(status_code=404, detail="Training task not found")
+        
+        task = ts_training_tasks[request.task_id]
+        
+        # Check if training is completed
+        if task["status"] != "completed":
+            raise HTTPException(status_code=400, detail=f"Training not completed. Status: {task['status']}")
+        
+        # Get the best model information
+        leaderboard = task.get("leaderboard", [])
+        if not leaderboard:
+            raise HTTPException(status_code=404, detail="No models found in training results")
+        
+        best_model = leaderboard[0]  # Best model is first in sorted leaderboard
+        forecasting_type = task.get("forecasting_type", "univariate")
+        
+        # Find the model file in models directory
+        models_dir = Path("models") / request.task_id
+        
+        # Look for the best model file
+        model_name_file = best_model["model"].replace(" ", "_").lower()
+        model_file = models_dir / f"{model_name_file}.pkl"
+        
+        # If not found, try best_model.pkl
+        if not model_file.exists():
+            model_file = models_dir / "best_model.pkl"
+        
+        if not model_file.exists():
+            # List all pkl files as fallback
+            pkl_files = list(models_dir.glob("*.pkl"))
+            if pkl_files:
+                model_file = pkl_files[0]  # Use first available
+            else:
+                raise HTTPException(status_code=404, detail=f"Model file not found at {model_file}")
+        
+        # Read model file
+        with open(model_file, 'rb') as f:
+            model_data = f.read()
+        
+        file_size = len(model_data)
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        
+        # Create storage path: user_id/ts_model_name_timestamp.pkl
+        storage_filename = f"{user_id}/ts_{request.model_name.replace(' ', '_')}_{timestamp}.pkl"
+        
+        # Upload to Supabase Storage
+        try:
+            logger.info(f"☁️ Uploading to Supabase Storage: {storage_filename}")
+            
+            # Upload to model-files bucket
+            storage_response = supabase.storage.from_('model-files').upload(
+                storage_filename,
+                model_data,
+                file_options={"content-type": "application/octet-stream"}
+            )
+            
+            logger.info(f"✅ Model file uploaded to storage")
+            
+            # Prepare model metadata
+            config = task.get("config", {})
+            target_column = config.get("target_column")
+            date_column = config.get("date_column")
+            exogenous_columns = config.get("exogenous_columns", [])
+            
+            # Extract metrics from best model
+            metrics = {
+                "smape": best_model.get("smape"),
+                "mae": best_model.get("mae"),
+                "rmse": best_model.get("rmse"),
+                "mape": best_model.get("mape"),
+            }
+            # Remove None values
+            metrics = {k: v for k, v in metrics.items() if v is not None}
+            
+            # Prepare database record
+            model_record = {
+                "user_id": user_id,
+                "file_id": task.get("file_id"),  # Reference to dataset
+                "model_name": request.model_name,
+                "model_type": f"time_series_{forecasting_type}",
+                "algorithm": best_model.get("model", "Unknown"),
+                "metrics": metrics,
+                "training_config": {
+                    "forecasting_type": forecasting_type,
+                    "forecast_horizon": config.get("forecast_horizon", 12),
+                    "train_split": config.get("train_split", 0.8),
+                    "seasonal_periods": config.get("seasonal_periods"),
+                    "include_deep_learning": config.get("include_deep_learning", True),
+                    "include_statistical": config.get("include_statistical", True),
+                    "include_ml": config.get("include_ml", True),
+                    "max_epochs": config.get("max_epochs", 10),
+                },
+                "model_file_path": storage_filename,
+                "model_file_size": file_size,
+                "feature_columns": exogenous_columns if exogenous_columns else [],
+                "target_column": target_column,
+                "preprocessing_steps": {
+                    "date_column": date_column,
+                    "forecasting_type": forecasting_type,
+                },
+                "training_time_seconds": best_model.get("training_time", 0),
+                "training_samples": task.get("train_size"),
+                "test_samples": task.get("val_size"),
+                "status": "ready",
+                "description": request.description,
+                "tags": request.tags or []
+            }
+            
+            # Insert into database
+            logger.info(f"💾 Saving time series model metadata to database")
+            db_response = supabase.table('trained_models').insert(model_record).execute()
+            
+            model_id = db_response.data[0]['id']
+            
+            logger.info(f"✅ Time series model saved successfully! ID: {model_id}")
+            
+            return JSONResponse({
+                "success": True,
+                "message": "Time series model saved successfully",
+                "model_id": model_id,
+                "model_name": request.model_name,
+                "file_size": file_size,
+                "storage_path": storage_filename,
+                "forecasting_type": forecasting_type
+            })
+            
+        except Exception as storage_error:
+            logger.error(f"❌ Supabase error: {storage_error}")
+            raise HTTPException(status_code=500, detail=f"Failed to save model: {str(storage_error)}")
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Error saving time series model: {e}")
+        raise HTTPException(status_code=500, detail=f"Error saving model: {str(e)}")
+
 @router.get("/download-ts-model/{task_id}/{model_name}")
 async def download_time_series_model(task_id: str, model_name: str):
     """Download trained time series model"""
@@ -1833,6 +2222,38 @@ async def download_time_series_model(task_id: str, model_name: str):
         filename=f"ts_{model_name}_{task_id}.pkl",
         media_type="application/octet-stream"
     )
+
+@router.post("/deploy-ts-model")
+async def deploy_time_series_model(model_id: str, user_id: str, background_tasks: BackgroundTasks):
+    """
+    Deploy a trained time series model to Azure ML
+    Delegates to the azure_deployment module
+    """
+    try:
+        # Import deployment logic
+        from azure_deployment import deploy_model, DeployModelRequest
+        
+        # Create deployment request
+        deploy_request = DeployModelRequest(
+            model_id=model_id,
+            endpoint_name=None,  # Use auto-generated endpoint
+            instance_type="Standard_DS1_v2",
+            instance_count=1,
+            description="Time series model deployment"
+        )
+        
+        # Call the deployment endpoint
+        result = await deploy_model(deploy_request, background_tasks, user_id)
+        return result
+        
+    except ImportError:
+        raise HTTPException(
+            status_code=503,
+            detail="Azure deployment module not available"
+        )
+    except Exception as e:
+        logger.error(f"Error deploying time series model: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/download-ts-leaderboard/{task_id}")
 async def download_time_series_leaderboard(task_id: str):

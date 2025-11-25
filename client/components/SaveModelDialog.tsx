@@ -65,6 +65,8 @@ function SaveModelDialog({
         .map((t) => t.trim())
         .filter((t) => t.length > 0)
 
+      const isTimeSeries = modelInfo.taskType === 'time_series'
+      
       const result = await saveModel(
         {
           task_id: taskId,
@@ -72,7 +74,8 @@ function SaveModelDialog({
           description: description || undefined,
           tags: tagList.length > 0 ? tagList : undefined,
         },
-        userId
+        userId,
+        isTimeSeries
       )
 
       if (result.success && result.model_id) {

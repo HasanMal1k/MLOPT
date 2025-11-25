@@ -161,6 +161,12 @@ export default function MLTrainingPage() {
   const eventSourceRef = useRef<EventSource | null>(null)
   const abortControllerRef = useRef<AbortController | null>(null)
   const currentConfigIdRef = useRef<string | null>(null)
+  const taskTypeRef = useRef<string | null>(null)
+  
+  // Update taskTypeRef when taskType changes
+  useEffect(() => {
+    taskTypeRef.current = taskType
+  }, [taskType])
 
   // Cleanup on unmount - cancel training if in progress
   useEffect(() => {
@@ -179,8 +185,14 @@ export default function MLTrainingPage() {
       }
       // Cancel training if in progress (use ref to access latest value)
       if (currentConfigIdRef.current) {
-        console.log('🛑 Cancelling training on unmount');
-        fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/ml/cancel-training/${currentConfigIdRef.current}`, {
+        console.log('🛑 Cancelling training on unmount, task type:', taskTypeRef.current);
+        
+        // Use appropriate cancellation endpoint based on task type
+        const cancelEndpoint = taskTypeRef.current === 'time_series'
+          ? `${process.env.NEXT_PUBLIC_BACKEND_URL}/time-series/cancel-time-series-training/${currentConfigIdRef.current}`
+          : `${process.env.NEXT_PUBLIC_BACKEND_URL}/ml/cancel-training/${currentConfigIdRef.current}`
+        
+        fetch(cancelEndpoint, {
           method: 'POST',
           keepalive: true // Ensure request completes even if page unloads
         }).catch(err => console.error('Failed to cancel training:', err));
@@ -510,7 +522,7 @@ export default function MLTrainingPage() {
 
   // Replace polling with Server-Sent Events for real-time updates
   const streamTrainingResults = (taskId: string) => {
-    console.log('🚀 Starting SSE stream for task:', taskId)
+    console.log('🚀 Starting SSE stream for task:', taskId, 'Type:', taskType)
     
     // Close any existing EventSource
     if (eventSourceRef.current) {
@@ -518,9 +530,14 @@ export default function MLTrainingPage() {
     }
     
     try {
-      const eventSource = new EventSource(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/ml/training-stream/${taskId}`
-      )
+      // Use appropriate endpoint based on task type
+      const streamEndpoint = taskType === 'time_series'
+        ? `${process.env.NEXT_PUBLIC_BACKEND_URL}/time-series/time-series-training-stream/${taskId}`
+        : `${process.env.NEXT_PUBLIC_BACKEND_URL}/ml/training-stream/${taskId}`
+      
+      console.log('📡 Connecting to SSE endpoint:', streamEndpoint)
+      
+      const eventSource = new EventSource(streamEndpoint)
 
       // Store in ref for cleanup
       eventSourceRef.current = eventSource;
@@ -659,7 +676,12 @@ export default function MLTrainingPage() {
   // Fallback polling function if SSE fails
   const pollTrainingStatusFallback = async (taskId: string) => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/ml/training-status/${taskId}`)
+      // Use appropriate endpoint based on task type
+      const statusEndpoint = taskType === 'time_series'
+        ? `${process.env.NEXT_PUBLIC_BACKEND_URL}/time-series/training-status/${taskId}`
+        : `${process.env.NEXT_PUBLIC_BACKEND_URL}/ml/training-status/${taskId}`
+      
+      const response = await fetch(statusEndpoint)
       
       if (!response.ok) throw new Error('Failed to check training status')
       
