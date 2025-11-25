@@ -2762,8 +2762,23 @@ async def forecast_time_series(
         
         logger.info(f"Generating forecast for {forecast_horizon} periods ahead...")
         
-        # Generate forecast
-        forecast = model.predict(n=forecast_horizon, series=series)
+        # Generate forecast with robust handling for different model types
+        try:
+            # Try passing series (required for GlobalForecastingModels like NBEATS, LSTM)
+            forecast = model.predict(n=forecast_horizon, series=series)
+        except TypeError as e:
+            # Handle models that don't accept 'series' in predict (LocalForecastingModels)
+            if "unexpected keyword argument 'series'" in str(e):
+                logger.info(f"Model {model_name} does not accept 'series' in predict(). Using fallback.")
+                
+                # For Naive models, refit on full data is instant and ensures correct forecast start
+                if any(x in model_name for x in ["Naive", "Seasonal", "Drift"]):
+                    logger.info(f"Refitting {model_name} on full data")
+                    model.fit(series)
+                
+                forecast = model.predict(n=forecast_horizon)
+            else:
+                raise e
         
         # Convert forecast to DataFrame
         forecast_df = forecast.pd_dataframe()
