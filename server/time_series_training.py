@@ -2635,12 +2635,34 @@ async def forecast_time_series(
         
         # Load historical data to generate forecast
         training_data_dir = Path("training_data")
-        data_file = training_data_dir / f"{config_id}_ts_data.csv"
         
-        if not data_file.exists():
+        # Try multiple paths for data file
+        data_file = None
+        
+        # 1. Try path from task definition
+        if "data_file" in task and Path(task["data_file"]).exists():
+            data_file = Path(task["data_file"])
+            logger.info(f"Found data file in task definition: {data_file}")
+            
+        # 2. Try standard time series path
+        if not data_file:
+            ts_path = training_data_dir / f"{config_id}_ts_data.csv"
+            if ts_path.exists():
+                data_file = ts_path
+                logger.info(f"Found data file at standard TS path: {data_file}")
+                
+        # 3. Try ML pipeline path
+        if not data_file:
+            ml_path = training_data_dir / f"{config_id}_data.csv"
+            if ml_path.exists():
+                data_file = ml_path
+                logger.info(f"Found data file at ML path: {data_file}")
+        
+        if not data_file or not data_file.exists():
+            logger.error(f"Training data not found for {config_id}. Searched in {training_data_dir}")
             raise HTTPException(
                 status_code=404,
-                detail="Training data not found. Cannot generate forecast without historical data."
+                detail=f"Training data not found for {config_id}. Cannot generate forecast without historical data."
             )
         
         df = pd.read_csv(data_file)
