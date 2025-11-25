@@ -1154,7 +1154,15 @@ async def train_univariate_models(series_info: Dict, config: Dict, max_epochs: i
             
             # Stream result to SSE clients
             if config_id and config_id in ts_model_results_queue:
-                stream_result = {k: v for k, v in metrics.items() if k != "model_object"}
+                # Clean metrics for JSON serialization
+                stream_result = {}
+                for k, v in metrics.items():
+                    if k == "model_object":
+                        continue
+                    if isinstance(v, float) and (np.isnan(v) or np.isinf(v)):
+                        stream_result[k] = None
+                    else:
+                        stream_result[k] = v
                 stream_result["type"] = "model_completed"
                 ts_model_results_queue[config_id].append(stream_result)
             
@@ -1389,7 +1397,15 @@ async def train_multivariate_models(series_info: Dict, config: Dict, max_epochs:
                     
                     # Stream result to SSE clients
                     if config_id and config_id in ts_model_results_queue:
-                        stream_result = {k: v for k, v in metrics.items() if k != "model_object"}
+                        # Clean metrics for JSON serialization
+                        stream_result = {}
+                        for k, v in metrics.items():
+                            if k == "model_object":
+                                continue
+                            if isinstance(v, float) and (np.isnan(v) or np.isinf(v)):
+                                stream_result[k] = None
+                            else:
+                                stream_result[k] = v
                         stream_result["type"] = "model_completed"
                         ts_model_results_queue[config_id].append(stream_result)
                     
@@ -1894,10 +1910,15 @@ async def start_time_series_training(background_tasks: BackgroundTasks, config_i
 @router.get("/time-series-training-status/{task_id}")
 async def get_time_series_training_status(task_id: str):
     """Get time series training status and results"""
+    logger.info(f"📊 Status request for task: {task_id}")
+    
     if task_id not in ts_training_tasks:
+        logger.warning(f"❌ Task {task_id} not found in ts_training_tasks")
+        logger.info(f"📋 Available tasks: {list(ts_training_tasks.keys())}")
         raise HTTPException(status_code=404, detail="Task not found")
     
     task = ts_training_tasks[task_id]
+    logger.info(f"✅ Task found, status: {task['status']}")
     
     response = {
         "task_id": task_id,
@@ -1908,17 +1929,45 @@ async def get_time_series_training_status(task_id: str):
     }
     
     if task["status"] == "completed":
+        # Clean leaderboard to remove NaN/Inf values before JSON serialization
+        leaderboard = task.get("leaderboard", [])
+        cleaned_leaderboard = []
+        
+        logger.info(f"🧹 Cleaning {len(leaderboard)} leaderboard entries for JSON serialization")
+        
+        for result in leaderboard:
+            cleaned_result = {}
+            for key, value in result.items():
+                # Skip non-serializable values
+                if key == "model_object":
+                    continue
+                    
+                # Clean float values
+                if isinstance(value, float):
+                    if np.isnan(value) or np.isinf(value):
+                        logger.warning(f"⚠️ Replacing invalid {key}={value} with None")
+                        cleaned_result[key] = None
+                    else:
+                        cleaned_result[key] = value
+                else:
+                    cleaned_result[key] = value
+            
+            cleaned_leaderboard.append(cleaned_result)
+        
+        logger.info(f"✅ Cleaned leaderboard has {len(cleaned_leaderboard)} entries")
+        
         response.update({
-            "leaderboard": task["leaderboard"],
-            "best_model_name": task["best_model_name"],
-            "models_saved": task["models_saved"],
-            "total_models_tested": task["total_models_tested"],
-            "successful_models": task["successful_models"],
-            "forecast_horizon": task["forecast_horizon"]
+            "leaderboard": cleaned_leaderboard,
+            "best_model_name": task.get("best_model_name"),
+            "models_saved": task.get("models_saved"),
+            "total_models_tested": task.get("total_models_tested"),
+            "successful_models": task.get("successful_models"),
+            "forecast_horizon": task.get("forecast_horizon")
         })
     elif task["status"] == "failed":
         response["error"] = task.get("error")
     
+    logger.info(f"📤 Returning status response for {task_id}")
     return JSONResponse(response)
 
 @router.get("/time-series-training-stream/{task_id}")
@@ -1980,13 +2029,21 @@ async def stream_time_series_training(task_id: str):
                 status = task.get("status")
                 
                 if status == "completed":
+                    # Clean leaderboard for JSON serialization
+                    leaderboard = task.get("leaderboard", [])
+                    cleaned_leaderboard = []
+                    for result in leaderboard:
+                        cleaned = {k: (None if isinstance(v, float) and (np.isnan(v) or np.isinf(v)) else v) 
+                                  for k, v in result.items() if k != "model_object"}
+                        cleaned_leaderboard.append(cleaned)
+                    
                     completion_data = {
                         "type": "completed",
                         "task_id": task_id,
                         "best_model_name": task.get("best_model_name"),
                         "models_saved": task.get("models_saved"),
                         "total_models_tested": task.get("total_models_tested"),
-                        "leaderboard": task.get("leaderboard", [])
+                        "leaderboard": cleaned_leaderboard
                     }
                     completion_msg = f"data: {json.dumps(completion_data)}\n\n"
                     yield completion_msg
