@@ -11,11 +11,27 @@ import {
   CardFooter,
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { FileUp, Database, Settings2, ChevronRight, Eye, Braces, GitBranch } from "lucide-react"
+import { FileUp, Database, Settings2, ChevronRight, Eye, Braces, GitBranch, TrendingUp, Calendar, BarChart3 } from "lucide-react"
 import type { FileMetadata } from '@/components/FilePreview'
 import Link from 'next/link'
 import { Badge } from "@/components/ui/badge"
 import  FilePreview  from '@/components/FilePreview'
+import { useTheme } from 'next-themes'
+import { 
+  AreaChart, 
+  Area, 
+  BarChart, 
+  Bar, 
+  PieChart, 
+  Pie, 
+  Cell, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer,
+  Legend
+} from 'recharts'
 
 export default function Dashboard() {
   const [userData, setUserData] = useState<{
@@ -31,6 +47,7 @@ export default function Dashboard() {
   const [userName, setUserName] = useState<string>('')
   const [selectedFile, setSelectedFile] = useState<FileMetadata | null>(null)
   const [isPreviewOpen, setIsPreviewOpen] = useState(false)
+  const { theme } = useTheme()
   
   const supabase = createClient()
   
@@ -101,6 +118,64 @@ export default function Dashboard() {
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   }
+
+  // Prepare chart data
+  const getUploadTrendData = () => {
+    const last7Days = Array.from({ length: 7 }, (_, i) => {
+      const date = new Date()
+      date.setDate(date.getDate() - (6 - i))
+      return date.toISOString().split('T')[0]
+    })
+
+    return last7Days.map(date => {
+      const count = userData.recentFiles.filter(file => 
+        file.upload_date.split('T')[0] === date
+      ).length
+      return {
+        date: new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        uploads: count
+      }
+    })
+  }
+
+  const getFileTypeData = () => {
+    const csvCount = userData.recentFiles.filter(f => f.mime_type?.includes('csv')).length
+    const excelCount = userData.recentFiles.filter(f => f.mime_type?.includes('sheet') || f.mime_type?.includes('excel')).length
+    return [
+      { name: 'CSV', value: csvCount, color: 'hsl(var(--chart-1))' },
+      { name: 'Excel', value: excelCount, color: 'hsl(var(--chart-2))' }
+    ]
+  }
+
+  const getProcessingStatusData = () => {
+    return [
+      { 
+        name: 'Preprocessed', 
+        value: userData.preprocessedCount,
+        color: 'hsl(var(--chart-3))'
+      },
+      { 
+        name: 'Raw', 
+        value: userData.fileCount - userData.preprocessedCount,
+        color: 'hsl(var(--chart-4))'
+      }
+    ]
+  }
+
+  const getFileSizeDistribution = () => {
+    return userData.recentFiles.map(file => ({
+      name: file.original_filename?.substring(0, 15) + '...',
+      size: Number((file.file_size / (1024 * 1024)).toFixed(2)),
+      rows: file.row_count
+    })).slice(0, 5)
+  }
+
+  // Theme-aware colors
+  const isDark = theme === 'dark'
+  const textColor = isDark ? '#e5e7eb' : '#374151'
+  const gridColor = isDark ? '#374151' : '#e5e7eb'
+  const tooltipBg = isDark ? '#1f2937' : '#ffffff'
+  const tooltipBorder = isDark ? '#374151' : '#e5e7eb'
   
   return (
     <section className="h-screen w-[100%] px-6 md:px-10 py-10 overflow-y-auto">
@@ -124,30 +199,44 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Card>
+                <Card className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900 border-blue-200 dark:border-blue-800">
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium">Total Files</CardTitle>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-sm font-medium">Total Files</CardTitle>
+                      <Database className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                    </div>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">{userData.fileCount}</div>
+                    <div className="text-3xl font-bold text-blue-700 dark:text-blue-300">{userData.fileCount}</div>
+                    <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">Uploaded datasets</p>
                   </CardContent>
                 </Card>
                 
-                <Card>
+                <Card className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950 dark:to-green-900 border-green-200 dark:border-green-800">
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium">Preprocessed Files</CardTitle>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-sm font-medium">Preprocessed</CardTitle>
+                      <Settings2 className="h-4 w-4 text-green-600 dark:text-green-400" />
+                    </div>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">{userData.preprocessedCount}</div>
+                    <div className="text-3xl font-bold text-green-700 dark:text-green-300">{userData.preprocessedCount}</div>
+                    <p className="text-xs text-green-600 dark:text-green-400 mt-1">Ready for training</p>
                   </CardContent>
                 </Card>
                 
-                <Card>
+                <Card className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-950 dark:to-purple-900 border-purple-200 dark:border-purple-800">
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium">Files Ready for ML</CardTitle>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-sm font-medium">ML Ready</CardTitle>
+                      <TrendingUp className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                    </div>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">{Math.min(userData.preprocessedCount, userData.fileCount)}</div>
+                    <div className="text-3xl font-bold text-purple-700 dark:text-purple-300">{Math.min(userData.preprocessedCount, userData.fileCount)}</div>
+                    <p className="text-xs text-purple-600 dark:text-purple-400 mt-1">
+                      {userData.fileCount > 0 ? `${Math.round((userData.preprocessedCount / userData.fileCount) * 100)}% processed` : 'No files yet'}
+                    </p>
                   </CardContent>
                 </Card>
               </div>
@@ -161,6 +250,185 @@ export default function Dashboard() {
               </Button>
             </CardFooter>
           </Card>
+
+          {/* Charts Section */}
+          {userData.fileCount > 0 && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Upload Trend Chart */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Calendar className="h-5 w-5" />
+                    Upload Activity (Last 7 Days)
+                  </CardTitle>
+                  <CardDescription>Track your daily upload patterns</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={250}>
+                    <AreaChart data={getUploadTrendData()}>
+                      <defs>
+                        <linearGradient id="colorUploads" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.8}/>
+                          <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
+                      <XAxis 
+                        dataKey="date" 
+                        stroke={textColor}
+                        style={{ fontSize: '12px' }}
+                      />
+                      <YAxis 
+                        stroke={textColor}
+                        style={{ fontSize: '12px' }}
+                      />
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: tooltipBg, 
+                          border: `1px solid ${tooltipBorder}`,
+                          borderRadius: '8px',
+                          color: textColor
+                        }}
+                      />
+                      <Area 
+                        type="monotone" 
+                        dataKey="uploads" 
+                        stroke="hsl(var(--primary))" 
+                        fillOpacity={1} 
+                        fill="url(#colorUploads)" 
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+
+              {/* File Type Distribution */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <FileUp className="h-5 w-5" />
+                    File Type Distribution
+                  </CardTitle>
+                  <CardDescription>Breakdown of your file formats</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={250}>
+                    <PieChart>
+                      <Pie
+                        data={getFileTypeData()}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                        outerRadius={80}
+                        fill="hsl(var(--primary))"
+                        dataKey="value"
+                      >
+                        {getFileTypeData().map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: tooltipBg, 
+                          border: `1px solid ${tooltipBorder}`,
+                          borderRadius: '8px',
+                          color: textColor
+                        }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+
+              {/* Processing Status */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Settings2 className="h-5 w-5" />
+                    Processing Status
+                  </CardTitle>
+                  <CardDescription>Current preprocessing progress</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={250}>
+                    <BarChart data={getProcessingStatusData()}>
+                      <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
+                      <XAxis 
+                        dataKey="name" 
+                        stroke={textColor}
+                        style={{ fontSize: '12px' }}
+                      />
+                      <YAxis 
+                        stroke={textColor}
+                        style={{ fontSize: '12px' }}
+                      />
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: tooltipBg, 
+                          border: `1px solid ${tooltipBorder}`,
+                          borderRadius: '8px',
+                          color: textColor
+                        }}
+                      />
+                      <Bar dataKey="value" radius={[8, 8, 0, 0]}>
+                        {getProcessingStatusData().map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+
+              {/* File Size Distribution */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <BarChart3 className="h-5 w-5" />
+                    Dataset Size Overview
+                  </CardTitle>
+                  <CardDescription>File sizes and row counts</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={250}>
+                    <BarChart data={getFileSizeDistribution()}>
+                      <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
+                      <XAxis 
+                        dataKey="name" 
+                        stroke={textColor}
+                        style={{ fontSize: '10px' }}
+                      />
+                      <YAxis 
+                        yAxisId="left"
+                        stroke={textColor}
+                        style={{ fontSize: '12px' }}
+                        label={{ value: 'Size (MB)', angle: -90, position: 'insideLeft', fill: textColor }}
+                      />
+                      <YAxis 
+                        yAxisId="right"
+                        orientation="right"
+                        stroke={textColor}
+                        style={{ fontSize: '12px' }}
+                        label={{ value: 'Rows', angle: 90, position: 'insideRight', fill: textColor }}
+                      />
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: tooltipBg, 
+                          border: `1px solid ${tooltipBorder}`,
+                          borderRadius: '8px',
+                          color: textColor
+                        }}
+                      />
+                      <Legend wrapperStyle={{ color: textColor }} />
+                      <Bar yAxisId="left" dataKey="size" fill="hsl(var(--chart-1))" radius={[8, 8, 0, 0]} />
+                      <Bar yAxisId="right" dataKey="rows" fill="hsl(var(--chart-2))" radius={[8, 8, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+            </div>
+          )}
           
           {/* Quick Actions */}
           {/* <div>

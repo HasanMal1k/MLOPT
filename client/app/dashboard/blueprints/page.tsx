@@ -70,6 +70,7 @@ import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
 interface ExtendedFileMetadata {
   id: string;
   user_id: string;
+  name?: string;
   filename: string;
   original_filename: string;
   file_size: number;
@@ -190,7 +191,7 @@ export default function BlueprintsPage() {
   }
 
   const filteredDatasets = getMLReadyDatasets().filter(dataset => {
-    const matchesSearch = dataset.original_filename.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesSearch = (dataset.name || dataset.original_filename).toLowerCase().includes(searchTerm.toLowerCase())
     const matchesType = filterType === 'all' || dataset.dataset_type === filterType
     
     let matchesStatus = true
@@ -370,12 +371,12 @@ export default function BlueprintsPage() {
             {ML_WORKFLOW_STEPS.map((step, index) => (
               <div key={step.id} className="relative">
                 {index < ML_WORKFLOW_STEPS.length - 1 && (
-                  <div className="hidden md:block absolute top-8 right-0 w-full h-0.5 bg-gray-200 z-0" />
+                  <div className="hidden md:block absolute top-8 right-0 w-full h-0.5 bg-border z-0" />
                 )}
-                <Card className="relative z-10 bg-white">
+                <Card className="relative z-10">
                   <CardContent className="p-4">
                     <div className="flex items-center gap-3 mb-2">
-                      <div className="p-2 bg-blue-50 rounded-lg text-blue-600">
+                      <div className="p-2 bg-blue-50 dark:bg-blue-950 rounded-lg text-blue-600 dark:text-blue-400">
                         {step.icon}
                       </div>
                       <div className="text-sm font-medium">{step.title}</div>
@@ -545,7 +546,7 @@ export default function BlueprintsPage() {
                       <div className="flex items-center gap-3">
                         {getDatasetTypeIcon(dataset.dataset_type)}
                         <div>
-                          <div className="font-medium">{dataset.original_filename}</div>
+                          <div className="font-medium">{dataset.name || dataset.original_filename}</div>
                           <div className="text-sm text-muted-foreground">
                             {formatFileSize(dataset.file_size)} • {dataset.mime_type.includes('csv') ? 'CSV' : 'Excel'}
                           </div>
