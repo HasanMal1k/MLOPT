@@ -693,11 +693,14 @@ async def run_time_series_training(config_id: str, config: dict):
         
         logger.info(f"Time series training completed for {config_id}. Tested {len(results)} models, {len(successful_results)} successful.")
         
-        # Clean up training data file
-        try:
-            os.unlink(data_file)
-        except:
-            pass
+        # NOTE: Keep training data file for forecasting endpoint
+        # The /forecast-time-series/ endpoint needs this data to generate forecasts
+        # Do NOT delete the training data file
+        # # Clean up training data file
+        # try:
+        #     os.unlink(data_file)
+        # except:
+        #     pass
         
     except Exception as e:
         logger.error(f"Time series training error for {config_id}: {str(e)}")
