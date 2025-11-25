@@ -413,8 +413,8 @@ MLOPT/
 <table>
   <tr>
     <td align="center">
-      <a href="https://github.com/mhasan-cmt">
-        <img src="https://github.com/mhasan-cmt.png" width="100px;" alt=""/>
+      <a href="https://github.com/HasanMal1k/">
+        <img src="https://github.com/HasanMal1k/" width="100px;" alt=""/>
         <br />
         <sub><b>Muhammad Hasan</b></sub>
       </a>
