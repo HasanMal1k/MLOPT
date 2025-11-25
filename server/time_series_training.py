@@ -653,6 +653,7 @@ async def run_time_series_training(config_id: str, config: dict):
                     saved_models.append({
                         "name": result["model"],
                         "path": str(model_path),
+                        "index": i,  # Add index for accurate file lookup
                         "metrics": {k: v for k, v in result.items() if k not in ["model_object", "status"]}
                     })
                 except Exception as e:
@@ -2159,32 +2160,43 @@ async def save_time_series_model(request: SaveTimeSeriesModelRequest, user_id: s
         if task["status"] != "completed":
             raise HTTPException(status_code=400, detail=f"Training not completed. Status: {task['status']}")
         
-        # Get the best model information
+        # Get the target model from request (not just best model)
+        target_model_name = request.model_name
+        
+        # Find the model's metrics in the leaderboard to verify it exists
         leaderboard = task.get("leaderboard", [])
         if not leaderboard:
             raise HTTPException(status_code=404, detail="No models found in training results")
         
-        best_model = leaderboard[0]  # Best model is first in sorted leaderboard
+        # Find the specific model requested
+        best_model_metrics = next((m for m in leaderboard if m.get("model") == target_model_name), None)
+        
+        if not best_model_metrics:
+            raise HTTPException(status_code=404, detail=f"Model '{target_model_name}' not found in training results.")
+        
         forecasting_type = task.get("forecasting_type", "univariate")
         
-        # Find the model file in models directory
+        # Find the model file in models directory using glob pattern
         models_dir = Path("models") / request.task_id
         
-        # Look for the best model file
-        model_name_file = best_model["model"].replace(" ", "_").lower()
-        model_file = models_dir / f"{model_name_file}.pkl"
+        # Use glob to find the file that starts with the model name
+        # Models are saved as "ModelName_index.pkl" (e.g., "AutoARIMA_0.pkl")
+        model_name_for_glob = target_model_name.replace(" ", "")  # Remove spaces
+        model_files = list(models_dir.glob(f"{model_name_for_glob}_*.pkl"))
         
-        # If not found, try best_model.pkl
-        if not model_file.exists():
-            model_file = models_dir / "best_model.pkl"
+        if not model_files:
+            # Try without space removal
+            model_files = list(models_dir.glob(f"{target_model_name}_*.pkl"))
         
-        if not model_file.exists():
-            # List all pkl files as fallback
-            pkl_files = list(models_dir.glob("*.pkl"))
-            if pkl_files:
-                model_file = pkl_files[0]  # Use first available
-            else:
-                raise HTTPException(status_code=404, detail=f"Model file not found at {model_file}")
+        if not model_files:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Model file for '{target_model_name}' not found. Searched for {model_name_for_glob}_*.pkl in {models_dir}"
+            )
+        
+        # Select the first matching file (the index doesn't matter for the same model)
+        model_file = model_files[0]
+        logger.info(f"✅ Found model file: {model_file}")
         
         # Read model file
         with open(model_file, 'rb') as f:
@@ -2215,12 +2227,17 @@ async def save_time_series_model(request: SaveTimeSeriesModelRequest, user_id: s
             date_column = config.get("date_column")
             exogenous_columns = config.get("exogenous_columns", [])
             
-            # Extract metrics from best model
+            # Extract metrics from the requested model (use best_model_metrics instead of best_model)
+            smape_val = best_model_metrics.get("smape")
+            r2_val = max(0, 1 - (smape_val / 100) ** 2) if smape_val and 0 < smape_val <= 100 else 0
+            
             metrics = {
-                "smape": best_model.get("smape"),
-                "mae": best_model.get("mae"),
-                "rmse": best_model.get("rmse"),
-                "mape": best_model.get("mape"),
+                "r2": round(r2_val, 4),
+                "mae": best_model_metrics.get("mae"),
+                "rmse": best_model_metrics.get("rmse"),
+                "mse": round(best_model_metrics.get("rmse", 0) ** 2, 4) if best_model_metrics.get("rmse") else None,
+                "smape": best_model_metrics.get("smape"),
+                "mape": best_model_metrics.get("mape"),
             }
             # Remove None values
             metrics = {k: v for k, v in metrics.items() if v is not None}
@@ -2231,8 +2248,9 @@ async def save_time_series_model(request: SaveTimeSeriesModelRequest, user_id: s
                 "file_id": task.get("file_id"),  # Reference to dataset
                 "model_name": request.model_name,
                 "model_type": f"time_series_{forecasting_type}",
-                "algorithm": best_model.get("model", "Unknown"),
+                "algorithm": target_model_name,
                 "metrics": metrics,
+                "training_time_seconds": best_model_metrics.get("training_time", 0),
                 "training_config": {
                     "forecasting_type": forecasting_type,
                     "forecast_horizon": config.get("forecast_horizon", 12),
