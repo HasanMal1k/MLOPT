@@ -73,4 +73,5 @@ server/temp_models/
 server/processing_status/
 server/processed_files/
 server/preprocessing_results/
+server/models/
 
