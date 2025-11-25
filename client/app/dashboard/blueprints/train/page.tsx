@@ -185,17 +185,30 @@ export default function MLTrainingPage() {
       }
       // Cancel training if in progress (use ref to access latest value)
       if (currentConfigIdRef.current) {
-        console.log('🛑 Cancelling training on unmount, task type:', taskTypeRef.current);
+        const configId = currentConfigIdRef.current
+        const taskType = taskTypeRef.current
+        
+        console.log('🛑 Cancelling training on unmount');
+        console.log('   Config ID:', configId);
+        console.log('   Task Type:', taskType);
         
         // Use appropriate cancellation endpoint based on task type
-        const cancelEndpoint = taskTypeRef.current === 'time_series'
-          ? `${process.env.NEXT_PUBLIC_BACKEND_URL}/time-series/cancel-time-series-training/${currentConfigIdRef.current}`
-          : `${process.env.NEXT_PUBLIC_BACKEND_URL}/ml/cancel-training/${currentConfigIdRef.current}`
+        const cancelEndpoint = taskType === 'time_series'
+          ? `${process.env.NEXT_PUBLIC_BACKEND_URL}/time-series/cancel-time-series-training/${configId}`
+          : `${process.env.NEXT_PUBLIC_BACKEND_URL}/ml/cancel-training/${configId}`
+        
+        console.log('   Cancel Endpoint:', cancelEndpoint);
         
         fetch(cancelEndpoint, {
           method: 'POST',
           keepalive: true // Ensure request completes even if page unloads
-        }).catch(err => console.error('Failed to cancel training:', err));
+        })
+        .then(response => {
+          console.log('✅ Cancel request sent, status:', response.status);
+          return response.json();
+        })
+        .then(data => console.log('   Response:', data))
+        .catch(err => console.error('❌ Failed to cancel training:', err));
       }
     };
   }, []); // Empty deps - use refs for latest values
@@ -562,25 +575,40 @@ export default function MLTrainingPage() {
         }
         
         else if (data.type === 'model_completed') {
-          // Add model to live leaderboard
-          const modelResult = data.model
+          // Handle both ML format (data.model) and time series format (data directly)
+          const modelResult = data.model || data
+          
+          // Normalize model name field (ML uses "Model", time series uses "model")
+          const modelName = modelResult.Model || modelResult.model
           
           // Only add if not a failed model
           if (modelResult.status !== 'failed') {
-            liveLeaderboard.push(modelResult)
+            // Normalize the model result for consistent display
+            const normalizedModel = {
+              ...modelResult,
+              Model: modelName, // Ensure Model field exists for display
+              // For time series, map lowercase metrics to uppercase if needed
+              SMAPE: modelResult.smape || modelResult.SMAPE,
+              MAE: modelResult.mae || modelResult.MAE,
+              RMSE: modelResult.rmse || modelResult.RMSE,
+              MAPE: modelResult.mape || modelResult.MAPE,
+              'TT (Sec)': modelResult.training_time || modelResult['TT (Sec)'] || 0,
+            }
+            
+            liveLeaderboard.push(normalizedModel)
             
             // Sort leaderboard by performance metric
             const sortedLeaderboard = [...liveLeaderboard].sort((a, b) => {
-              // Determine which metric to use for sorting
-              const metric = sortMetric === 'auto' 
-                ? (taskType === 'regression' ? 'R2' : 'Accuracy')
+              // For time series, use SMAPE as default metric (lower is better)
+              let metric = sortMetric === 'auto' 
+                ? (taskType === 'time_series' ? 'SMAPE' : (taskType === 'regression' ? 'R2' : 'Accuracy'))
                 : sortMetric
               
               const metricA = a[metric] ?? 0
               const metricB = b[metric] ?? 0
               
-              // For error metrics (MAE, RMSE, RMSLE), lower is better
-              const lowerIsBetter = ['MAE', 'RMSE', 'RMSLE', 'MSE'].includes(metric)
+              // For error metrics (MAE, RMSE, RMSLE, MSE, SMAPE), lower is better
+              const lowerIsBetter = ['MAE', 'RMSE', 'RMSLE', 'MSE', 'SMAPE'].includes(metric)
               return lowerIsBetter ? metricA - metricB : metricB - metricA
             })
             
@@ -589,19 +617,19 @@ export default function MLTrainingPage() {
               ...prev,
               leaderboard: sortedLeaderboard,
               total_models_tested: liveLeaderboard.length,
-              current_model: modelResult.Model
+              current_model: modelName
             }))
 
-            console.log(`✅ Model added to leaderboard: ${modelResult.Model} (${liveLeaderboard.length} total)`)
+            console.log(`✅ Model added to leaderboard: ${modelName} (${liveLeaderboard.length} total)`)
             
             // Show toast notification
             const displayMetric = sortMetric === 'auto' 
-              ? (taskType === 'regression' ? 'R2' : 'Accuracy')
+              ? (taskType === 'time_series' ? 'SMAPE' : (taskType === 'regression' ? 'R2' : 'Accuracy'))
               : sortMetric
-            const displayValue = modelResult[displayMetric] ?? 0
+            const displayValue = normalizedModel[displayMetric] ?? 0
             
             toast({
-              title: `Model Completed: ${modelResult.Model}`,
+              title: `Model Completed: ${modelName}`,
               description: `${displayMetric}: ${displayValue.toFixed(4)}`,
               duration: 2000
             })

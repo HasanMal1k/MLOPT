@@ -618,12 +618,24 @@ async def run_time_series_training(config_id: str, config: dict):
         # Define model candidates based on configuration
         results = []
         
+        # Check cancellation before starting training
+        if ts_training_tasks[config_id].get("cancelled", False):
+            logger.info(f"🛑 Training cancelled before model training started")
+            ts_training_tasks[config_id]["status"] = "cancelled"
+            return
+        
         if forecasting_type == "univariate":
             results = await train_univariate_models(series_info, config, max_epochs, config_id)
         elif forecasting_type == "multivariate":
             results = await train_multivariate_models(series_info, config, max_epochs, config_id)
         elif forecasting_type == "exogenous":
             results = await train_exogenous_models(series_info, config, max_epochs, config_id)
+        
+        # Check if cancelled during training
+        if ts_training_tasks[config_id].get("cancelled", False):
+            logger.info(f"🛑 Training was cancelled during model training")
+            ts_training_tasks[config_id]["status"] = "cancelled"
+            return
         
         ts_training_tasks[config_id]["status"] = "saving_models"
         
@@ -1095,8 +1107,15 @@ async def train_univariate_models(series_info: Dict, config: Dict, max_epochs: i
                 
                 start_time = time.time()
                 model.fit(train_target)
-                pred = model.predict(len(val_target))
                 training_time = time.time() - start_time
+            
+            # Check for cancellation right after model training completes
+            if config_id and config_id in ts_training_tasks:
+                if ts_training_tasks[config_id].get("cancelled", False):
+                    logger.info(f"🛑 Training cancelled after {name} completed")
+                    break
+            
+            pred = model.predict(len(val_target))
             
             # Validate predictions
             if pred is None or len(pred) == 0:
@@ -2016,21 +2035,30 @@ async def stream_time_series_training(task_id: str):
 @router.post("/cancel-time-series-training/{task_id}")
 async def cancel_time_series_training(task_id: str):
     """Cancel an ongoing time series training task"""
+    logger.info(f"🔔 Cancellation endpoint called for task: {task_id}")
+    
     if task_id not in ts_training_tasks:
+        logger.warning(f"⚠️ Task {task_id} not found in ts_training_tasks")
+        logger.info(f"📋 Available tasks: {list(ts_training_tasks.keys())}")
         raise HTTPException(status_code=404, detail="Task not found")
     
     task = ts_training_tasks[task_id]
+    current_status = task["status"]
     
-    if task["status"] in ["completed", "failed", "cancelled"]:
+    logger.info(f"📊 Current task status: {current_status}")
+    
+    if current_status in ["completed", "failed", "cancelled"]:
+        logger.info(f"⚠️ Task already {current_status}, cannot cancel")
         return JSONResponse({
             "success": False,
-            "message": f"Training already {task['status']}",
+            "message": f"Training already {current_status}",
             "task_id": task_id
         })
     
     # Set cancellation flag
     ts_training_tasks[task_id]["cancelled"] = True
-    logger.info(f"🛑 Cancellation requested for time series task {task_id}")
+    ts_training_tasks[task_id]["status"] = "cancelled"
+    logger.info(f"✅ Cancellation flag set for time series task {task_id}")
     
     return JSONResponse({
         "success": True,
