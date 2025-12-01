@@ -64,6 +64,7 @@ AZURE_WORKSPACE_NAME = os.getenv("AZURE_WORKSPACE_NAME", "")
 # Pydantic models
 class DeployModelRequest(BaseModel):
     model_id: str
+    deployment_name: str
     endpoint_name: Optional[str] = None  # If None, create new endpoint
     instance_type: str = "Standard_DS1_v2"
     instance_count: int = 1
@@ -122,14 +123,12 @@ async def deploy_model(
         now = datetime.now()
         timestamp = now.strftime('%Y%m%d%H%M%S')
         timestamp_ms = now.strftime('%Y%m%d%H%M%S%f')  # Include microseconds for unique model name
-        deployment_name = f"deploy-{timestamp}"
         
-        # Reuse endpoint if provided, otherwise create user-specific shared endpoint
-        if request.endpoint_name:
-            endpoint_name = request.endpoint_name
-        else:
-            # Use a shared endpoint per user for faster deployments
-            endpoint_name = f"mlopt-{user_id[:8]}-endpoint"
+        # Use user-provided deployment name
+        deployment_name = request.deployment_name
+        
+        # Enforce fixed endpoint for all deployments
+        endpoint_name = "mlopt-102-bestendpoint"
         
         azure_model_name = f"model_{model_data['model_name'].replace(' ', '_')}_{timestamp_ms}"
         

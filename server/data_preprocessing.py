@@ -36,11 +36,13 @@ logger = logging.getLogger("robust_preprocessing")
 # Comprehensive list of missing value indicators
 MISSING_VALUES = [
     'na', 'n/a', 'N/A', 'NAN', 'NA', 'Null', 'null', 'NULL', 
-    'Nan', 'nan', 'Unknown', 'unknown', 'UNKNOWN', '-', '--', 
+    'Nan', 'nan', '-', '--', 
     '---', '----', '', ' ', '  ', '   ', '    ', '?', '??', 
-    '???', '????', 'Missing', 'missing', 'MISSING', '#N/A',
-    '#NA', 'None', 'none', 'NONE', 'nil', 'NIL', 'NaN', '####'
+    '???', '????', '#N/A',
+    '#NA', 'nil', 'NIL', 'NaN', '####'
 ]
+
+
 
 # Comprehensive date patterns
 DATE_PATTERNS = [
