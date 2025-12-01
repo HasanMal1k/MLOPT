@@ -40,6 +40,7 @@ export interface DeploymentStats {
 
 export interface DeployModelRequest {
   model_id: string;
+  deployment_name: string;
   endpoint_name?: string;
   instance_type?: string;
   instance_count?: number;

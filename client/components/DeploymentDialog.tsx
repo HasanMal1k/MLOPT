@@ -31,7 +31,7 @@ export default function DeploymentDialog({
   onSuccess,
 }: DeploymentDialogProps) {
   const [deploymentName, setDeploymentName] = useState("")
-  const [endpointName, setEndpointName] = useState("")
+  // Endpoint name is now fixed in backend
   const [instanceType, setInstanceType] = useState("Standard_DS1_v2")
   const [instanceCount, setInstanceCount] = useState(1)
   const [description, setDescription] = useState("")
@@ -45,13 +45,21 @@ export default function DeploymentDialog({
       return
     }
 
+    // Azure naming validation
+    const azureNameRegex = /^[a-zA-Z][a-zA-Z0-9-]*$/
+    if (!azureNameRegex.test(deploymentName.trim())) {
+      setError("Deployment name must start with a letter and only contain alphanumeric characters and hyphens (-).")
+      return
+    }
+
     setIsDeploying(true)
     setError(null)
 
     try {
       const request: DeployModelRequest = {
         model_id: modelId,
-        endpoint_name: endpointName.trim() || undefined,
+        deployment_name: deploymentName.trim(),
+        // endpoint_name is handled by backend
         instance_type: instanceType,
         instance_count: instanceCount,
         description: description.trim() || undefined,
@@ -69,7 +77,6 @@ export default function DeploymentDialog({
 
   const handleClose = () => {
     setDeploymentName("")
-    setEndpointName("")
     setInstanceType("Standard_DS2_v2")
     setInstanceCount(1)
     setDescription("")
@@ -105,25 +112,13 @@ export default function DeploymentDialog({
                 onChange={(e) => setDeploymentName(e.target.value)}
                 disabled={isDeploying}
               />
-            </div>
-
-            {/* Endpoint Name */}
-            <div className="space-y-2">
-              <Label htmlFor="endpoint-name">
-                Endpoint Name <span className="text-muted-foreground text-sm">(Optional)</span>
-              </Label>
-              <Input
-                id="endpoint-name"
-                placeholder="Leave empty to create new endpoint"
-                value={endpointName}
-                onChange={(e) => setEndpointName(e.target.value)}
-                disabled={isDeploying}
-              />
               <p className="text-xs text-muted-foreground">
-                If left empty, a new endpoint will be created automatically
+                Must start with a letter and only contain alphanumeric characters and hyphens (-).
               </p>
             </div>
 
+            {/* Endpoint Name - Hidden/Fixed */}
+            
             {/* Instance Type */}
             <div className="space-y-2">
               <Label htmlFor="instance-type">Instance Type</Label>

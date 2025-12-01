@@ -93,21 +93,20 @@ export default function Home() {
         <BeamsBackground />
         <div className="max-w-7xl mx-auto px-6 text-center relative z-10">
           <div className="space-y-8">
-            <div className="inline-block px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full border border-white/20">
-              <span className="text-sm text-gray-300">FYP-I Project 2024 • Data Science Automation</span>
+            <div className="inline-block px-4 py-2 bg-white/5 backdrop-blur-sm rounded-full border border-white/10 mb-8">
+              <span className="text-sm text-gray-300 font-medium tracking-wide">NEXT GEN DATA SCIENCE AUTOMATION</span>
             </div>
             
-            <h1 className="text-6xl md:text-8xl font-bold leading-tight">
+            <h1 className="text-6xl md:text-8xl font-bold leading-tight tracking-tight">
               Automate Your
               <br />
-              <span className="text-white/80">Data Science</span>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-600">Data Science</span>
               <br />
               Pipeline
             </h1>
             
-            <p className="text-xl md:text-2xl text-gray-400 max-w-3xl mx-auto leading-relaxed">
-              From raw CSV files to deployed models in minutes. MLOPT transforms your data science workflow 
-              with intelligent automation, cleaning, transformation, and deployment.
+            <p className="text-xl md:text-2xl text-gray-400 max-w-3xl mx-auto leading-relaxed font-light">
+              From raw data to deployed models in minutes. Enterprise-grade automation for your machine learning workflow.
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-8">
@@ -238,16 +237,55 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="relative">
-              <div className="bg-white/5 backdrop-blur-sm rounded-3xl border border-white/10 p-8">
-                <div className="space-y-4">
-                  <div className="h-4 bg-white/20 rounded w-3/4"></div>
-                  <div className="h-4 bg-white/10 rounded w-1/2"></div>
-                  <div className="h-4 bg-white/20 rounded w-full"></div>
-                  <div className="h-4 bg-white/10 rounded w-2/3"></div>
-                  <div className="grid grid-cols-2 gap-4 pt-4">
-                    <div className="h-20 bg-white/10 rounded-xl"></div>
-                    <div className="h-20 bg-white/20 rounded-xl"></div>
+            <div className="relative group">
+              {/* Glow effect */}
+              <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-purple-600 rounded-3xl blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
+              
+              {/* Main Container */}
+              <div className="relative bg-[#0A0A0A] rounded-3xl border border-white/10 overflow-hidden shadow-2xl">
+                {/* Window Header */}
+                <div className="bg-white/5 px-4 py-3 border-b border-white/5 flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-red-500/20"></div>
+                  <div className="w-3 h-3 rounded-full bg-yellow-500/20"></div>
+                  <div className="w-3 h-3 rounded-full bg-green-500/20"></div>
+                </div>
+
+                <div className="flex h-[300px]">
+                  {/* Sidebar */}
+                  <div className="w-16 border-r border-white/5 p-3 flex flex-col gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-white/10"></div>
+                    <div className="w-8 h-8 rounded-lg bg-white/5"></div>
+                    <div className="w-8 h-8 rounded-lg bg-white/5"></div>
+                    <div className="mt-auto w-8 h-8 rounded-full bg-white/10"></div>
+                  </div>
+
+                  {/* Content */}
+                  <div className="flex-1 p-6 space-y-6">
+                    {/* Header Stats */}
+                    <div className="grid grid-cols-3 gap-4">
+                      <div className="bg-white/5 rounded-xl p-3 border border-white/5">
+                        <div className="w-8 h-1 bg-blue-500/50 rounded mb-2"></div>
+                        <div className="w-12 h-4 bg-white/20 rounded"></div>
+                      </div>
+                      <div className="bg-white/5 rounded-xl p-3 border border-white/5">
+                        <div className="w-8 h-1 bg-purple-500/50 rounded mb-2"></div>
+                        <div className="w-12 h-4 bg-white/20 rounded"></div>
+                      </div>
+                      <div className="bg-white/5 rounded-xl p-3 border border-white/5">
+                        <div className="w-8 h-1 bg-green-500/50 rounded mb-2"></div>
+                        <div className="w-12 h-4 bg-white/20 rounded"></div>
+                      </div>
+                    </div>
+
+                    {/* Chart Area */}
+                    <div className="bg-white/5 rounded-xl p-4 border border-white/5 h-32 flex items-end justify-between gap-2">
+                      <div className="w-full bg-blue-500/20 rounded-t h-[40%]"></div>
+                      <div className="w-full bg-blue-500/30 rounded-t h-[70%]"></div>
+                      <div className="w-full bg-blue-500/40 rounded-t h-[50%]"></div>
+                      <div className="w-full bg-blue-500/50 rounded-t h-[80%]"></div>
+                      <div className="w-full bg-blue-500/60 rounded-t h-[60%]"></div>
+                      <div className="w-full bg-blue-500/70 rounded-t h-[90%]"></div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -316,7 +354,7 @@ export default function Home() {
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="text-2xl font-bold mb-4 md:mb-0">MLOPT</div>
             <div className="text-sm text-gray-500">
-              © 2024 MLOPT. Built with ❤️ for FYP-I Project.
+              © 2024 MLOPT. Final Year Project. All rights reserved.
             </div>
           </div>
         </div>
